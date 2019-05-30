@@ -6,7 +6,6 @@ import akka.actor.{ActorRefFactory, ActorSystem}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer, SourceShape}
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Keep, Merge, RunnableGraph, Sink, Source}
 import javax.inject.Inject
-import models.AssetSweeperFile
 import play.api.{Configuration, Logger}
 import play.api.inject.Injector
 import play.api.libs.circe.Circe
@@ -14,6 +13,7 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 import streamComponents.{AssetSweeperFilesSource, FilterOutIgnores}
 import io.circe.generic.auto._
 import io.circe.syntax._
+import models.AssetSweeperFile
 import responses.ObjectListResponse
 
 import scala.concurrent.Future

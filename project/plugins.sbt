@@ -4,4 +4,4 @@ resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/release
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.2")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.1.4")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.22")

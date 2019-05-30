@@ -4,24 +4,23 @@ import java.sql.Connection
 
 import akka.stream.{Attributes, Outlet, SourceShape}
 import akka.stream.stage.{AbstractOutHandler, GraphStage, GraphStageLogic}
+import config.DatabaseConfiguration
 import helpers.JdbcConnectionManager
-import javax.inject.Inject
 import models.AssetSweeperFile
-import play.api.Logger
-
+import org.slf4j.LoggerFactory
 import scala.util.{Failure, Success}
 
 /**
   * akka source to retrieve items from the given (existing) jdbc database and yield them to the stream
-  * @param jdbcConnectionManager implicitly provided JdbcConnectionManager object
   */
-class AssetSweeperFilesSource @Inject() (jdbcConnectionManager: JdbcConnectionManager) extends GraphStage[SourceShape[AssetSweeperFile]] {
+class AssetSweeperFilesSource (config:DatabaseConfiguration) extends GraphStage[SourceShape[AssetSweeperFile]] {
   private final val out:Outlet[AssetSweeperFile] = Outlet.create("AssetSweeperFilesSource.out")
 
   override def shape: SourceShape[AssetSweeperFile] = SourceShape.of(out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    private val logger = Logger(getClass)
+    private val logger = LoggerFactory.getLogger(getClass)
+
     var connection:Connection = _
     var lastProcessed:Int = 0
     val pageSize:Int = 20
@@ -59,7 +58,7 @@ class AssetSweeperFilesSource @Inject() (jdbcConnectionManager: JdbcConnectionMa
     })
 
     override def preStart(): Unit = {
-      jdbcConnectionManager.getConnectionForSection("assetSweeper") match {
+      JdbcConnectionManager.getConnectionForSection(config) match {
         case Failure(err)=>
           logger.error(s"Could not get connection for asset sweeper db: ", err)
           failStage(err)
