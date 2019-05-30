@@ -11,7 +11,7 @@ import play.api.{Configuration, Logger}
 import play.api.inject.Injector
 import play.api.libs.circe.Circe
 import play.api.mvc.{AbstractController, ControllerComponents}
-import streamComponents.AssetSweeperFilesSource
+import streamComponents.{AssetSweeperFilesSource, FilterOutIgnores}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import responses.ObjectListResponse
@@ -32,16 +32,19 @@ class TestStreamController @Inject()(cc:ControllerComponents, config:Configurati
 
       val srcFactory = injector.instanceOf(classOf[AssetSweeperFilesSource])
       val streamSource = builder.add(srcFactory)
-      streamSource ~> streamSink
+      val ignoresFilter = builder.add(new FilterOutIgnores)
+      streamSource ~> ignoresFilter ~> streamSink
+
       ClosedShape
     }}
 
     val resultFuture = RunnableGraph.fromGraph(graph).run()
 
     resultFuture.map(results=>{
+      //if one of these is going to blow up circe, get a better error report here
       results.foreach(result=>{
         try {
-          println(result.asJson)
+          result.asJson
         } catch {
           case ex:Throwable=>
             logger.warn(s"$result failed to render: ", ex)
