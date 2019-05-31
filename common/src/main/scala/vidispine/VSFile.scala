@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 import scala.xml.{NodeSeq, XML}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class VSFile(vsid:String, path:String, uri:String, state:VSFileState.Value, size:Long, hash:Option[String], timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]])
+case class VSFile(vsid:String, path:String, uri:String, state:VSFileState.Value, size:Long, hash:Option[String], timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]], membership: Option[VSFileItemMembership])
 
 object VSFile {
   val logger = LoggerFactory.getLogger(getClass)
@@ -33,7 +33,11 @@ object VSFile {
       metadataDictFromNodes(xmlNode \ "metadata") match {
         case Success(mdDict)=>Some(mdDict)
         case Failure(err)=>None
-      }
+      },
+      (xmlNode \ "item").headOption.map(node=>VSFileItemMembership.fromXml(node) match {
+        case Success(membership)=>membership
+        case Failure(err)=>throw err
+      })
     )
   }
 
@@ -66,7 +70,7 @@ object VSFile {
   }
 
   def forPathOnStorage(storageId:String, path:String)(implicit communicator: VSCommunicator, mat:Materializer) = {
-    val uri = s"/API/storage/$storageId/file"
+    val uri = s"/API/storage/$storageId/file;includeItem=true"
     communicator.requestGet(uri, Map("Accept"->"application/xml"), queryParams = Map("path"->path,"count"->"false")).map({
       case Left(err)=>Left(err.toString)
       case Right(xmlString)=>VSFile.fromXmlString(xmlString) match {

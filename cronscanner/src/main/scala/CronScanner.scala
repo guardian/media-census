@@ -36,6 +36,8 @@ object CronScanner extends ZonedDateTimeEncoder {
 
   lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
 
+  lazy val limit = sys.env.get("LIMIT").map(_.toInt)
+
   /**
     * builds the main stream for conducting the mediacensus
     * @param vsPathMap Vidispine path map. Get this from the getPathMap call
@@ -47,7 +49,7 @@ object CronScanner extends ZonedDateTimeEncoder {
     GraphDSL.create(sink) { implicit builder=> { streamSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
-      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig)
+      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, limit)
       val streamSource = builder.add(srcFactory)
       val ignoresFilter = builder.add(new FilterOutIgnores)
 
@@ -98,6 +100,7 @@ object CronScanner extends ZonedDateTimeEncoder {
         val finalResultJson = result.asJson.toString()
         println("Final results: ")
         println(finalResultJson)
+        println(s"Got a total of ${result.length} items with a limit of $limit")
         Thread.sleep(10000)
         actorSystem.terminate().andThen({
           case _=>System.exit(0)

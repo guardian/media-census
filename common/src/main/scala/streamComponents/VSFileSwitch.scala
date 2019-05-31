@@ -45,7 +45,9 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
           case Success(Right(vsFile))=>
             logger.info(s"Found file for ${elem.storageSubpath} at ${vsFile.vsid}")
             val updatedElem = elem.copy(
-              vsFileId = Some(vsFile.vsid)
+              vsFileId = Some(vsFile.vsid),
+              vsItemId = vsFile.membership.map(_.itemId),
+              vsShapeIds = vsFile.membership.map(_.shapes.map(_.shapeId))
             )
             completeCb.invoke(updatedElem)
         })

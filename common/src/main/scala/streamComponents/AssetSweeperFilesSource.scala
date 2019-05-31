@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 /**
   * akka source to retrieve items from the given (existing) jdbc database and yield them to the stream
   */
-class AssetSweeperFilesSource (config:DatabaseConfiguration) extends GraphStage[SourceShape[MediaCensusEntry]] {
+class AssetSweeperFilesSource (config:DatabaseConfiguration, totalLimit:Option[Int]=None) extends GraphStage[SourceShape[MediaCensusEntry]] {
   private final val out:Outlet[MediaCensusEntry] = Outlet.create("AssetSweeperFilesSource.out")
 
   override def shape: SourceShape[MediaCensusEntry] = SourceShape.of(out)
@@ -28,6 +28,12 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration) extends GraphStage[
 
     setHandler(out, new AbstractOutHandler {
       override def onPull(): Unit = {
+        if(totalLimit.isDefined && lastProcessed>=totalLimit.get){
+          logger.info(s"Processed up to limit of ${totalLimit.get}, stopping")
+          complete(out)
+          return
+        }
+
         if(processingQueue.isEmpty){
           val statement = connection.createStatement()
           val stmtSource = s"SELECT * FROM files OFFSET $lastProcessed LIMIT $pageSize"
@@ -48,7 +54,7 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration) extends GraphStage[
           case Some(nextElem)=>
             processingQueue = processingQueue.tail
             lastProcessed+=1
-            push(out, MediaCensusEntry(nextElem,None,None,None,None,Seq()))
+            push(out, MediaCensusEntry(nextElem,None,None,None,None,None,Seq()))
           case None=>
             logger.info(s"Rendered all items")
             complete(out)
