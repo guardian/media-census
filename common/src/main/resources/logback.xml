@@ -11,7 +11,7 @@
         <appender-ref ref="STDOUT" />
     </appender>
 
-    <logger name="streamComponents" level="DEBUG"/>
+    <logger name="streamComponents" level="WARN"/>
     <logger name="streamComponents.VSFileSwitch" level="WARN"/>
     <logger name="controllers.TestStreamController" level="DEBUG"/>
 

@@ -1,19 +1,23 @@
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
-import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink}
+import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
+import com.sksamuel.elastic4s.ElasticsearchClientUri
 import models.{AssetSweeperFile, MediaCensusEntry}
 import streamComponents._
 import play.api.{Configuration, Logger}
-import config.{DatabaseConfiguration, VSConfig}
+import config.{DatabaseConfiguration, ESConfig, VSConfig}
 import io.circe.syntax._
 import io.circe.generic.auto._
 import vidispineclient.VSPathMapper
 import com.softwaremill.sttp._
+import helpers.ZonedDateTimeEncoder
 import vidispine.{VSCommunicator, VSStorage}
 
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import com.sksamuel.elastic4s.http.HttpClient
+import scala.concurrent.duration._
 
 object CronScanner extends ZonedDateTimeEncoder {
   val logger = Logger(getClass)
@@ -34,21 +38,33 @@ object CronScanner extends ZonedDateTimeEncoder {
     sys.env("VIDISPINE_PASSWORD")
   )
 
+  lazy val esConfig = ESConfig(
+    sys.env.getOrElse("ES_HOST","mediacensus-elasticsearch"),
+    sys.env.getOrElse("ES_PORT","9200").toInt
+  )
+
   lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
 
   lazy val limit = sys.env.get("LIMIT").map(_.toInt)
+
+  lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
+  lazy val indexer = new Indexer(indexName)
 
   /**
     * builds the main stream for conducting the mediacensus
     * @param vsPathMap Vidispine path map. Get this from the getPathMap call
     * @return
     */
-  def buildStream(vsPathMap:Map[String,VSStorage]) = {
-    val sink = Sink.seq[MediaCensusEntry]
+  def buildStream(vsPathMap:Map[String,VSStorage], esClient:HttpClient) = {
+    //val sink = Sink.seq[MediaCensusEntry]
 
-    GraphDSL.create(sink) { implicit builder=> { streamSink =>
+
+    val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
+
+    GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
+      val indexSink = builder.add(indexer.getIndexSink(esClient))
       val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, limit)
       val streamSource = builder.add(srcFactory)
       val ignoresFilter = builder.add(new FilterOutIgnores)
@@ -58,6 +74,7 @@ object CronScanner extends ZonedDateTimeEncoder {
       val vsFindReplicas = builder.add(new VSFindReplicas())
 
       val merge = builder.add(Merge[MediaCensusEntry](4,eagerComplete = false))
+      val sinkBranch = builder.add(Broadcast[MediaCensusEntry](2,eagerCancel=true))
       streamSource ~> ignoresFilter ~> knownStorageSwitch
 
       knownStorageSwitch.out(0) ~> vsFileSwitch
@@ -69,8 +86,10 @@ object CronScanner extends ZonedDateTimeEncoder {
       vsFindReplicas.out(0) ~> merge
       vsFindReplicas.out(1) ~> merge
 
-      merge ~> streamSink
+      merge ~> sinkBranch
 
+      sinkBranch.out(0) ~> indexSink
+      sinkBranch.out(1) ~> reduceSink
       ClosedShape
     }}
   }
@@ -86,26 +105,30 @@ object CronScanner extends ZonedDateTimeEncoder {
   }
 
   def main(args: Array[String]): Unit = {
-//    val resultFuture = getPathMap().flatMap({
-
-//    }
-
     val pathMapFuture = getPathMap()
+
+    val esClient = HttpClient(ElasticsearchClientUri(esConfig.host, esConfig.port))
+
+    Await.result(indexer.checkIndex(esClient), 30 seconds) match {
+      case Left(err)=>
+        logger.error(s"Could not check index status: $err")
+        actorSystem.terminate().andThen({
+          case _=>System.exit(1)
+        })
+      case Right(result)=>
+        logger.info(s"Successfully connected to index $indexName on ${esConfig.host}:${esConfig.port}")
+    }
 
     val resultFuture = pathMapFuture.flatMap({
       case Right(pathMap)=>
-        RunnableGraph.fromGraph(buildStream(pathMap)).run().map(results=>Right(results))
+        RunnableGraph.fromGraph(buildStream(pathMap, esClient)).run().map(resultCount=>Right(resultCount))
       case Left(err)=>
         Future(Left(err))
     })
 
     resultFuture.onComplete({
-      case Success(Right(result))=>
-        val finalResultJson = result.asJson.toString()
-        println("Final results: ")
-        println(finalResultJson)
-        println(s"Got a total of ${result.length} items with a limit of $limit")
-        Thread.sleep(10000)
+      case Success(Right(resultCount))=>
+        println(s"Indexed a total of $resultCount items with a limit of $limit")
         actorSystem.terminate().andThen({
           case _=>System.exit(0)
         })
