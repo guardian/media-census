@@ -6,17 +6,17 @@ import akka.stream.{Attributes, Outlet, SourceShape}
 import akka.stream.stage.{AbstractOutHandler, GraphStage, GraphStageLogic}
 import config.DatabaseConfiguration
 import helpers.JdbcConnectionManager
-import models.AssetSweeperFile
+import models.{AssetSweeperFile, MediaCensusEntry}
 import org.slf4j.LoggerFactory
 import scala.util.{Failure, Success}
 
 /**
   * akka source to retrieve items from the given (existing) jdbc database and yield them to the stream
   */
-class AssetSweeperFilesSource (config:DatabaseConfiguration) extends GraphStage[SourceShape[AssetSweeperFile]] {
-  private final val out:Outlet[AssetSweeperFile] = Outlet.create("AssetSweeperFilesSource.out")
+class AssetSweeperFilesSource (config:DatabaseConfiguration) extends GraphStage[SourceShape[MediaCensusEntry]] {
+  private final val out:Outlet[MediaCensusEntry] = Outlet.create("AssetSweeperFilesSource.out")
 
-  override def shape: SourceShape[AssetSweeperFile] = SourceShape.of(out)
+  override def shape: SourceShape[MediaCensusEntry] = SourceShape.of(out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
@@ -48,7 +48,7 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration) extends GraphStage[
           case Some(nextElem)=>
             processingQueue = processingQueue.tail
             lastProcessed+=1
-            push(out, nextElem)
+            push(out, MediaCensusEntry(nextElem,None,None,None,None,Seq()))
           case None=>
             logger.info(s"Rendered all items")
             complete(out)

@@ -54,7 +54,7 @@ lazy val `common` = (project in file("common"))
     "io.circe" %% "circe-java8" % circeVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
-    "org.slf4j" % "slf4j-simple" % slf4jVersion,
+//    "org.slf4j" % "slf4j-simple" % slf4jVersion,
     "com.softwaremill.sttp" %% "core" % "0.0.20",
     "com.softwaremill.sttp" %% "async-http-client-backend-future" % "0.0.20",
     "org.asynchttpclient" % "async-http-client" % "2.0.37",

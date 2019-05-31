@@ -33,7 +33,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       "Content-Type"->"application/xml"
     ) ++ headers
 
-    logger.info(s"Got headers, initiating send to $uri")
+    logger.debug(s"Got headers, initiating send to $uri")
     sttp
       .put(uri)
       .streamBody(source)
@@ -42,15 +42,17 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       .send()
   }
 
-  private def sendGet(uriPath:String, headers:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
+  private def sendGet(uriPath:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val hdr = Map(
       "Accept"->"application/xml",
       "Authorization"->s"Basic $authString",
       "Content-Type"->"application/xml"
     ) ++ headers
 
-    val uri = vsUri.path(uriPath)
-    logger.info(s"Got headers, initiating send to $uri")
+    val uriWithPath = vsUri.path(uriPath)
+    val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
+
+    logger.debug(s"Got headers, initiating send to $uri")
     sttp
       .get(uri)
       .headers(hdr)
@@ -59,7 +61,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
   }
 
   private def consumeSource(source:Source[ByteString,Any])(implicit materializer: akka.stream.Materializer, ec: ExecutionContext):Future[String] = {
-    logger.info("Consuming returned body")
+    logger.debug("Consuming returned body")
     val sink = Sink.reduce((acc:ByteString, unit:ByteString)=>acc.concat(unit))
     val runnable = source.toMat(sink)(Keep.right)
     runnable.run().map(_.utf8String)
@@ -70,7 +72,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
   Future[Either[HttpError,String]] = sendPut(uriPath, xmlString, headers).flatMap({ response=>
     response.body match {
       case Right(source)=>
-        logger.info("Send succeeded")
+        logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
         VSError.fromXml(errorString) match {
@@ -84,12 +86,12 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
         }
     }})
 
-  def requestGet(uriPath:String, headers:Map[String,String])
+  def requestGet(uriPath:String, headers:Map[String,String],queryParams:Map[String,String]=Map())
                 (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendGet(uriPath, headers).flatMap({ response=>
+  Future[Either[HttpError,String]] = sendGet(uriPath, headers, queryParams).flatMap({ response=>
     response.body match {
       case Right(source)=>
-        logger.info("Send succeeded")
+        logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
         VSError.fromXml(errorString) match {

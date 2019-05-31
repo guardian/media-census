@@ -1,10 +1,7 @@
 import akka.actor.ActorSystem
-import akka.event.DiagnosticLoggingAdapter
-import akka.event.Logging
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
-import akka.stream.scaladsl.{GraphDSL, RunnableGraph, Sink}
-import com.softwaremill.sttp.Uri
-import models.AssetSweeperFile
+import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink}
+import models.{AssetSweeperFile, MediaCensusEntry}
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, VSConfig}
@@ -12,8 +9,11 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import vidispineclient.VSPathMapper
 import com.softwaremill.sttp._
+import vidispine.{VSCommunicator, VSStorage}
+
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object CronScanner extends ZonedDateTimeEncoder {
   val logger = Logger(getClass)
@@ -34,8 +34,15 @@ object CronScanner extends ZonedDateTimeEncoder {
     sys.env("VIDISPINE_PASSWORD")
   )
 
-  def buildStream = {
-    val sink = Sink.seq[AssetSweeperFile]
+  lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
+
+  /**
+    * builds the main stream for conducting the mediacensus
+    * @param vsPathMap Vidispine path map. Get this from the getPathMap call
+    * @return
+    */
+  def buildStream(vsPathMap:Map[String,VSStorage]) = {
+    val sink = Sink.seq[MediaCensusEntry]
 
     GraphDSL.create(sink) { implicit builder=> { streamSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
@@ -43,49 +50,83 @@ object CronScanner extends ZonedDateTimeEncoder {
       val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig)
       val streamSource = builder.add(srcFactory)
       val ignoresFilter = builder.add(new FilterOutIgnores)
-      streamSource ~> ignoresFilter ~> streamSink
+
+      val knownStorageSwitch = builder.add(new KnownStorageSwitch(vsPathMap))
+      val vsFileSwitch = builder.add(new VSFileSwitch())  //VSFileSwitch args are implicits
+
+      val merge = builder.add(Merge[MediaCensusEntry](3,eagerComplete = false))
+      streamSource ~> ignoresFilter ~> knownStorageSwitch
+
+      knownStorageSwitch.out(0) ~> vsFileSwitch
+      knownStorageSwitch.out(1) ~> merge
+
+      vsFileSwitch.out(0) ~> merge
+      vsFileSwitch.out(1) ~> merge
+
+      merge ~> streamSink
 
       ClosedShape
     }}
   }
 
+  /**
+    * returns the vidispine path map, i.e. a Map of the on-disk root path (as a string) to the storage definition
+    * for all "filesystem" type storages
+    * @return a Future, containing either an error message or a Map[String, VSStorage]
+    */
   def getPathMap() = {
     val mapper = new VSPathMapper(vsConfig)
     mapper.getPathMap()
   }
 
   def main(args: Array[String]): Unit = {
-//    val resultFuture = RunnableGraph.fromGraph(buildStream).run()
-//
-//    resultFuture.onComplete({
-//      case Success(result)=>
-//        val finalResultJson = result.asJson.toString()
-//        println("Final results: ")
-//        println(finalResultJson)
-//        System.exit(0)
-//      case Failure(err)=>
-//        println(s"ERROR: ${err.toString}")
-//        System.exit(1)
-//    })
+//    val resultFuture = getPathMap().flatMap({
 
-    getPathMap.onComplete({
-      case Success(Right(pathmap))=>
-        println("Got path map: ")
-        println(pathmap)
+//    }
+
+    val pathMapFuture = getPathMap()
+
+    val resultFuture = pathMapFuture.flatMap({
+      case Right(pathMap)=>
+        RunnableGraph.fromGraph(buildStream(pathMap)).run().map(results=>Right(results))
+      case Left(err)=>
+        Future(Left(err))
+    })
+
+    resultFuture.onComplete({
+      case Success(Right(result))=>
+        val finalResultJson = result.asJson.toString()
+        println("Final results: ")
+        println(finalResultJson)
+        Thread.sleep(10000)
         actorSystem.terminate().andThen({
           case _=>System.exit(0)
         })
-      case Success(Left(err))=>
+      case Failure(err)=>
         println(s"ERROR: ${err.toString}")
         actorSystem.terminate().andThen({
           case _=>System.exit(1)
         })
-      case Failure(err)=>
-        logger.error("Could not map path data", err)
-        actorSystem.terminate().andThen({
-          case _=>System.exit(1)
-        })
     })
+
+//    getPathMap.onComplete({
+//      case Success(Right(pathmap))=>
+//        println("Got path map: ")
+//        println(pathmap)
+//        actorSystem.terminate().andThen({
+//          case _=>System.exit(0)
+//        })
+//      case Success(Left(err))=>
+//        println(s"ERROR: ${err.toString}")
+//        actorSystem.terminate().andThen({
+//          case _=>System.exit(1)
+//        })
+//      case Failure(err)=>
+//        logger.error("Could not map path data", err)
+//        actorSystem.terminate().andThen({
+//          case _=>System.exit(1)
+//        })
+//    })
 
   }
 }

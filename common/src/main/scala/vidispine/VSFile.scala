@@ -2,12 +2,17 @@ package vidispine
 
 import java.time.ZonedDateTime
 
+import akka.stream.Materializer
+import org.slf4j.LoggerFactory
+
 import scala.util.{Failure, Success, Try}
-import scala.xml.NodeSeq
+import scala.xml.{NodeSeq, XML}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class VSFile(vsid:String, path:String, uri:String, state:VSFileState.Value, size:Long, hash:Option[String], timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]])
 
 object VSFile {
+  val logger = LoggerFactory.getLogger(getClass)
   def metadataDictFromNodes(metadataNode:NodeSeq):Try[Map[String,String]] = Try {
     (metadataNode \ "field").map(fieldNode=>
       ((fieldNode \ "key").text, (fieldNode \ "value").text)
@@ -30,5 +35,47 @@ object VSFile {
         case Failure(err)=>None
       }
     )
+  }
+
+  /**
+    * convert the absolute path of a file to a relative path on the storage
+    * @param fullPath path of the item on-disk
+    * @param storageRoot root path of the storage
+    * @return either the relative path or None if the paths don't overlap
+    */
+  def storageSubpath(fullPath:String, storageRoot:String) =
+    if(!fullPath.startsWith(storageRoot)){
+      None
+    } else {
+      val maybePath = fullPath.substring(storageRoot.length)
+      if (maybePath.startsWith("/")) {
+        Some(maybePath.substring(1))
+      } else {
+        Some(maybePath)
+      }
+    }
+
+
+  def fromXmlString(str:String) = {
+    val xmlNodes = XML.loadString(str)
+    if((xmlNodes \ "file").nonEmpty){
+      VSFile.fromXml(xmlNodes \ "file") //if retrieving the file directly, you get this extra node layer
+    } else {
+      VSFile.fromXml(xmlNodes)
+    }
+  }
+
+  def forPathOnStorage(storageId:String, path:String)(implicit communicator: VSCommunicator, mat:Materializer) = {
+    val uri = s"/API/storage/$storageId/file"
+    communicator.requestGet(uri, Map("Accept"->"application/xml"), queryParams = Map("path"->path,"count"->"false")).map({
+      case Left(err)=>Left(err.toString)
+      case Right(xmlString)=>VSFile.fromXmlString(xmlString) match {
+        case Failure(err)=>
+          err.printStackTrace()
+          logger.error(xmlString)
+          Left(err.toString)
+        case Success(vsFile)=>Right(vsFile)
+      }
+    })
   }
 }
