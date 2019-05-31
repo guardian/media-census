@@ -48,9 +48,19 @@ val slf4jVersion = "1.7.25"
 lazy val `common` = (project in file("common"))
   .settings(commonSettings, libraryDependencies ++= Seq(
     "org.postgresql" % "postgresql" % "42.2.5",
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
-    "org.slf4j" % "slf4j-simple" % slf4jVersion
+    "org.slf4j" % "slf4j-simple" % slf4jVersion,
+    "com.softwaremill.sttp" %% "core" % "0.0.20",
+    "com.softwaremill.sttp" %% "async-http-client-backend-future" % "0.0.20",
+    "org.asynchttpclient" % "async-http-client" % "2.0.37",
+    "com.softwaremill.sttp" %% "akka-http-backend" % "0.0.20",
+    "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
+    specs2
   ))
 
 lazy val `cronscanner` = (project in file("cronscanner"))
@@ -63,7 +73,7 @@ lazy val `cronscanner` = (project in file("cronscanner"))
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-java8" % circeVersion,
-      guice, jdbc
+      jdbc
     ),version := sys.props.getOrElse("build.number","DEV"),
       dockerPermissionStrategy := DockerPermissionStrategy.Run,
       daemonUserUid in Docker := None,

@@ -13,3 +13,4 @@ dist
 /.project
 /RUNNING_PID
 /.settings
+/utils/run_sample.sh

@@ -5,6 +5,7 @@ import akka.NotUsed
 import akka.actor.{ActorRefFactory, ActorSystem}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer, SourceShape}
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Keep, Merge, RunnableGraph, Sink, Source}
+import config.DatabaseConfiguration
 import javax.inject.Inject
 import play.api.{Configuration, Logger}
 import play.api.inject.Injector
@@ -24,13 +25,20 @@ class TestStreamController @Inject()(cc:ControllerComponents, config:Configurati
   implicit val mat:ActorMaterializer = ActorMaterializer.create(system)
   private val logger = Logger(getClass)
 
+  def assetSweeperConfigFromAppConfig = DatabaseConfiguration(
+    config.get[String]("assetSweeper.driver"),
+    config.get[String]("assetSweeper.jdbcUrl"),
+    config.get[String]("assetSweeper.user"),
+    config.get[String]("assetSweeper.password")
+  )
+
   def testStream = Action.async {
     val sink = Sink.seq[AssetSweeperFile]
 
     val graph = GraphDSL.create(sink) { implicit builder=> { streamSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
-      val srcFactory = injector.instanceOf(classOf[AssetSweeperFilesSource])
+      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfigFromAppConfig)
       val streamSource = builder.add(srcFactory)
       val ignoresFilter = builder.add(new FilterOutIgnores)
       streamSource ~> ignoresFilter ~> streamSink
