@@ -55,15 +55,19 @@ object CronScanner extends ZonedDateTimeEncoder {
 
       val knownStorageSwitch = builder.add(new KnownStorageSwitch(vsPathMap))
       val vsFileSwitch = builder.add(new VSFileSwitch())  //VSFileSwitch args are implicits
+      val vsFindReplicas = builder.add(new VSFindReplicas())
 
-      val merge = builder.add(Merge[MediaCensusEntry](3,eagerComplete = false))
+      val merge = builder.add(Merge[MediaCensusEntry](4,eagerComplete = false))
       streamSource ~> ignoresFilter ~> knownStorageSwitch
 
       knownStorageSwitch.out(0) ~> vsFileSwitch
       knownStorageSwitch.out(1) ~> merge
 
-      vsFileSwitch.out(0) ~> merge
+      vsFileSwitch.out(0) ~> vsFindReplicas
       vsFileSwitch.out(1) ~> merge
+
+      vsFindReplicas.out(0) ~> merge
+      vsFindReplicas.out(1) ~> merge
 
       merge ~> streamSink
 

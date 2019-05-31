@@ -13,7 +13,7 @@ import scala.xml.XML
 case class VSShape (vsid:String,essenceVersion:Int,tag:String,mimeType:String, files:Seq[VSFile])
 
 object VSShape {
-  def vsIdForShapeTag(itemId:String, shapeTag:String)(implicit vsCommunicator:VSCommunicator,mat:Materializer,logger:DiagnosticLoggingAdapter) = {
+  def vsIdForShapeTag(itemId:String, shapeTag:String)(implicit vsCommunicator:VSCommunicator,mat:Materializer) = {
     val uri = s"/API/item/$itemId/shape?tag=$shapeTag"
     vsCommunicator.requestGet(uri,Map("Accept"->"application/xml"))
       .map({
@@ -28,30 +28,30 @@ object VSShape {
       })
   }
 
-  def forItem(itemId:String, shapeTag:String)(implicit vsCommunicator:VSCommunicator,mat:Materializer,logger:DiagnosticLoggingAdapter) = {
-    val maybeUriFuture = vsIdForShapeTag(itemId, shapeTag).map({
-      case Left(err)=>Left(err)
-      case Right(None)=>Left(HttpError(s"No shape exists for tag $shapeTag", 404))
-      case Right(Some(shapeId))=>Right(s"/API/item/$itemId/shape/$shapeId")
-    })
+  def forItemWithId(itemId:String, shapeId:String)(implicit vsCommunicator:VSCommunicator,mat:Materializer) = {
+    val uri = s"/API/item/$itemId/shape/$shapeId"
+    vsCommunicator.requestGet(uri, Map("Accept" -> "application/xml"))
+      .map({
+        case Right(stringData) => VSShape.fromXmlString(stringData) match {
+          case Success(vsShape) =>
+            Right(vsShape)
+          case Failure(err) =>
+            Left(HttpError(err.toString, -1))
+        }
+        case Left(err) => Left(err)
+      })
+  }
 
-    maybeUriFuture.flatMap({
-      case Right(uri)=>
-        vsCommunicator.requestGet(uri, Map("Accept" -> "application/xml"))
-          .map({
-            case Right(stringData) => VSShape.fromXml(stringData) match {
-              case Success(vsShape) =>
-                Right(vsShape)
-              case Failure(err) =>
-                Left(HttpError(err.toString, -1))
-            }
-            case Left(err) => Left(err)
-          })
-      case Left(err)=>Future(Left(err))
+  def forItemWithTag(itemId:String, shapeTag:String)(implicit vsCommunicator:VSCommunicator,mat:Materializer) = {
+    vsIdForShapeTag(itemId, shapeTag).flatMap({
+      case Left(err) => Future(Left(err))
+      case Right(None) => Future(Left(HttpError(s"No shape exists for tag $shapeTag", 404)))
+      case Right(Some(shapeId)) => forItemWithId(itemId, shapeId)
     })
   }
 
-  def fromXml(xmlString:String):Try[VSShape] = Try {
+
+  def fromXmlString(xmlString:String):Try[VSShape] = Try {
     val xmlNodes = XML.loadString(xmlString)
 
     new VSShape(
