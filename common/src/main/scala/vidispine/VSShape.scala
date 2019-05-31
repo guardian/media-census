@@ -54,12 +54,14 @@ object VSShape {
   def fromXmlString(xmlString:String):Try[VSShape] = Try {
     val xmlNodes = XML.loadString(xmlString)
 
-    new VSShape(
+    //see http://apidoc.vidispine.com/latest/ref/xml-schema.html?highlight=shapedocument#schema-element-ShapeDocument for a list of all the possible components
+    val containerNodesList = (xmlNodes \ "containerComponent" \ "file") ++ (xmlNodes \ "binaryComponent" \ "file") ++ (xmlNodes \ "descriptorComponent" \ "file") ++(xmlNodes \ "audioComponent" \ "file") ++(xmlNodes \ "videoComponent" \ "file") ++ (xmlNodes \ "subtitleComponent" \ "file")
+      new VSShape(
       (xmlNodes \ "id").text,
       (xmlNodes \ "essenceVersion").text.toInt,
       (xmlNodes \ "tag").text,
       (xmlNodes \ "mimeType").text,
-      (xmlNodes \ "containerComponent" \ "file").map(fileNode=>VSFile.fromXml(fileNode) match {
+      containerNodesList.map(fileNode=>VSFile.fromXml(fileNode) match {
         case Success(vsFile)=>vsFile
         case Failure(err)=>throw err  //this is picked up immediately by the containing Try and returned as a Failure
       })
