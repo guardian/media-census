@@ -55,10 +55,12 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
             val shapes = results.collect({case Right(shape)=>shape})
             val replicaList = shapes.flatMap(_.files)
             logger.info(s"Found replicas list $replicaList for ${elem.storageSubpath}")
+            val replicasOut = replicaList.map(VSFileLocation.fromVsFile).groupBy(elem=>elem.storageId+":"+elem.fileId).map(_._2.head).toSeq
             val updatedElem = elem.copy(
               //see https://stackoverflow.com/questions/3912753/scala-remove-duplicates-in-list-of-objects
               //because of the way replicaList is put together there can be dupes, i.e. the same file ID on the same storage ID twice. To avoid confusion, we strip them out here.
-              replicas = replicaList.map(VSFileLocation.fromVsFile).groupBy(elem=>elem.storageId+":"+elem.fileId).map(_._2.head).toSeq
+              replicas = replicasOut,
+              replicaCount = replicasOut.length
             )
             completionCb.invoke(updatedElem)
           })

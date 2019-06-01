@@ -54,7 +54,7 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, totalLimit:Option[I
           case Some(nextElem)=>
             processingQueue = processingQueue.tail
             lastProcessed+=1
-            push(out, MediaCensusEntry(nextElem,None,None,None,None,None,Seq()))
+            push(out, MediaCensusEntry(nextElem,None,None,None,None,None,Seq(),0))
           case None=>
             logger.info(s"Rendered all items")
             complete(out)
