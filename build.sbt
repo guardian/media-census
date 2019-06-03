@@ -112,7 +112,7 @@ lazy val `cronscanner` = (project in file("cronscanner"))
     )
 
 
-val elastic4sVersion = "6.0.4"
+val elastic4sVersion = "6.5.1"
 libraryDependencies ++= Seq (
   "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
   "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,

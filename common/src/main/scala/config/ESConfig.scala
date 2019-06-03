@@ -1,3 +1,3 @@
 package config
 
-case class ESConfig (host:String, port:Int)
+case class ESConfig (uri:Option[String], host:String, port:Int)

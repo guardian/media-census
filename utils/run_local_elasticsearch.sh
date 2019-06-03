@@ -15,4 +15,4 @@ if [ ! -d "$DIR/esdata" ]; then
     mkdir -p "$DIR/esdata"
 fi
 
-docker run -v "$DIR/esdata":/usr/share/elasticsearch/data --name mediacensus-elasticsearch --network=mediacensus-dev -p 9200:9200 -e "ES_JAVA_OPTS=-Xms1g -Xmx1g" docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+docker run -v "$DIR/esdata":/usr/share/elasticsearch/data --name mediacensus-elasticsearch --network=mediacensus-dev -p 9200:9200 -e "ES_JAVA_OPTS=-Xms1g -Xmx1g" docker.elastic.co/elasticsearch/elasticsearch:6.8.0
