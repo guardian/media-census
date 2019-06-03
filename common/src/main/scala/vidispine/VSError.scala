@@ -4,6 +4,12 @@ import scala.xml._
 import akka.event._
 import org.slf4j.LoggerFactory
 
+/**
+  * helper class that represents a generic error from the Vidispine API.
+  * the `fromXml` methods on the companion object initialise this from an XML string that is returned by the API.
+  * Specific errors are represented by subclasses of this class.
+  * @param errorMessage
+  */
 class VSError(errorMessage:String) extends Throwable {
   override def getMessage: String = errorMessage
 

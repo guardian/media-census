@@ -5,6 +5,10 @@ import com.softwaremill.sttp.Uri
 import scala.util.Try
 import scala.xml.{NodeSeq, XML}
 
+/**
+  * this class represents the parsed out content of a Vidispine UriListDocument
+  * @param uri
+  */
 case class UriListDocument (uri:Seq[String])
 
 object UriListDocument {

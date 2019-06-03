@@ -13,14 +13,27 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 
+/**
+  * this class provides base functionality to communicate with Vidispine via Akka HTTP. As such it is true non-blocking.
+  * @param vsUri base URI to access Vidispine (don't include the /API part). Request URIs are concatenated to this.
+  * @param plutoUser username for accessing Vidispine
+  * @param plutoPass password for accessing Vidispine
+  * @param actorSystem implicitly provided reference to an ActorSystem, for Akka
+  */
 class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val actorSystem:ActorSystem) {
-
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def authString:String = Base64.getEncoder.encodeToString(s"$plutoUser:$plutoPass".getBytes)
 
   protected implicit val sttpBackend:SttpBackend[Future,Source[ByteString, Any]] = AkkaHttpBackend.usingActorSystem(actorSystem)
 
+  /**
+    * internal method to perform a PUT request
+    * @param uriPath
+    * @param xmlString
+    * @param headers
+    * @return
+    */
   private def sendPut(uriPath:String, xmlString:String, headers:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val bs = ByteString(xmlString,"UTF-8")
 
@@ -42,6 +55,13 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       .send()
   }
 
+  /**
+    * internal method to perform a GET request
+    * @param uriPath
+    * @param headers
+    * @param queryParams
+    * @return
+    */
   private def sendGet(uriPath:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val hdr = Map(
       "Accept"->"application/xml",
@@ -60,6 +80,13 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       .send()
   }
 
+  /**
+    * internal method to buffer returned data into a String for parsing
+    * @param source Akka source that yields ByteString entries
+    * @param materializer implicitly provided stream materializer
+    * @param ec implicitly provided execution context for async operations
+    * @return a Future, which contains the String of the returned content.
+    */
   private def consumeSource(source:Source[ByteString,Any])(implicit materializer: akka.stream.Materializer, ec: ExecutionContext):Future[String] = {
     logger.debug("Consuming returned body")
     val sink = Sink.reduce((acc:ByteString, unit:ByteString)=>acc.concat(unit))
@@ -67,6 +94,15 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     runnable.run().map(_.utf8String)
   }
 
+  /**
+    * request a PUT operation to Vidispine
+    * @param uriPath URI to put to. This should include /API, and is concatenated to the `baseUri` contructor parameter
+    * @param xmlString request body
+    * @param headers Map of headers to send to the server. Authorization is automatcially added.
+    * @param materializer implicitly provided stream materializer
+    * @param ec implicitly provided execution context for async operations
+    * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
+    */
   def request(uriPath:String,xmlString:String,headers:Map[String,String])
              (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
   Future[Either[HttpError,String]] = sendPut(uriPath, xmlString, headers).flatMap({ response=>
@@ -86,6 +122,15 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
         }
     }})
 
+  /**
+    * request a GET operation to Vidispine
+    * @param uriPath URI to GET from. This should include /API, and is concatenated to the `baseUri` contructor parameter
+    * @param headers Map of headers to send to the server. Authorization is automatcially added.
+    * @param queryParams Dictionary of query parameters to add to the string. All keys/values must be strings.
+    * @param materializer implicitly provided stream materializer
+    * @param ec implicitly provided execution context for async operations
+    * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
+    */
   def requestGet(uriPath:String, headers:Map[String,String],queryParams:Map[String,String]=Map())
                 (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
   Future[Either[HttpError,String]] = sendGet(uriPath, headers, queryParams).flatMap({ response=>
