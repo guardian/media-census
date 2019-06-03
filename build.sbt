@@ -40,6 +40,7 @@ lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerP
       Cmd("USER", "daemon")
     ),
     libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-http" % "10.1.8",  //force akka-http to agree with akka-parsing, akka-http-core
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
@@ -82,6 +83,7 @@ lazy val `cronscanner` = (project in file("cronscanner"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)
     .dependsOn(common)
     .settings(commonSettings, libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-http" % "10.1.8",  //force akka-http to agree with akka-parsing, akka-http-core
       "org.postgresql" % "postgresql" % "42.2.5",
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "io.circe" %% "circe-core" % circeVersion,
