@@ -3,7 +3,6 @@ package vidispine
 import java.util.Base64
 
 import akka.actor.ActorSystem
-import akka.event.DiagnosticLoggingAdapter
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
 import com.softwaremill.sttp._

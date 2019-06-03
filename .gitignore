@@ -15,3 +15,5 @@ dist
 /.settings
 /utils/run_sample.sh
 /esdata/
+frontend/node_modules
+/public/javascripts/bundle.js
