@@ -20,8 +20,11 @@ object VSFile {
   }
 
   def optionNullOrBlank(str:String):Option[String] = {
-    if(str==null || str.isEmpty) None
-    Some(str)
+    if(str==null || str==""){
+      None
+    } else {
+      Some(str)
+    }
   }
 
   def fromXml(xmlNode:NodeSeq):Try[VSFile] = Try {
