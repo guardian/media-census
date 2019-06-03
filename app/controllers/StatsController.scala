@@ -35,7 +35,7 @@ class StatsController @Inject() (cc:ControllerComponents, config:Configuration, 
       if(result.isError){
         InternalServerError(GenericResponse("error",result.error.toString).asJson)
       } else {
-        val response = HistogramDataResponse.fromEsData[Int](result.result.aggregationsAsMap("replicaCount").asInstanceOf[Map[String,Any]])
+        val response = HistogramDataResponse.fromEsData[Double, Int](result.result.aggregationsAsMap("replicaCount").asInstanceOf[Map[String,Any]])
 
         response match {
           case Success(statsData)=>Ok(statsData.asJson)

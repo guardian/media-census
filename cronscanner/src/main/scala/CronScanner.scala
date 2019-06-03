@@ -1,3 +1,5 @@
+import java.time.ZonedDateTime
+
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
@@ -130,6 +132,31 @@ object CronScanner extends ZonedDateTimeEncoder {
     }
   }
 
+  /**
+    * shuts down the actor system and exit the JVM. Optionally, update and save a [[JobHistory]] to the index beforehand
+    * @param exitCode exit code for the system
+    * @param errorMessage optional string of an error message to show in the JobHistory
+    * @param runInfo optional [[JobHistory]] to be saved and updated
+    * @param jobHistoryDAO implicitly provided DAO for JobHistory
+    * @return a Future
+    */
+  def complete_run(exitCode:Int, errorMessage:Option[String], runInfo:Option[JobHistory])(implicit jobHistoryDAO: JobHistoryDAO) = {
+    val updateFuture = runInfo match {
+      case Some(jobHistory)=>
+        val updatedJobHistory = jobHistory.copy(scanFinish = Some(ZonedDateTime.now()), lastError = errorMessage)
+        jobHistoryDAO.put(updatedJobHistory).map(response=>{
+          if(response.isError) logger.error(s"Could not update job history entry: ${response.error.toString}")
+        })
+      case None => Future( () )
+    }
+
+    updateFuture.andThen({
+      case _=>actorSystem.terminate().andThen({
+          case _ => System.exit(exitCode)
+        })
+    })
+  }
+
   def main(args: Array[String]): Unit = {
     val pathMapFuture = getPathMap()
 
@@ -137,51 +164,42 @@ object CronScanner extends ZonedDateTimeEncoder {
 
     checkIndex(esClient)
 
-    lazy val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
+    lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
     val runInfo = JobHistory.newRun()
 
-    jobHistoryDAO.put(runInfo)
-
-    val resultFuture = pathMapFuture.flatMap({
-      case Right(pathMap)=>
-        RunnableGraph.fromGraph(buildStream(pathMap, esClient)).run().map(resultCount=>Right(resultCount))
-      case Left(err)=>
-        Future(Left(err))
+    val resultFuture = jobHistoryDAO.put(runInfo).flatMap(_=>{
+      logger.info(s"Saved run info ${runInfo.toString}")
+      pathMapFuture.flatMap({
+        case Right(pathMap)=>
+          RunnableGraph.fromGraph(buildStream(pathMap, esClient)).run().map(resultCount=>Right(resultCount))
+        case Left(err)=>
+          Future(Left(err))
+      })
     })
+
+
 
     resultFuture.onComplete({
       case Success(Right(resultCount))=>
         println(s"Indexed a total of $resultCount items with a limit of $limit")
 
-        actorSystem.terminate().andThen({
-          case _=>System.exit(0)
+        indexer.calculateStats(esClient, runInfo).onComplete({
+          case Failure(err)=>
+            logger.error(s"Calculate stats crashed: ", err)
+            complete_run(1,Some(s"Calculate stats crashed: ${err.toString}"),Some(runInfo))
+          case Success(Left(errs))=>
+            complete_run(1,Some(errs.mkString("; ")),Some(runInfo))
+          case Success(Right(updatedJH))=>
+            complete_run(0,None,Some(updatedJH))
         })
+
+      case Success(Left(err))=>
+        logger.error(s"ERROR: ${err.toString}")
+        complete_run(1,Some(err.toString),Some(runInfo))
       case Failure(err)=>
-        println(s"ERROR: ${err.toString}")
-        actorSystem.terminate().andThen({
-          case _=>System.exit(1)
-        })
+        logger.error(s"Stream failed: ", err)
+        complete_run(0,Some(err.toString), Some(runInfo))
     })
-
-//    getPathMap.onComplete({
-//      case Success(Right(pathmap))=>
-//        println("Got path map: ")
-//        println(pathmap)
-//        actorSystem.terminate().andThen({
-//          case _=>System.exit(0)
-//        })
-//      case Success(Left(err))=>
-//        println(s"ERROR: ${err.toString}")
-//        actorSystem.terminate().andThen({
-//          case _=>System.exit(1)
-//        })
-//      case Failure(err)=>
-//        logger.error("Could not map path data", err)
-//        actorSystem.terminate().andThen({
-//          case _=>System.exit(1)
-//        })
-//    })
-
   }
 }
