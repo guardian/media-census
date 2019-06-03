@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 import scala.xml.{NodeSeq, XML}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class VSFile(vsid:String, path:String, uri:String, state:VSFileState.Value, size:Long, hash:Option[String], timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]], membership: Option[VSFileItemMembership])
+case class VSFile(vsid:String, path:String, uri:String, state:Option[VSFileState.Value], size:Long, hash:Option[String], timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]], membership: Option[VSFileItemMembership])
 
 object VSFile {
   val logger = LoggerFactory.getLogger(getClass)
@@ -19,12 +19,17 @@ object VSFile {
     ).toMap
   }
 
+  def optionNullOrBlank(str:String):Option[String] = {
+    if(str==null || str.isEmpty) None
+    Some(str)
+  }
+
   def fromXml(xmlNode:NodeSeq):Try[VSFile] = Try {
     new VSFile(
       (xmlNode \ "id").text,
       (xmlNode \ "path").text,
       (xmlNode \ "uri").text,
-      VSFileState.withName((xmlNode \ "state").text),
+      optionNullOrBlank((xmlNode \ "state").text).map(value=>VSFileState.withName(value)),
       (xmlNode \ "size").text.toLong,
       Option((xmlNode \ "hash").text),
       ZonedDateTime.parse((xmlNode \ "timestamp").text),
