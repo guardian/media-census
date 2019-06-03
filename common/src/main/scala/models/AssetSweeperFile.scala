@@ -5,16 +5,16 @@ import java.time.{ZoneId, ZonedDateTime}
 
 import scala.util.Try
 
-case class AssetSweeperFile(id:Int, filepath:String, filename:String, mtime:ZonedDateTime, ctime:ZonedDateTime,
+case class AssetSweeperFile(id:Long, filepath:String, filename:String, mtime:ZonedDateTime, ctime:ZonedDateTime,
                             atime:ZonedDateTime, imported_id:Option[String], importedAt:Option[ZonedDateTime],
                             size:Long, owner:Int, gid:Int, prelude_ref:Option[String],
                             ignore:Boolean, mime_type:String, asset_folder:Option[String])
 
-object AssetSweeperFile extends ((Int,String,String,ZonedDateTime,ZonedDateTime,ZonedDateTime,Option[String],Option[ZonedDateTime],Long,Int,Int,Option[String], Boolean, String, Option[String])=>AssetSweeperFile)
+object AssetSweeperFile extends ((Long,String,String,ZonedDateTime,ZonedDateTime,ZonedDateTime,Option[String],Option[ZonedDateTime],Long,Int,Int,Option[String], Boolean, String, Option[String])=>AssetSweeperFile)
 {
   def fromResultSet(resultSet:ResultSet):Try[AssetSweeperFile] = Try {
       new AssetSweeperFile(
-        resultSet.getInt("id"),
+        resultSet.getLong("id"),
         resultSet.getString("filepath"),
         resultSet.getString("filename"),
         ZonedDateTime.ofInstant(resultSet.getTimestamp("mtime").toInstant, ZoneId.of("UTC")),
