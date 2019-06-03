@@ -42,7 +42,7 @@ object CronScanner extends ZonedDateTimeEncoder {
   )
 
   lazy val esConfig = ESConfig(
-    None,
+    sys.env.get("ES_URI"),
     sys.env.getOrElse("ES_HOST","mediacensus-elasticsearch"),
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
