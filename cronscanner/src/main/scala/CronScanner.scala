@@ -15,7 +15,7 @@ import com.softwaremill.sttp._
 import helpers.ZonedDateTimeEncoder
 import vidispine.{VSCommunicator, VSStorage}
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties, HttpClient}
@@ -109,13 +109,27 @@ object CronScanner extends ZonedDateTimeEncoder {
     mapper.getPathMap()
   }
 
-  def getEsClient = {
+  def getEsClient = Try {
     val uri = esConfig.uri match {
       case Some(uri)=>uri
       case None=>s"http://${esConfig.host}:${esConfig.port}"
     }
 
     ElasticClient(ElasticProperties(uri))
+  }
+
+  def getEsClientWithRetry(attempt:Int=0):ElasticClient = getEsClient match {
+    case Failure(err)=>
+      logger.error(s"Could not connect to ES, trying again: ", err)
+      Thread.sleep(3000)
+      if(attempt>10) {
+        logger.error(s"Failed 10 times, not trying any more")
+        Await.ready(complete_run(2, None,None)(null), 60 seconds)
+        throw err
+      } else {
+        getEsClientWithRetry(attempt+1)
+      }
+    case Success(client)=>client
   }
 
   def checkIndex(esClient:ElasticClient):Unit = {
@@ -161,7 +175,7 @@ object CronScanner extends ZonedDateTimeEncoder {
   def main(args: Array[String]): Unit = {
     val pathMapFuture = getPathMap()
 
-    val esClient = getEsClient
+    val esClient = getEsClientWithRetry()
 
     checkIndex(esClient)
 
