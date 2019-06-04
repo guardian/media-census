@@ -32,16 +32,18 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
           }
         })
 
+        val failCb = getAsyncCallback[Throwable](err=>failStage(err))
+
         val elem = grab(in)
 
         val sourceStorageId = elem.sourceStorage.get
         VSFile.forPathOnStorage(sourceStorageId, elem.storageSubpath.get).onComplete({
           case Failure(err)=>
             logger.error("VS lookup process crashed: ", err)
-            failStage(err)
+            failCb.invoke(err)
           case Success(Left(err))=>
             logger.error(s"Could not look up file in VS: ${err.toString}")
-            failStage(new RuntimeException(err))
+            failCb.invoke(new RuntimeException(err))
           case Success(Right(Some(vsFile)))=>
             logger.info(s"Found file for ${elem.storageSubpath} at ${vsFile.vsid}")
             val updatedElem = elem.copy(

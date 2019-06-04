@@ -193,8 +193,6 @@ object CronScanner extends ZonedDateTimeEncoder {
       })
     })
 
-
-
     resultFuture.onComplete({
       case Success(Right(resultCount))=>
         println(s"Indexed a total of $resultCount items with a limit of $limit")
@@ -214,7 +212,7 @@ object CronScanner extends ZonedDateTimeEncoder {
         complete_run(1,Some(err.toString),Some(runInfo))
       case Failure(err)=>
         logger.error(s"Stream failed: ", err)
-        complete_run(0,Some(err.toString), Some(runInfo))
+        complete_run(1,Some(err.toString), Some(runInfo))
     })
   }
 }

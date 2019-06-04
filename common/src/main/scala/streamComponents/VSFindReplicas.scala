@@ -32,6 +32,8 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
           }
         })
 
+        val errorCb = getAsyncCallback[Throwable](err=>failStage(err))
+
         if(elem.vsItemId.isEmpty || elem.vsShapeIds.isEmpty) {
           logger.warn(s"${elem.storageSubpath} is not attached to items and/or shapes")
           push(outNo, elem)
@@ -44,7 +46,7 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
             if(failures.nonEmpty){
               logger.error(s"Could not look up shapes, ${failures.length} out of ${results.length} requests errored:")
               failures.foreach(err=>logger.error(err.toString))
-              failStage(new RuntimeException(s"Communication failure, see logs for details"))
+              errorCb.invoke(new RuntimeException(s"Communication failure, see logs for details"))
             }
 
             /**
