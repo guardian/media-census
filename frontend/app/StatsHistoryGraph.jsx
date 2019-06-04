@@ -79,16 +79,19 @@ class StatsHistoryGraph extends React.Component {
                             label: "No backups",
                             backgroundColor: "#FF0000",
                             showLine: true,
+                            fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.noBackupsCount}})
                         },{
                             label: "Partial backups",
                             backgroundColor: "#0000FF",
                             showLine: true,
+                            fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.partialBackupsCount}})
                         }, {
                             label: "Full backups",
                             backgroundColor: "#00FF00",
                             showLine: true,
+                            fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.fullBackupsCount}})
                         }]
                 }}
@@ -98,7 +101,8 @@ class StatsHistoryGraph extends React.Component {
                             scaleLabel: {
                                 display: true,
                                 labelString: "File count",
-                            }
+                            },
+                            stacked: true
                         }],
                         xAxes: [{
                             labelString: "Date",
