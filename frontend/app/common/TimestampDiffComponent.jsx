@@ -5,14 +5,14 @@ import moment from 'moment';
 class TimestampDiffComponent extends React.Component {
     static propTypes = {
         startTime: PropTypes.string.isRequired,
-        endTime: PropTypes.string.isRequired,
+        endTime: PropTypes.string,
         formatString: PropTypes.string
     };
 
     render(){
         const formatToUse = this.props.formatString ? this.props.formatString : "";
-        const startMoment = moment(this.props.startTime);
-        const endMoment = moment(this.props.endTime);
+        const startMoment = this.props.startTime ? moment(this.props.startTime) : moment();
+        const endMoment = this.props.endTime ? moment(this.props.endTime) : moment();
 
         const out = endMoment.from(startMoment);
         return <span className="timestamp">{out}</span>

@@ -142,3 +142,13 @@ li.attribution {
     justify-content: space-between;
     margin-bottom: 1em;
 }
+
+div.inprogress-container {
+    float: right;
+    border: 2px solid darkred;
+    border-radius: 1em;
+    padding-right: 1em;
+    padding-left: 1em;
+    margin-bottom: 1em;
+    background: lightblue;
+}

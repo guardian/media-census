@@ -3,6 +3,7 @@ import {render} from 'react-dom';
 import {BrowserRouter, Link, Route, Switch, Redirect} from 'react-router-dom';
 import Raven from 'raven-js';
 import StatsHistoryGraph from "./StatsHistoryGraph.jsx";
+import RunsInProgress from "./RunsInProgress.jsx";
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faStroopwafel, faCheckCircle, faCheck, faTimes, faTimesCircle, faRoad, faSearch,faThList,faWrench, faLightbulb, faFolderPlus, faFolderMinus, faFolder, faBookReader, faRedoAlt, faHome } from '@fortawesome/free-solid-svg-icons'
@@ -16,6 +17,7 @@ class App extends React.Component {
     render(){
         return <div>
             <h1>Media Census</h1>
+            <RunsInProgress/>
             <StatsHistoryGraph/>
         </div>
     }
