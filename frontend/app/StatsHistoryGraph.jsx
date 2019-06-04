@@ -94,6 +94,7 @@ class StatsHistoryGraph extends React.Component {
                             fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.fullBackupsCount}})
                         }]
+
                 }}
                 options={{
                     scales: {
