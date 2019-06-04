@@ -144,8 +144,9 @@ object CronScanner extends ZonedDateTimeEncoder {
     val updateFuture = runInfo match {
       case Some(jobHistory)=>
         val updatedJobHistory = jobHistory.copy(scanFinish = Some(ZonedDateTime.now()), lastError = errorMessage)
-        jobHistoryDAO.put(updatedJobHistory).map(response=>{
-          if(response.isError) logger.error(s"Could not update job history entry: ${response.error.toString}")
+        jobHistoryDAO.put(updatedJobHistory).map({
+          case Left(err)=>logger.error(s"Could not update job history entry: ${err.toString}")
+          case Right(newVersion)=>logger.info(s"Update run ${updatedJobHistory} with new version $newVersion")
         })
       case None => Future( () )
     }

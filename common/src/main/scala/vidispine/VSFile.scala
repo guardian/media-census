@@ -47,6 +47,11 @@ object VSFile {
         case Failure(err)=>throw err
       })
     )
+  } match {
+    case s @Success(_)=>s
+    case f @Failure(err)=>
+      logger.error(s"Could not decode XML ${xmlNode.toString()}")
+      f
   }
 
   /**
