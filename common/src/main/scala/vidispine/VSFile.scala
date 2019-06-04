@@ -27,26 +27,30 @@ object VSFile {
     }
   }
 
-  def fromXml(xmlNode:NodeSeq):Try[VSFile] = Try {
-    new VSFile(
-      (xmlNode \ "id").text,
-      (xmlNode \ "path").text,
-      (xmlNode \ "uri").text,
-      optionNullOrBlank((xmlNode \ "state").text).map(value=>VSFileState.withName(value)),
-      (xmlNode \ "size").text.toLong,
-      Option((xmlNode \ "hash").text),
-      ZonedDateTime.parse((xmlNode \ "timestamp").text),
-      (xmlNode \ "refreshFlag").text.toInt,
-      (xmlNode \ "storage").text,
-      metadataDictFromNodes(xmlNode \ "metadata") match {
-        case Success(mdDict)=>Some(mdDict)
-        case Failure(err)=>None
-      },
-      (xmlNode \ "item").headOption.map(node=>VSFileItemMembership.fromXml(node) match {
-        case Success(membership)=>membership
-        case Failure(err)=>throw err
-      })
-    )
+  def fromXml(xmlNode:NodeSeq):Try[Option[VSFile]] = Try {
+    if( (xmlNode \ "id").isEmpty){
+      None
+    } else {
+      Some(new VSFile(
+        (xmlNode \ "id").text,
+        (xmlNode \ "path").text,
+        (xmlNode \ "uri").text,
+        optionNullOrBlank((xmlNode \ "state").text).map(value => VSFileState.withName(value)),
+        (xmlNode \ "size").text.toLong,
+        Option((xmlNode \ "hash").text),
+        ZonedDateTime.parse((xmlNode \ "timestamp").text),
+        (xmlNode \ "refreshFlag").text.toInt,
+        (xmlNode \ "storage").text,
+        metadataDictFromNodes(xmlNode \ "metadata") match {
+          case Success(mdDict) => Some(mdDict)
+          case Failure(err) => None
+        },
+        (xmlNode \ "item").headOption.map(node => VSFileItemMembership.fromXml(node) match {
+          case Success(membership) => membership
+          case Failure(err) => throw err
+        })
+      ))
+    }
   } match {
     case s @Success(_)=>s
     case f @Failure(err)=>

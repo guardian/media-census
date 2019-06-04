@@ -42,12 +42,20 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
           case Success(Left(err))=>
             logger.error(s"Could not look up file in VS: ${err.toString}")
             failStage(new RuntimeException(err))
-          case Success(Right(vsFile))=>
+          case Success(Right(Some(vsFile)))=>
             logger.info(s"Found file for ${elem.storageSubpath} at ${vsFile.vsid}")
             val updatedElem = elem.copy(
               vsFileId = Some(vsFile.vsid),
               vsItemId = vsFile.membership.map(_.itemId),
               vsShapeIds = vsFile.membership.map(_.shapes.map(_.shapeId))
+            )
+            completeCb.invoke(updatedElem)
+          case Success(Right(None))=>
+            logger.info(s"No files present for ${elem.storageSubpath}")
+            val updatedElem = elem.copy(
+              vsFileId = None,
+              vsItemId = None,
+              vsShapeIds = None
             )
             completeCb.invoke(updatedElem)
         })
