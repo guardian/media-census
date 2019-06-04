@@ -7,6 +7,7 @@ class RefreshButton extends React.Component {
         isRunning: PropTypes.bool.isRequired,
         clickedCb: PropTypes.func.isRequired,
         showText: PropTypes.bool,
+        style:PropTypes.object,
         caption: PropTypes.string
     };
 
@@ -18,7 +19,7 @@ class RefreshButton extends React.Component {
     }
 
     render() {
-        return <span className="clickable" onClick={this.props.clickedCb}>
+        return <span className="clickable-inline" style={this.props.style} onClick={this.props.clickedCb}>
             <FontAwesomeIcon icon="redo-alt"
                              className={this.props.isRunning ? "button-icon spin" : "button-icon"}/>
             {

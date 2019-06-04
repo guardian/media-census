@@ -41,7 +41,7 @@ class CurrentStateStats extends React.Component {
 
     render(){
         return <div className="current-stats-container">
-            <RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()}/>
+            {/*<RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()} style={{display: "inline"}}/>*/}
             <HorizontalBar data={{
                     datasets: this.state.buckets.map((bucketSize,idx)=>{return {
                         label: bucketSize + " copies",
@@ -78,7 +78,6 @@ class CurrentStateStats extends React.Component {
                                }
                            }}
 
-                           height="200px"
             />
         </div>
     }
