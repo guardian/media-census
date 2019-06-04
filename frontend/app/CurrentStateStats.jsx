@@ -11,9 +11,20 @@ class CurrentStateStats extends React.Component {
             loading: false,
             lastError: null,
             buckets: [],
-            values: []
+            values: [],
+            colourValues:[]
         }
     }
+
+    static makeColourValues(count, offset){
+        let values = [];
+        for(let n=0;n<count;++n){
+            let hue = (n/count)*360.0 + offset;
+            values[n] = 'hsla(' + hue + ',75%,50%,0.6)'
+        }
+        return values;
+    }
+
 
     componentWillMount() {
         this.refresh();
@@ -21,7 +32,7 @@ class CurrentStateStats extends React.Component {
 
     refresh(){
         this.setState({loading: true}, ()=>axios.get("/api/stats/replicas").then(result=>{
-            this.setState({loading: false, lastError: null, buckets: result.data.buckets, values: result.data.values})
+            this.setState({loading: false, lastError: null, buckets: result.data.buckets, values: result.data.values, colourValues: CurrentStateStats.makeColourValues(result.data.values.length,10)})
         }).catch(err=>{
             console.error(err);
             this.setState({loading: false, lastError: err});
@@ -34,7 +45,8 @@ class CurrentStateStats extends React.Component {
             <HorizontalBar data={{
                     datasets: this.state.buckets.map((bucketSize,idx)=>{return {
                         label: bucketSize + " copies",
-                        data: [this.state.values[idx]]
+                        data: [this.state.values[idx]],
+                        backgroundColor: this.state.colourValues[idx]
                     }})
                 }}
                            options={{
