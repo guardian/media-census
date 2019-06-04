@@ -152,3 +152,17 @@ div.inprogress-container {
     margin-bottom: 1em;
     background: lightblue;
 }
+
+div.current-stats-container {
+    float: left;
+    display:inline-block;
+    width: 50%;
+    overflow: hidden;
+    height: 240px
+}
+
+div.container {
+    overflow: hidden;
+    width: 100%;
+    height: 80vw;
+}

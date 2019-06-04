@@ -70,7 +70,7 @@ class StatsHistoryGraph extends React.Component {
     }
 
     render(){
-        return <div>
+        return <div className="container">
             <span className="controls-banner"><RefreshButton isRunning={this.state.loading} clickedCb={()=>this.reload()}/></span>
             <Scatter
                 data={{
