@@ -82,6 +82,19 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     })
   }
 
+  def runningJobs = esClient.execute {
+      search(indexName) query boolQuery().must(
+        not(existsQuery("scanFinish")),
+        existsQuery("scanStart")
+      )
+    }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.to[JobHistory])
+      }
+  })
+
   /**
     * retrieve the latest [[JobHistory]]
     * @param didComplete if true, the latest history with a completion date, if false the latest history without. If None then
