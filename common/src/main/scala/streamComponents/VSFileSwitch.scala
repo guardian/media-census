@@ -4,7 +4,7 @@ import akka.stream.{Attributes, Inlet, Materializer, Outlet, UniformFanOutShape}
 import akka.stream.stage.{AbstractInHandler, AbstractOutHandler, GraphStage, GraphStageLogic}
 import models.MediaCensusEntry
 import org.slf4j.LoggerFactory
-import vidispine.{VSCommunicator, VSFile}
+import vidispine.{VSCommunicator, VSFile, VSFileState}
 
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,6 +21,34 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     val logger = LoggerFactory.getLogger(getClass)
+
+    def findBestVsFile(vsFileSeq:Seq[VSFile]): VSFile = {
+      if(vsFileSeq.length==1){
+        vsFileSeq.head
+      } else {
+        val goodFilesStage1 = vsFileSeq.filter(_.membership.isDefined)
+        val goodFilesStage2 = goodFilesStage1.filter(vsFile=>
+          !vsFile.state.contains(VSFileState.LOST) &&
+          !vsFile.state.contains(VSFileState.UNKNOWN) &&
+          !vsFile.state.contains(VSFileState.MISSING) &&
+          !vsFile.state.contains(VSFileState.TO_BE_DELETED)
+        )
+        logger.debug(s"findBestVsFile: got incoming $vsFileSeq")
+        logger.debug(s"findBestVsFile: found membered files $goodFilesStage1")
+        logger.debug(s"findBestVsFile: found good membered files $goodFilesStage2")
+
+        goodFilesStage2.headOption match {
+          case Some(vsFile)=>vsFile
+          case None=>
+            goodFilesStage1.headOption match {
+              case Some(vsFile)=>vsFile
+              case None=>
+                logger.warn(s"No good files found from $vsFileSeq, returning first")
+                vsFileSeq.head
+            }
+        }
+      }
+    }
 
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
@@ -41,24 +69,26 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
           case Failure(err)=>
             logger.error("VS lookup process crashed: ", err)
             failCb.invoke(err)
-          case Success(Left(err))=>
-            logger.error(s"Could not look up file in VS: ${err.toString}")
-            failCb.invoke(new RuntimeException(err))
-          case Success(Right(Some(vsFile)))=>
-            logger.info(s"Found file for ${elem.storageSubpath} at ${vsFile.vsid}")
-            val updatedElem = elem.copy(
-              vsFileId = Some(vsFile.vsid),
-              vsItemId = vsFile.membership.map(_.itemId),
-              vsShapeIds = vsFile.membership.map(_.shapes.map(_.shapeId))
-            )
-            completeCb.invoke(updatedElem)
-          case Success(Right(None))=>
-            logger.info(s"No files present for ${elem.storageSubpath}")
-            val updatedElem = elem.copy(
-              vsFileId = None,
-              vsItemId = None,
-              vsShapeIds = None
-            )
+          case Success(Left(errList))=>
+            logger.error(s"Could not look up file in VS: ${errList.toString}")
+            failCb.invoke(new RuntimeException(errList.head))
+          case Success(Right(vsFileSeq))=>
+            logger.info(s"Found file(s) for ${elem.storageSubpath} at ${vsFileSeq.map(_.vsid)}")
+            val updatedElem = if(vsFileSeq.isEmpty){
+              logger.info(s"No files present for ${elem.storageSubpath}")
+              elem.copy(
+                vsFileId = None,
+                vsItemId = None,
+                vsShapeIds = None
+              )
+            } else {
+              val bestVsFile = findBestVsFile(vsFileSeq)
+              elem.copy(
+                vsFileId = Some(bestVsFile.vsid),
+                vsItemId = bestVsFile.membership.map(_.itemId),
+                vsShapeIds = bestVsFile.membership.map(_.shapes.map(_.shapeId))
+              )
+            }
             completeCb.invoke(updatedElem)
         })
       }

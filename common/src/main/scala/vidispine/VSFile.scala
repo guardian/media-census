@@ -80,22 +80,39 @@ object VSFile {
   def fromXmlString(str:String) = {
     val xmlNodes = XML.loadString(str)
     if((xmlNodes \ "file").nonEmpty){
-      VSFile.fromXml(xmlNodes \ "file") //if retrieving the file directly, you get this extra node layer
+      VSFile.fromXml((xmlNodes \ "file").head) //if retrieving the file directly, you get this extra node layer
     } else {
       VSFile.fromXml(xmlNodes)
     }
   }
 
+  /**
+    * if parsing a FileListDocument, use this version as it can handle multiple files
+    * @param str
+    * @return
+    */
+  def seqFromXmlString(str:String) = {
+    val xmlNodes = XML.loadString(str)
+    val maybeNodeList = (xmlNodes \ "file").map(xmlNode=>VSFile.fromXml(xmlNode))
+
+    val failures = maybeNodeList.collect({case Failure(err)=>err})
+    if(failures.nonEmpty){
+      Left(failures)
+    } else {
+      Right(maybeNodeList.collect({case Success(Some(vsFile))=>vsFile}))
+    }
+
+  }
   def forPathOnStorage(storageId:String, path:String)(implicit communicator: VSCommunicator, mat:Materializer) = {
     val uri = s"/API/storage/$storageId/file;includeItem=true"
     communicator.requestGet(uri, Map("Accept"->"application/xml"), queryParams = Map("path"->path,"count"->"false")).map({
-      case Left(err)=>Left(err.toString)
-      case Right(xmlString)=>VSFile.fromXmlString(xmlString) match {
-        case Failure(err)=>
-          err.printStackTrace()
+      case Left(err)=>Left(Seq(err.toString))
+      case Right(xmlString)=>VSFile.seqFromXmlString(xmlString) match {
+        case Left(errSeq)=>
           logger.error(xmlString)
-          Left(err.toString)
-        case Success(vsFile)=>Right(vsFile)
+          errSeq.foreach(err=>logger.error("Errors when trying to load XML data: ", err))
+          Left(errSeq.map(_.toString))
+        case Right(vsFileSeq)=>Right(vsFileSeq)
       }
     })
   }

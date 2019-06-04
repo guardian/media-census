@@ -12,7 +12,7 @@
     </appender>
 
     <logger name="streamComponents" level="WARN"/>
-    <logger name="streamComponents.VSFileSwitch" level="WARN"/>
+    <logger name="streamComponents.VSFileSwitch" level="DEBUG"/>
     <logger name="controllers.TestStreamController" level="DEBUG"/>
 
     <root level="INFO">
