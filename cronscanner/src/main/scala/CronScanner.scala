@@ -177,7 +177,13 @@ object CronScanner extends ZonedDateTimeEncoder {
 
     val esClient = getEsClientWithRetry()
 
-    checkIndex(esClient)
+    try {
+      checkIndex(esClient)
+    } catch {
+      case err:Throwable=>
+        logger.error(s"Could not establish contact with Elasticsearch: ", err)
+        complete_run(1,None,None)(null)
+    }
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
