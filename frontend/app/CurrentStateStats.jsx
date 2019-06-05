@@ -12,7 +12,9 @@ class CurrentStateStats extends React.Component {
             lastError: null,
             buckets: [],
             values: [],
-            colourValues:[]
+            colourValues:[],
+            unattachedCount: 0,
+            unimportedCount: 0
         }
     }
 
@@ -30,9 +32,36 @@ class CurrentStateStats extends React.Component {
         this.refresh();
     }
 
+    /**
+     * By definition, the "zero" replicas bucket also counts unimported and unattached items. So, we subtract them out here
+     * and put them into seperate buckets.
+     **/
+    postProcessData(responseData){
+        const zeroBucketIndex = responseData.buckets.indexOf(0);
+        const zeroCount = responseData.values[zeroBucketIndex];
+
+        let updatedValues = [...responseData.values];   //clone out values
+        updatedValues[zeroBucketIndex] = zeroCount - responseData.extraData.unimported - responseData.extraData.unattached;
+
+        return {
+            buckets: ["Unimported", "Unattached"].concat(responseData.buckets),
+            values: [
+                responseData.extraData.unimported,
+                responseData.extraData.unattached,
+            ].concat(updatedValues)
+        }
+    }
+
     refresh(){
-        this.setState({loading: true}, ()=>axios.get("/api/stats/replicas").then(result=>{
-            this.setState({loading: false, lastError: null, buckets: result.data.buckets, values: result.data.values, colourValues: CurrentStateStats.makeColourValues(result.data.values.length,10)})
+        this.setState({loading: true}, ()=>axios.get("/api/stats/unattached").then(result=>{
+            const postProcessed = this.postProcessData(result.data);
+
+            this.setState({loading: false,
+                lastError: null,
+                buckets: postProcessed.buckets,
+                values: postProcessed.values,
+                colourValues: CurrentStateStats.makeColourValues(result.data.values.length,10)
+            })
         }).catch(err=>{
             console.error(err);
             this.setState({loading: false, lastError: err});
