@@ -114,7 +114,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          request(uriPath, xmlString, headers, attempt)
+          request(uriPath, xmlString, headers, attempt+1)
         } else {
           VSError.fromXml(errorString) match {
             case Left(unparseableError) =>
@@ -147,9 +147,9 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       case Left(errorString)=>
         if(response.code==503){
           val delayTime = if(attempt>6) 60 else 2^attempt
-          logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
+          logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          requestGet(uriPath, headers, queryParams, attempt)
+          requestGet(uriPath, headers, queryParams, attempt+1)
         } else {
           VSError.fromXml(errorString) match {
             case Left(unparseableError) =>
