@@ -7,8 +7,9 @@ import play.api.libs.circe.Circe
 import play.api.mvc.{AbstractController, ControllerComponents}
 import io.circe.generic.auto._
 import io.circe.syntax._
+import models.MediaCensusIndexer
 import play.api.Configuration
-import responses.{GenericResponse, HistogramDataResponse}
+import responses.{GenericResponse, HistogramDataResponse, ObjectGetResponse, ObjectListResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -22,6 +23,8 @@ class StatsController @Inject() (cc:ControllerComponents, config:Configuration, 
 
   private val esClient = esClientMgr.getCachedClient()
   private val indexName = config.get[String]("elasticsearch.indexName")
+
+  val mcIndexer = new MediaCensusIndexer(indexName)
 
   def replicaStats = Action.async {
     esClient.execute {
@@ -42,6 +45,18 @@ class StatsController @Inject() (cc:ControllerComponents, config:Configuration, 
           case Failure(err)=>InternalServerError(GenericResponse("error",err.toString).asJson)
         }
       }
+    })
+  }
+
+  def unattachedStats = Action.async {
+    mcIndexer.calculateStatsRaw(esClient).map({
+      case Left(errSeq)=>
+        InternalServerError(ObjectListResponse("db_error","errstring",errSeq, errSeq.length).asJson)
+      case Right(statsTuple)=>
+        val response = HistogramDataResponse.fromMap[Double,Int,Map[String,Long]](statsTuple._1,Some(Map("unimported"->statsTuple._3, "unattached"->statsTuple._2)))
+
+        Ok(response.asJson)
+        //Ok(ObjectGetResponse("ok","stats",Map("unattached"->statsTuple._2, "unimported"->statsTuple._3, "replicas"->statsTuple._1)).asJson)
     })
   }
 }

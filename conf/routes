@@ -8,6 +8,8 @@ GET     /                           @controllers.UiController.index
 GET     /healthcheck                @controllers.HealthcheckController.healthcheck
 
 GET     /api/stats/replicas         @controllers.StatsController.replicaStats
+GET     /api/stats/unattached       @controllers.StatsController.unattachedStats
+
 GET     /api/jobs/forTimespan        @controllers.JobsController.jobsForTimespan(startAt:Option[String]?=None,endAt:Option[String]?=None)
 GET     /api/jobs/running           @controllers.JobsController.runningJobs
 GET     /api/job/:jobId             @controllers.JobsController.jobDetail(jobId)

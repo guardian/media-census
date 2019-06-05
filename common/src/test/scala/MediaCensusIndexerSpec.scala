@@ -2,18 +2,17 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import com.sksamuel.elastic4s.http.search.{SearchHits, SearchResponse}
-import com.sksamuel.elastic4s.http.{ElasticClient, ElasticError, RequestFailure, RequestSuccess, Shards}
+import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.searches.SearchRequest
-import models.JobHistory
-import org.elasticsearch.client.Response
+import models.{JobHistory, MediaCensusIndexer}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
-class IndexerSpec extends Specification with Mockito{
+class MediaCensusIndexerSpec extends Specification with Mockito{
   "Indexer.getReplicaStats" should {
     "convert the returned maps into a map of bucket size -> count" in {
       val mockedClient = mock[ElasticClient]
@@ -30,7 +29,7 @@ class IndexerSpec extends Specification with Mockito{
           SearchResponse(1234L,false,false,Map(),mock[Shards],None,fakeAggs,mock[SearchHits])
         ))
 
-      val toTest = new Indexer("test")
+      val toTest = new MediaCensusIndexer("test")
 
       val result = Await.result(toTest.getReplicaStats(mockedClient), 30 seconds)
 
@@ -47,7 +46,7 @@ class IndexerSpec extends Specification with Mockito{
           ElasticError("sometype","some reason",None,None,None,Seq(),None)
         ))
 
-      val toTest = new Indexer("test")
+      val toTest = new MediaCensusIndexer("test")
 
       val result = Await.result(toTest.getReplicaStats(mockedClient), 30 seconds)
 
@@ -59,28 +58,36 @@ class IndexerSpec extends Specification with Mockito{
     "retrieve replica stats and update the provided JobHistoryModel" in {
       val mockedClient = mock[ElasticClient]
 
-      val toTest = new Indexer("test") {
+      val toTest = new MediaCensusIndexer("test") {
         override def getReplicaStats(esClient: ElasticClient): Future[Either[String, Map[Double, Int]]] = Future(Right(Map(1.0->123, 2.0->234, 3.0->345)))
+
+        override def getUnattachedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(456))
+
+        override def getUnimportedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(567))
       }
 
       val uuid = UUID.fromString("482FF934-2D16-4E3A-BA2D-8F6134BD87C2")
       val fakeStartTime = ZonedDateTime.now()
-      val prevJobHistory = JobHistory(uuid,fakeStartTime,None,None,0,0,0)
+      val prevJobHistory = JobHistory(uuid,fakeStartTime,None,None,0,0,0,0,0)
 
       val result = Await.result(toTest.calculateStats(mockedClient, prevJobHistory), 30 seconds)
-      result must beRight(JobHistory(uuid,fakeStartTime,None,None,123,234,345))
+      result must beRight(JobHistory(uuid,fakeStartTime,None,None,123,234,345, 567, 456))
     }
 
     "pass along an error as a Left"  in {
       val mockedClient = mock[ElasticClient]
 
-      val toTest = new Indexer("test") {
+      val toTest = new MediaCensusIndexer("test") {
         override def getReplicaStats(esClient: ElasticClient): Future[Either[String, Map[Double, Int]]] = Future(Left("kaboom"))
+
+        override def getUnattachedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(456))
+
+        override def getUnimportedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(567))
       }
 
       val uuid = UUID.fromString("482FF934-2D16-4E3A-BA2D-8F6134BD87C2")
       val fakeStartTime = ZonedDateTime.now()
-      val prevJobHistory = JobHistory(uuid,fakeStartTime,None,None,0,0,0)
+      val prevJobHistory = JobHistory(uuid,fakeStartTime,None,None,0,0,0,0,0)
 
       val result = Await.result(toTest.calculateStats(mockedClient, prevJobHistory), 30 seconds)
       result must beLeft(Seq("kaboom"))
