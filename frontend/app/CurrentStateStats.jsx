@@ -60,7 +60,7 @@ class CurrentStateStats extends React.Component {
                 lastError: null,
                 buckets: postProcessed.buckets,
                 values: postProcessed.values,
-                colourValues: CurrentStateStats.makeColourValues(result.data.values.length,10)
+                colourValues: CurrentStateStats.makeColourValues(result.data.values.length+2,10)
             })
         }).catch(err=>{
             console.error(err);
