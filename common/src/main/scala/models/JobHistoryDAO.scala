@@ -7,12 +7,14 @@ import com.sksamuel.elastic4s.ElasticDate
 import com.sksamuel.elastic4s.http.ElasticClient
 import helpers.ZonedDateTimeEncoder
 import io.circe.generic.auto._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateTimeEncoder {
   import com.sksamuel.elastic4s.http.ElasticDsl._
   import com.sksamuel.elastic4s.circe._
+  private val logger = LoggerFactory.getLogger(getClass)
 
   /**
     * save the provided entry to the index
@@ -55,17 +57,23 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     * @return a Future, with either an error object or a List of [[JobHistory]]
     */
   def jobsForTimespan(startingTime:Option[ZonedDateTime], endingTime:ZonedDateTime=ZonedDateTime.now()) = {
-    val queryList = Seq(
+    val maybeQueryList = Seq(
       startingTime.map(actualStartingTime=>
-        rangeQuery("startingTime").gte(ElasticDate.fromTimestamp(actualStartingTime.toEpochSecond))
+        rangeQuery("scanStart").gte(ElasticDate.fromTimestamp(actualStartingTime.toEpochSecond*1000))
       ),
-      Some(rangeQuery("endingTime").lte(ElasticDate.fromTimestamp(endingTime.toEpochSecond)))
+      Some(rangeQuery("scanFinish").lte(ElasticDate.fromTimestamp(endingTime.toEpochSecond*1000)))
     ).collect({case Some(q)=>q})
+
+    val queryList = if(maybeQueryList.nonEmpty) maybeQueryList else Seq(matchAllQuery())
+
+    logger.debug(s"queryList is $queryList")
+
     esClient.execute {
       search(indexName) query {
         boolQuery().must(queryList)
-      } sortByFieldDesc "startingTime"
+      } sortByFieldDesc "scanStart"
     }.map(response=>{
+      logger.debug(response.toString)
       if(response.isError){
         Left(response.error)
       } else {
@@ -73,6 +81,19 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
       }
     })
   }
+
+  def runningJobs = esClient.execute {
+      search(indexName) query boolQuery().must(
+        not(existsQuery("scanFinish")),
+        existsQuery("scanStart")
+      )
+    }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.to[JobHistory])
+      }
+  })
 
   /**
     * retrieve the latest [[JobHistory]]
@@ -82,13 +103,13 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     */
   def mostRecentJob(didComplete:Option[Boolean]) = {
     val queryDefn = didComplete match {
-      case Some(true)=>existsQuery("endingTime")
-      case Some(false)=>not(existsQuery("endingTime"))
+      case Some(true)=>existsQuery("scanFinish")
+      case Some(false)=>not(existsQuery("scanFinish"))
       case None=>matchAllQuery()
     }
 
     esClient.execute {
-      search(indexName) query queryDefn sortByFieldDesc "startingTime" limit 1
+      search(indexName) query queryDefn sortByFieldDesc "scanStart" limit 1
     }.map(response=>{
       if(response.isError){
         Left(response.error)

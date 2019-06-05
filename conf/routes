@@ -9,6 +9,7 @@ GET     /healthcheck                @controllers.HealthcheckController.healthche
 
 GET     /api/stats/replicas         @controllers.StatsController.replicaStats
 GET     /api/jobs/forTimespan        @controllers.JobsController.jobsForTimespan(startAt:Option[String]?=None,endAt:Option[String]?=None)
+GET     /api/jobs/running           @controllers.JobsController.runningJobs
 GET     /api/job/:jobId             @controllers.JobsController.jobDetail(jobId)
 
 # Map static resources from the /public folder to the /assets URL path

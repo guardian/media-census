@@ -36,7 +36,8 @@
   <logger name="com.gargoylesoftware.htmlunit.javascript" level="OFF" />
 
   <logger name="streamComponents" level="DEBUG"/>
-  <logger name="controllers.TestStreamController" level="DEBUG"/>
+  <logger name="models.JobHistoryDAO" level="DEBUG"/>
+
   <root level="WARN">
     <appender-ref ref="ASYNCFILE" />
     <appender-ref ref="ASYNCSTDOUT" />
