@@ -118,4 +118,14 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
       }
     })
   }
+
+  def delete(id:UUID) = esClient.execute {
+    deleteById(indexName, "jobHistory", id.toString)
+  }.map(response=>{
+    if(response.isError){
+      Left(response.error)
+    } else {
+      Right(response.result)
+    }
+  })
 }

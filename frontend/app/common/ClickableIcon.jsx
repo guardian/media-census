@@ -25,6 +25,7 @@ class ClickableIcon extends React.Component {
 
         return <FontAwesomeIcon icon={this.props.icon} onClick={this.props.onClick}
                                 className={this.state.hovered ? hoveredClass : unHoveredClass}
+                                style={this.props.style}
                                 onMouseOver={evt=>this.setState({hovered: true})}
                                 onMouseOut={evt=>this.setState({hovered: false})}
         />

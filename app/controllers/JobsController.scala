@@ -75,4 +75,21 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
         Ok(ObjectListResponse("ok","jobHistory", resultSeq, resultSeq.length).asJson)
     })
   }
+
+  def manualDelete(idString:String) = Action.async {
+    val maybeUuid = Try { UUID.fromString(idString) }
+
+    maybeUuid match {
+      case Failure(err)=>
+        Future(BadRequest(GenericResponse("error","You must specify a valid UUID").asJson))
+      case Success(uuid)=>
+        jobsModelDAO.delete(uuid).map({
+          case Left(err)=>
+            logger.error(s"Could not delete job from index: $err")
+            InternalServerError(GenericResponse("db_rror", err.toString).asJson)
+          case Right(_)=>
+            Ok(GenericResponse("ok","job deleted").asJson)
+        })
+    }
+  }
 }
