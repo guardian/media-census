@@ -57,6 +57,10 @@ class PeriodicUpdate(initialJobRecord:JobHistory, updateEvery:Int=100)(implicit 
                       c=0
                       completedCb.invoke(elem)
                   })
+              }).recover({
+                case err:Throwable=>
+                  logger.error(s"calculate stats crashed: ", err)
+                  failedCb.invoke(err)
               }) //indexer.calculateStats.flatMap
           })  //jobForUuid.flatMap
         } else {
