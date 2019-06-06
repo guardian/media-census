@@ -32,6 +32,7 @@ class RunsInProgress extends React.Component {
 
     componentWillMount() {
         this.refresh();
+        window.setInterval(()=>this.refresh(), 10000);  //refresh every 10s
     }
 
     deletionClicked(entryId){
