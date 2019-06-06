@@ -21,7 +21,7 @@ class PeriodicUpdateSpec extends Specification with Mockito{
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       val uuid = UUID.randomUUID()
-      val mockedJobEntry = JobHistory(uuid, ZonedDateTime.now, None,None,0,0,0,0,0,0)
+      val mockedJobEntry = JobHistory(uuid, None, ZonedDateTime.now, None,None,0,0,0,0,0,0)
       val updatedJobEntry = mockedJobEntry.copy(fullBackupsCount = 10)
 
       implicit val mockedJobHistoryDAO = mock[JobHistoryDAO]

@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, MediaCensusEntry, MediaCensusIndexer}
+import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer}
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
@@ -59,7 +59,10 @@ object DeleteScanner extends ZonedDateTimeEncoder {
       val streamSource = builder.add(srcFactory)
       val sinkSplitter = builder.add(Broadcast[AssetSweeperFile](2, eagerCancel=false))
 
-      streamSource.out.log("deleteStream") ~> sinkSplitter
+      streamSource.out.log("deleteStream").map(file=>{
+
+        file
+      }) ~> sinkSplitter
       sinkSplitter ~> deleteSink
       sinkSplitter ~> reduceSink
 
@@ -145,27 +148,28 @@ object DeleteScanner extends ZonedDateTimeEncoder {
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
-//    val resultFuture = jobHistoryDAO.put(runInfo).map({
-//      case Right(_)=>
-//        logger.info(s"Saved run info ${runInfo.toString}")
-        val resultFuture:Future[Either[ElasticError, Int]] = RunnableGraph.fromGraph(buildStream(esClient)).run().map(resultCount=>Right(resultCount))
-//      case Left(err)=>
-//        Left(err)
-//      })
+    val runInfo = JobHistory.newRun(JobType.DeletedScan)
+
+    val resultFuture = jobHistoryDAO.put(runInfo).map({
+      case Right(_)=>
+        logger.info(s"Saved run info ${runInfo.toString}")
+        RunnableGraph.fromGraph(buildStream(esClient)).run().map(resultCount=>Right(resultCount))
+      case Left(err)=>
+        Left(err)
+      })
 
     resultFuture.onComplete({
       case Success(Right(resultCount))=>
         println(s"Deleted a total of $resultCount items that are now moved off primary storage")
-        complete_run(0,None,None)
-//        indexer.calculateStats(esClient, runInfo).onComplete({
-//          case Failure(err)=>
-//            logger.error(s"Calculate stats crashed: ", err)
-//            complete_run(1,Some(s"Calculate stats crashed: ${err.toString}"),Some(runInfo))
-//          case Success(Left(errs))=>
-//            complete_run(1,Some(errs.mkString("; ")),Some(runInfo))
-//          case Success(Right(updatedJH))=>
-//            complete_run(0,None,Some(updatedJH))
-//        })
+        indexer.calculateStats(esClient, runInfo).onComplete({
+          case Failure(err)=>
+            logger.error(s"Calculate stats crashed: ", err)
+            complete_run(1,Some(s"Calculate stats crashed: ${err.toString}"),Some(runInfo))
+          case Success(Left(errs))=>
+            complete_run(1,Some(errs.mkString("; ")),Some(runInfo))
+          case Success(Right(updatedJH))=>
+            complete_run(0,None,Some(updatedJH))
+        })
 
       case Success(Left(err))=>
         logger.error(s"ERROR: ${err.toString}")

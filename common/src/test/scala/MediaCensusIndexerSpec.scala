@@ -68,10 +68,10 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
 
       val uuid = UUID.fromString("482FF934-2D16-4E3A-BA2D-8F6134BD87C2")
       val fakeStartTime = ZonedDateTime.now()
-      val prevJobHistory = JobHistory(uuid,fakeStartTime,None,None,0,0,0,0,0,0)
+      val prevJobHistory = JobHistory(uuid,None, fakeStartTime,None,None,0,0,0,0,0,0)
 
       val result = Await.result(toTest.calculateStats(mockedClient, prevJobHistory), 30 seconds)
-      result must beRight(JobHistory(uuid,fakeStartTime,None,None,123,234,345, 567, 456,0))
+      result must beRight(JobHistory(uuid,None, fakeStartTime,None,None,123,234,345, 567, 456,0))
     }
 
     "pass along an error as a Left"  in {
@@ -87,7 +87,7 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
 
       val uuid = UUID.fromString("482FF934-2D16-4E3A-BA2D-8F6134BD87C2")
       val fakeStartTime = ZonedDateTime.now()
-      val prevJobHistory = JobHistory(uuid,fakeStartTime,None,None,0,0,0,0,0,0)
+      val prevJobHistory = JobHistory(uuid,None,fakeStartTime,None,None,0,0,0,0,0,0)
 
       val result = Await.result(toTest.calculateStats(mockedClient, prevJobHistory), 30 seconds)
       result must beLeft(Seq("kaboom"))

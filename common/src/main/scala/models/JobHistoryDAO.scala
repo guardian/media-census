@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateTimeEncoder {
+class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateTimeEncoder with JobTypeEncoder {
   import com.sksamuel.elastic4s.http.ElasticDsl._
   import com.sksamuel.elastic4s.circe._
   private val logger = LoggerFactory.getLogger(getClass)

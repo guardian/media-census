@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, MediaCensusEntry, MediaCensusIndexer}
+import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer}
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
@@ -60,7 +60,7 @@ object CronScanner extends ZonedDateTimeEncoder {
     * @param vsPathMap Vidispine path map. Get this from the getPathMap call
     * @return
     */
-  def buildStream(vsPathMap:Map[String,VSStorage], initialJobRecord:JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
+  def buildStream(vsPathMap:Map[String,VSStorage], maybeStartAt:Option[Long], initialJobRecord:JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
     //val sink = Sink.seq[MediaCensusEntry]
 
     val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
@@ -69,7 +69,7 @@ object CronScanner extends ZonedDateTimeEncoder {
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
       val indexSink = builder.add(indexer.getIndexSink(esClient))
-      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, limit.map(_.toLong))
+      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, maybeStartAt, limit.map(_.toLong))
       val streamSource = builder.add(srcFactory)
       val ignoresFilter = builder.add(new FilterOutIgnores)
 
@@ -201,6 +201,7 @@ object CronScanner extends ZonedDateTimeEncoder {
         Future(None)
     })
   }
+
   def main(args: Array[String]): Unit = {
     val pathMapFuture = getPathMap()
 
@@ -216,17 +217,19 @@ object CronScanner extends ZonedDateTimeEncoder {
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
-    val runInfo = JobHistory.newRun()
+    val runInfo = JobHistory.newRun(JobType.CensusScan)
 
-    val resultFuture = jobHistoryDAO.put(runInfo).flatMap(_=>{
-      logger.info(s"Saved run info ${runInfo.toString}")
-      pathMapFuture.flatMap({
-        case Right(pathMap)=>
-          RunnableGraph.fromGraph(buildStream(pathMap, runInfo)).run().map(resultCount=>Right(resultCount))
-        case Left(err)=>
-          Future(Left(err))
+    val resultFuture = shouldContinueFrom(esClient).flatMap(maybeStartAt=>
+      jobHistoryDAO.put(runInfo).flatMap(_=>{
+        logger.info(s"Saved run info ${runInfo.toString}")
+        pathMapFuture.flatMap({
+          case Right(pathMap)=>
+            RunnableGraph.fromGraph(buildStream(pathMap, maybeStartAt, runInfo)).run().map(resultCount=>Right(resultCount))
+          case Left(err)=>
+            Future(Left(err))
+        })
       })
-    })
+    )
 
     resultFuture.onComplete({
       case Success(Right(resultCount))=>
