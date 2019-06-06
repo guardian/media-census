@@ -85,6 +85,7 @@ lazy val `cronscanner` = (project in file("cronscanner"))
     .dependsOn(common)
     .settings(commonSettings, libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % "10.1.8",  //force akka-http to agree with akka-parsing, akka-http-core
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.postgresql" % "postgresql" % "42.2.5",
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "io.circe" %% "circe-core" % circeVersion,
