@@ -42,7 +42,7 @@ class AssetSweeperDeletedSource(config:DatabaseConfiguration, startAt:Option[Lon
           val resultSet = statement.executeQuery(stmtSource)
 
           while(resultSet.next()){
-            AssetSweeperFile.fromResultSet(resultSet) match {
+            AssetSweeperFile.fromDeletionTableResultSet(resultSet) match {
               case Failure(err)=>
                 logger.error("Could not marshal result set into object: ", err)
                 failStage(err)
