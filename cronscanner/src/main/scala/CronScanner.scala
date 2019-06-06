@@ -219,17 +219,21 @@ object CronScanner extends ZonedDateTimeEncoder {
 
     val runInfo = JobHistory.newRun(JobType.CensusScan)
 
-    val resultFuture = shouldContinueFrom(esClient).flatMap(maybeStartAt=>
-      jobHistoryDAO.put(runInfo).flatMap(_=>{
-        logger.info(s"Saved run info ${runInfo.toString}")
+    val resultFuture = shouldContinueFrom(esClient).flatMap(maybeStartAt=>{
+      val updatedRunInfo = maybeStartAt match {
+        case None=>runInfo
+        case Some(startAt)=>runInfo.copy(itemsCounted = startAt)
+      }
+      jobHistoryDAO.put(updatedRunInfo).flatMap(_=>{
+        logger.info(s"Saved run info ${updatedRunInfo.toString}")
         pathMapFuture.flatMap({
           case Right(pathMap)=>
-            RunnableGraph.fromGraph(buildStream(pathMap, maybeStartAt, runInfo)).run().map(resultCount=>Right(resultCount))
+            RunnableGraph.fromGraph(buildStream(pathMap, maybeStartAt, updatedRunInfo)).run().map(resultCount=>Right(resultCount))
           case Left(err)=>
             Future(Left(err))
         })
       })
-    )
+    })
 
     resultFuture.onComplete({
       case Success(Right(resultCount))=>
