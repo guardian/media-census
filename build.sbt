@@ -20,7 +20,7 @@ lazy val commonSettings = Seq(
 
 lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerPlugin, AshScriptPlugin)
   .dependsOn(common)
-  .aggregate(common, cronscanner)
+  .aggregate(cronscanner, deletescanner)
   .settings(version := sys.props.getOrElse("build.number","DEV"),
     dockerPermissionStrategy := DockerPermissionStrategy.Run,
     daemonUserUid in Docker := None,
@@ -105,7 +105,7 @@ lazy val `cronscanner` = (project in file("cronscanner"))
       dockerRepository := Some("guardianmultimedia"),
       packageName in Docker := "guardianmultimedia/mediacensus-scanner",
       packageName := "mediacensus",
-      dockerBaseImage := "openjdk:8-jdk-alpine",
+      dockerBaseImage := "openjdk:8-jdk-slim",
       dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-scanner",Some(sys.props.getOrElse("build.number","DEV"))),
       dockerCommands ++= Seq(
         Cmd("USER","root"),
@@ -139,7 +139,7 @@ lazy val `deletescanner` = (project in file("deletescanner"))
     dockerRepository := Some("guardianmultimedia"),
     packageName in Docker := "guardianmultimedia/mediacensus-delscanner",
     packageName := "mediacensus",
-    dockerBaseImage := "openjdk:8-jdk-alpine",
+    dockerBaseImage := "openjdk:8-jdk-slim",
     dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-delscanner",Some(sys.props.getOrElse("build.number","DEV"))),
     dockerCommands ++= Seq(
       Cmd("USER","root"),
