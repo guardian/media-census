@@ -2,8 +2,10 @@ package models
 
 import akka.actor.ActorRefFactory
 import akka.stream.scaladsl.Sink
+import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.http.ElasticClient
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
+import com.sksamuel.elastic4s.streams.RequestBuilder
 import helpers.CensusEntryRequestBuilder
 import org.slf4j.LoggerFactory
 
@@ -18,6 +20,15 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     Sink.fromSubscriber(client.subscriber[MediaCensusEntry](batchSize, concurrentBatches))
   }
 
+  def getDeleteSink(client:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+    implicit val deleteBuilder = new RequestBuilder[AssetSweeperFile] {
+      import com.sksamuel.elastic4s.http.ElasticDsl._
+
+      override def request(t: AssetSweeperFile): BulkCompatibleRequest = deleteById(indexName, "censusentry", t.id.toString)
+    }
+
+    Sink.fromSubscriber(client.subscriber[AssetSweeperFile](batchSize, concurrentBatches))
+  }
   def checkIndex(client:ElasticClient) = {
     client.execute {
       indexExists(indexName)
