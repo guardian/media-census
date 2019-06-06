@@ -81,7 +81,7 @@ object CronScanner extends ZonedDateTimeEncoder {
 
       val merge = builder.add(Merge[MediaCensusEntry](4,eagerComplete = false))
       val sinkBranch = builder.add(Broadcast[MediaCensusEntry](2,eagerCancel=true))
-      streamSource ~> ignoresFilter ~> knownStorageSwitch
+      streamSource.out.log("scanner-stream") ~> ignoresFilter ~> knownStorageSwitch
 
       knownStorageSwitch.out(0) ~> vsFileSwitch
       knownStorageSwitch.out(1) ~> merge
