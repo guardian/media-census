@@ -1,8 +1,12 @@
 import React from 'react';
 import {shallow, mount} from 'enzyme';
 import StatsHistoryGraph from "../app/StatsHistoryGraph.jsx";
+import moxios from "moxios";
 
 describe("StatsHistoryGraph.objectToQueryString", ()=>{
+    beforeEach(()=>moxios.install());
+    afterEach(()=>moxios.uninstall());
+
    it("should take a set of mappings and make a query string", ()=>{
        const rendered = shallow(<StatsHistoryGraph/>);
        const result = rendered.instance().objectToQueryString({"key1": "value1", key2: "value2"});

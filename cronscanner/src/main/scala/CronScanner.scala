@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, MediaCensusEntry}
+import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, MediaCensusEntry, MediaCensusIndexer}
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
@@ -53,7 +53,7 @@ object CronScanner extends ZonedDateTimeEncoder {
 
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
-  lazy val indexer = new Indexer(indexName)
+  lazy val indexer = new MediaCensusIndexer(indexName)
 
   /**
     * builds the main stream for conducting the mediacensus
