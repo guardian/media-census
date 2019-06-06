@@ -23,7 +23,7 @@ class PeriodicUpdate(initialJobRecord:JobHistory, updateEvery:Int=100)(implicit 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
     var c=0
-    var itemsProcessed:Long = 0
+    var itemsProcessed:Long = initialJobRecord.itemsCounted
 
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
