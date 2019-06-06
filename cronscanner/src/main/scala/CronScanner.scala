@@ -53,7 +53,7 @@ object CronScanner extends ZonedDateTimeEncoder {
 
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
-  lazy val indexer = new MediaCensusIndexer(indexName)
+  lazy implicit val indexer = new MediaCensusIndexer(indexName)
 
   /**
     * builds the main stream for conducting the mediacensus
@@ -204,7 +204,7 @@ object CronScanner extends ZonedDateTimeEncoder {
   def main(args: Array[String]): Unit = {
     val pathMapFuture = getPathMap()
 
-    val esClient = getEsClientWithRetry()
+    implicit val esClient = getEsClientWithRetry()
 
     try {
       checkIndex(esClient)
@@ -222,7 +222,7 @@ object CronScanner extends ZonedDateTimeEncoder {
       logger.info(s"Saved run info ${runInfo.toString}")
       pathMapFuture.flatMap({
         case Right(pathMap)=>
-          RunnableGraph.fromGraph(buildStream(pathMap, esClient)).run().map(resultCount=>Right(resultCount))
+          RunnableGraph.fromGraph(buildStream(pathMap, runInfo)).run().map(resultCount=>Right(resultCount))
         case Left(err)=>
           Future(Left(err))
       })

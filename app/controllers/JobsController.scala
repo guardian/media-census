@@ -12,7 +12,6 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 import responses.{GenericResponse, ObjectGetResponse, ObjectListResponse}
 import io.circe.generic.auto._
 import io.circe.syntax._
-import org.apache.xerces.xs.datatypes.ObjectList
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
