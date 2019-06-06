@@ -89,7 +89,9 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     }
   })
 
-  def calculateStatsRaw(client:ElasticClient) =
+  def removeZeroBuckets(data: Map[Double, Int]) = data.filter(entry=>entry._2!=0)
+
+  def calculateStatsRaw(client:ElasticClient, includeZeroes:Boolean=true) =
     Future.sequence(Seq(
       getReplicaStats(client),
       getUnattachedCount(client),
@@ -102,7 +104,9 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
         val replicaStats = resultSeq.head.right.get.asInstanceOf[Map[Double, Int]] //safe because the previous check ensures that there are no Lefts at this point.
         val unattachedCount = resultSeq(1).right.get.asInstanceOf[Long]
         val unimportedCount = resultSeq(2).right.get.asInstanceOf[Long]
-        Right(replicaStats, unattachedCount, unimportedCount)
+        val finalReplicaStats = if(includeZeroes) replicaStats else removeZeroBuckets(replicaStats)
+
+        Right(finalReplicaStats, unattachedCount, unimportedCount)
       }
     })
 

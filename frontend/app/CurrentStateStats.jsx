@@ -43,6 +43,7 @@ class CurrentStateStats extends React.Component {
         let updatedValues = [...responseData.values];   //clone out values
         updatedValues[zeroBucketIndex] = zeroCount - responseData.extraData.unimported - responseData.extraData.unattached;
 
+
         return {
             buckets: ["Unimported", "Unattached"].concat(responseData.buckets),
             values: [

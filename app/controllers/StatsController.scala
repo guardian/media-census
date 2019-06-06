@@ -49,11 +49,12 @@ class StatsController @Inject() (cc:ControllerComponents, config:Configuration, 
   }
 
   def unattachedStats = Action.async {
-    mcIndexer.calculateStatsRaw(esClient).map({
+    mcIndexer.calculateStatsRaw(esClient, includeZeroes = false).map({
       case Left(errSeq)=>
         InternalServerError(ObjectListResponse("db_error","errstring",errSeq, errSeq.length).asJson)
       case Right(statsTuple)=>
-        val response = HistogramDataResponse.fromMap[Double,Int,Map[String,Long]](statsTuple._1,Some(Map("unimported"->statsTuple._3, "unattached"->statsTuple._2)))
+        val response = HistogramDataResponse.
+          fromMap[Double,Int,Map[String,Long]](statsTuple._1,Some(Map("unimported"->statsTuple._3, "unattached"->statsTuple._2)))
 
         Ok(response.asJson)
         //Ok(ObjectGetResponse("ok","stats",Map("unattached"->statsTuple._2, "unimported"->statsTuple._3, "replicas"->statsTuple._1)).asJson)
