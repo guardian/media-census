@@ -12,6 +12,7 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 import responses.{GenericResponse, ObjectGetResponse, ObjectListResponse}
 import io.circe.generic.auto._
 import io.circe.syntax._
+import models.JobTypeEncoder
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,7 +20,7 @@ import scala.util.{Failure, Success, Try}
 
 @Singleton
 class JobsController @Inject() (config:Configuration, jobsModelDAOinj:InjectableJobsModelDAO, cc:ControllerComponents)
-  extends AbstractController(cc) with Circe with ZonedDateTimeEncoder {
+  extends AbstractController(cc) with Circe with ZonedDateTimeEncoder with JobTypeEncoder {
   private val jobsModelDAO = jobsModelDAOinj.dao
   private val logger = LoggerFactory.getLogger(getClass)
 

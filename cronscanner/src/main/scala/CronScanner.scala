@@ -126,7 +126,7 @@ object CronScanner extends ZonedDateTimeEncoder {
       if(attempt>10) {
         logger.error(s"Failed 10 times, not trying any more")
         Await.ready(complete_run(2, None,None)(null), 60 seconds)
-        throw err
+        throw err //won't actually reach this line, but need an exception or return type
       } else {
         getEsClientWithRetry(attempt+1)
       }
