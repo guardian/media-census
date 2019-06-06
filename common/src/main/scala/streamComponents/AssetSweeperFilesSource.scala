@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 /**
   * akka source to retrieve items from the given (existing) jdbc database and yield them to the stream
   */
-class AssetSweeperFilesSource (config:DatabaseConfiguration, totalLimit:Option[Int]=None) extends GraphStage[SourceShape[MediaCensusEntry]] {
+class AssetSweeperFilesSource (config:DatabaseConfiguration, startAt:Option[Long]=None, totalLimit:Option[Long]=None) extends GraphStage[SourceShape[MediaCensusEntry]] {
   private final val out:Outlet[MediaCensusEntry] = Outlet.create("AssetSweeperFilesSource.out")
 
   override def shape: SourceShape[MediaCensusEntry] = SourceShape.of(out)
@@ -22,7 +22,10 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, totalLimit:Option[I
     private val logger = LoggerFactory.getLogger(getClass)
 
     var connection:Connection = _
-    var lastProcessed:Int = 0
+    var lastProcessed:Long = startAt match {
+      case None=>0
+      case Some(startingIdx)=>startingIdx
+    }
     val pageSize:Int = 20
     var processingQueue:Seq[AssetSweeperFile] = Seq()
 
@@ -36,7 +39,7 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, totalLimit:Option[I
 
         if(processingQueue.isEmpty){
           val statement = connection.createStatement()
-          val stmtSource = s"SELECT * FROM files OFFSET $lastProcessed LIMIT $pageSize"
+          val stmtSource = s"SELECT * FROM files ORDER BY id asc OFFSET $lastProcessed LIMIT $pageSize"
           logger.debug(stmtSource)
           val resultSet = statement.executeQuery(stmtSource)
 

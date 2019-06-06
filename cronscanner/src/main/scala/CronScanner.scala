@@ -60,9 +60,8 @@ object CronScanner extends ZonedDateTimeEncoder {
     * @param vsPathMap Vidispine path map. Get this from the getPathMap call
     * @return
     */
-  def buildStream(vsPathMap:Map[String,VSStorage], esClient:ElasticClient) = {
+  def buildStream(vsPathMap:Map[String,VSStorage], initialJobRecord:JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
     //val sink = Sink.seq[MediaCensusEntry]
-
 
     val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
 
@@ -70,13 +69,15 @@ object CronScanner extends ZonedDateTimeEncoder {
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
       val indexSink = builder.add(indexer.getIndexSink(esClient))
-      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, limit)
+      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, limit.map(_.toLong))
       val streamSource = builder.add(srcFactory)
       val ignoresFilter = builder.add(new FilterOutIgnores)
 
       val knownStorageSwitch = builder.add(new KnownStorageSwitch(vsPathMap))
       val vsFileSwitch = builder.add(new VSFileSwitch())  //VSFileSwitch args are implicits
       val vsFindReplicas = builder.add(new VSFindReplicas())
+
+      val periodicUpdate = builder.add(new PeriodicUpdate(initialJobRecord, updateEvery=500))
 
       val merge = builder.add(Merge[MediaCensusEntry](4,eagerComplete = false))
       val sinkBranch = builder.add(Broadcast[MediaCensusEntry](2,eagerCancel=true))
@@ -91,7 +92,7 @@ object CronScanner extends ZonedDateTimeEncoder {
       vsFindReplicas.out(0) ~> merge
       vsFindReplicas.out(1) ~> merge
 
-      merge ~> sinkBranch
+      merge ~> periodicUpdate ~> sinkBranch
 
       sinkBranch.out(0) ~> indexSink
       sinkBranch.out(1) ~> reduceSink
@@ -172,6 +173,34 @@ object CronScanner extends ZonedDateTimeEncoder {
     })
   }
 
+  /**
+    * checks the records for the previous run; if it terminated abnormally then pick up from (roughly) where it left off.
+    * @param esClient
+    * @param jobHistoryDAO
+    * @return
+    */
+  def shouldContinueFrom(esClient:ElasticClient)(implicit jobHistoryDAO: JobHistoryDAO):Future[Option[Long]] = {
+    jobHistoryDAO.mostRecentJob(None).flatMap({
+      case Left(err)=>
+        logger.error(s"Could not look up most recent job: $err. Retrying in 5s.")
+        Thread.sleep(5000)
+        shouldContinueFrom(esClient)
+      case Right(Some(historyItem))=>
+        if(historyItem.scanFinish.isEmpty){
+          logger.info(s"Last scan has no finish time, assuming it crashed. Restarting from ${historyItem.itemsCounted}")
+          Future(Some(historyItem.itemsCounted))
+        } else if(historyItem.lastError.isDefined){
+          logger.info(s"Last scan terminated with an error: ${historyItem.lastError.get}. Restarting from ${historyItem.itemsCounted}")
+          Future(Some(historyItem.itemsCounted))
+        } else {
+          logger.info(s"Last scan terminated normally at ${historyItem.scanFinish}. Restarting from the start")
+          Future(None)
+        }
+      case Right(None)=>
+        logger.info(s"Could not find any record of a previous run. Running from the start.")
+        Future(None)
+    })
+  }
   def main(args: Array[String]): Unit = {
     val pathMapFuture = getPathMap()
 

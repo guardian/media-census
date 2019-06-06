@@ -64,6 +64,7 @@ lazy val `common` = (project in file("common"))
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-java8" % circeVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
@@ -75,7 +76,7 @@ lazy val `common` = (project in file("common"))
       "org.asynchttpclient" % "async-http-client" % "2.0.37",
       "com.softwaremill.sttp" %% "akka-http-backend" % "0.0.20",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
-      specs2
+      specs2 % Test
     )
   )
 
