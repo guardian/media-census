@@ -47,24 +47,24 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
               logger.error(s"Could not look up shapes, ${failures.length} out of ${results.length} requests errored:")
               failures.foreach(err=>logger.error(err.toString))
               errorCb.invoke(new RuntimeException(s"Communication failure, see logs for details"))
+            } else {
+              /**
+                * this code works fine for the "nothing found" case .
+                * in that case, completionCb detects that there is nothing in the replica list
+                * and pushes to the "no" channel
+                */
+              val shapes = results.collect({ case Right(shape) => shape })
+              val replicaList = shapes.flatMap(_.files)
+              logger.info(s"Found replicas list $replicaList for ${elem.storageSubpath}")
+              val replicasOut = replicaList.map(VSFileLocation.fromVsFile).groupBy(elem => elem.storageId + ":" + elem.fileId).map(_._2.head).toSeq
+              val updatedElem = elem.copy(
+                //see https://stackoverflow.com/questions/3912753/scala-remove-duplicates-in-list-of-objects
+                //because of the way replicaList is put together there can be dupes, i.e. the same file ID on the same storage ID twice. To avoid confusion, we strip them out here.
+                replicas = replicasOut,
+                replicaCount = replicasOut.length
+              )
+              completionCb.invoke(updatedElem)
             }
-
-            /**
-              * this code works fine for the "nothing found" case .
-              * in that case, completionCb detects that there is nothing in the replica list
-              * and pushes to the "no" channel
-              */
-            val shapes = results.collect({case Right(shape)=>shape})
-            val replicaList = shapes.flatMap(_.files)
-            logger.info(s"Found replicas list $replicaList for ${elem.storageSubpath}")
-            val replicasOut = replicaList.map(VSFileLocation.fromVsFile).groupBy(elem=>elem.storageId+":"+elem.fileId).map(_._2.head).toSeq
-            val updatedElem = elem.copy(
-              //see https://stackoverflow.com/questions/3912753/scala-remove-duplicates-in-list-of-objects
-              //because of the way replicaList is put together there can be dupes, i.e. the same file ID on the same storage ID twice. To avoid confusion, we strip them out here.
-              replicas = replicasOut,
-              replicaCount = replicasOut.length
-            )
-            completionCb.invoke(updatedElem)
           })
         }
       }

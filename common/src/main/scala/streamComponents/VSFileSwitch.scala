@@ -73,9 +73,9 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
             logger.error(s"Could not look up file in VS: ${errList.toString}")
             failCb.invoke(new RuntimeException(errList.head))
           case Success(Right(vsFileSeq))=>
-            logger.info(s"Found file(s) for ${elem.storageSubpath} at ${vsFileSeq.map(_.vsid)}")
+            logger.debug(s"Found file(s) for ${elem.storageSubpath} at ${vsFileSeq.map(_.vsid)}")
             val updatedElem = if(vsFileSeq.isEmpty){
-              logger.info(s"No files present for ${elem.storageSubpath}")
+              logger.debug(s"No files present for ${elem.storageSubpath}")
               elem.copy(
                 vsFileId = None,
                 vsItemId = None,

@@ -8,15 +8,13 @@ import config.DatabaseConfiguration
 import helpers.JdbcConnectionManager
 import models.{AssetSweeperFile, MediaCensusEntry}
 import org.slf4j.LoggerFactory
+
 import scala.util.{Failure, Success}
 
-/**
-  * akka source to retrieve items from the given (existing) jdbc database and yield them to the stream
-  */
-class AssetSweeperFilesSource (config:DatabaseConfiguration, startAt:Option[Long]=None, totalLimit:Option[Long]=None) extends GraphStage[SourceShape[MediaCensusEntry]] {
-  private final val out:Outlet[MediaCensusEntry] = Outlet.create("AssetSweeperFilesSource.out")
+class AssetSweeperDeletedSource(config:DatabaseConfiguration, startAt:Option[Long]=None, totalLimit:Option[Long]=None) extends GraphStage[SourceShape[AssetSweeperFile]]{
+  private final val out:Outlet[AssetSweeperFile] = Outlet.create("AssetSweeperFilesSource.out")
 
-  override def shape: SourceShape[MediaCensusEntry] = SourceShape.of(out)
+  override def shape: SourceShape[AssetSweeperFile] = SourceShape.of(out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
@@ -39,12 +37,12 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, startAt:Option[Long
 
         if(processingQueue.isEmpty){
           val statement = connection.createStatement()
-          val stmtSource = s"SELECT * FROM files ORDER BY id asc OFFSET $lastProcessed LIMIT $pageSize"
+          val stmtSource = s"SELECT * FROM deleted_files ORDER BY id asc OFFSET $lastProcessed LIMIT $pageSize"
           logger.debug(stmtSource)
           val resultSet = statement.executeQuery(stmtSource)
 
           while(resultSet.next()){
-            AssetSweeperFile.fromResultSet(resultSet) match {
+            AssetSweeperFile.fromDeletionTableResultSet(resultSet) match {
               case Failure(err)=>
                 logger.error("Could not marshal result set into object: ", err)
                 failStage(err)
@@ -57,7 +55,7 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, startAt:Option[Long
           case Some(nextElem)=>
             processingQueue = processingQueue.tail
             lastProcessed+=1
-            push(out, MediaCensusEntry(nextElem,None,None,None,None,None,Seq(),0))
+            push(out, nextElem)
           case None=>
             logger.info(s"Rendered all items")
             complete(out)
@@ -77,4 +75,5 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, startAt:Option[Long
       }
     }
   }
+
 }

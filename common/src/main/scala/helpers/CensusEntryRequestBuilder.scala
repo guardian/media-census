@@ -2,7 +2,7 @@ package helpers
 
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.streams.RequestBuilder
-import models.MediaCensusEntry
+import models.{AssetSweeperFile, MediaCensusEntry}
 import io.circe.generic.auto._
 
 /**
@@ -11,7 +11,7 @@ import io.circe.generic.auto._
 trait CensusEntryRequestBuilder extends ZonedDateTimeEncoder {
   val indexName:String
 
-  implicit val builder = new RequestBuilder[MediaCensusEntry] {
+  implicit val indexBuilder = new RequestBuilder[MediaCensusEntry] {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     import com.sksamuel.elastic4s.circe._
 

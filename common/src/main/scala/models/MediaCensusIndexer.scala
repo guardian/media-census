@@ -2,8 +2,10 @@ package models
 
 import akka.actor.ActorRefFactory
 import akka.stream.scaladsl.Sink
+import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.http.ElasticClient
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
+import com.sksamuel.elastic4s.streams.RequestBuilder
 import helpers.CensusEntryRequestBuilder
 import org.slf4j.LoggerFactory
 
@@ -18,6 +20,15 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     Sink.fromSubscriber(client.subscriber[MediaCensusEntry](batchSize, concurrentBatches))
   }
 
+  def getDeleteSink(client:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+    implicit val deleteBuilder = new RequestBuilder[AssetSweeperFile] {
+      import com.sksamuel.elastic4s.http.ElasticDsl._
+
+      override def request(t: AssetSweeperFile): BulkCompatibleRequest = deleteById(indexName, "censusentry", t.id.toString)
+    }
+
+    Sink.fromSubscriber(client.subscriber[AssetSweeperFile](batchSize, concurrentBatches))
+  }
   def checkIndex(client:ElasticClient) = {
     client.execute {
       indexExists(indexName)
@@ -78,7 +89,9 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     }
   })
 
-  def calculateStatsRaw(client:ElasticClient) =
+  def removeZeroBuckets(data: Map[Double, Int]) = data.filter(entry=>entry._2!=0)
+
+  def calculateStatsRaw(client:ElasticClient, includeZeroes:Boolean=true) =
     Future.sequence(Seq(
       getReplicaStats(client),
       getUnattachedCount(client),
@@ -91,7 +104,9 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
         val replicaStats = resultSeq.head.right.get.asInstanceOf[Map[Double, Int]] //safe because the previous check ensures that there are no Lefts at this point.
         val unattachedCount = resultSeq(1).right.get.asInstanceOf[Long]
         val unimportedCount = resultSeq(2).right.get.asInstanceOf[Long]
-        Right(replicaStats, unattachedCount, unimportedCount)
+        val finalReplicaStats = if(includeZeroes) replicaStats else removeZeroBuckets(replicaStats)
+
+        Right(finalReplicaStats, unattachedCount, unimportedCount)
       }
     })
 

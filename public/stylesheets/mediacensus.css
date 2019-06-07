@@ -171,3 +171,22 @@ div.container {
     display: inline;
     cursor: pointer;
 }
+
+.clickable-hovered {
+    display: inline;
+    cursor: pointer;
+    color: #000000FF;
+    margin-right: 0.4em;
+}
+
+.clickable-unhovered {
+    display: inline;
+    cursor: pointer;
+    color: #00000088;
+    margin-right: 0.4em;
+}
+
+ul.no-bullets {
+    list-style: none;
+    padding-left: 0;
+}

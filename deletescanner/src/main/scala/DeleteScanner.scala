@@ -10,7 +10,6 @@ import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
 import io.circe.syntax._
 import io.circe.generic.auto._
-import vidispineclient.VSPathMapper
 import com.softwaremill.sttp._
 import helpers.ZonedDateTimeEncoder
 import vidispine.{VSCommunicator, VSStorage}
@@ -18,11 +17,11 @@ import vidispine.{VSCommunicator, VSStorage}
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
-import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties, HttpClient}
+import com.sksamuel.elastic4s.http.{ElasticClient, ElasticError, ElasticProperties, HttpClient}
 
 import scala.concurrent.duration._
 
-object CronScanner extends ZonedDateTimeEncoder {
+object DeleteScanner extends ZonedDateTimeEncoder {
   val logger = Logger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
@@ -35,80 +34,42 @@ object CronScanner extends ZonedDateTimeEncoder {
     sys.env("ASSETSWEEPER_PASSWORD")
   )
 
-  lazy val vsConfig = VSConfig(
-    uri"${sys.env("VIDISPINE_BASE_URL")}",
-    sys.env("VIDISPINE_USER"),
-    sys.env("VIDISPINE_PASSWORD")
-  )
-
   lazy val esConfig = ESConfig(
     sys.env.get("ES_URI"),
     sys.env.getOrElse("ES_HOST","mediacensus-elasticsearch"),
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
 
-  lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
-
-  lazy val limit = sys.env.get("LIMIT").map(_.toInt)
-
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
-  lazy implicit val indexer = new MediaCensusIndexer(indexName)
+  lazy val indexer = new MediaCensusIndexer(indexName)
 
   /**
-    * builds the main stream for conducting the mediacensus
-    * @param vsPathMap Vidispine path map. Get this from the getPathMap call
+    * builds the main stream for conducting the delete scan
     * @return
     */
-  def buildStream(vsPathMap:Map[String,VSStorage], maybeStartAt:Option[Long], initialJobRecord:JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
-    //val sink = Sink.seq[MediaCensusEntry]
-
-    val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
+  def buildStream(esClient:ElasticClient) = {
+    val counterSink = Sink.fold[Int, AssetSweeperFile](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
-      val indexSink = builder.add(indexer.getIndexSink(esClient))
-      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, maybeStartAt, limit.map(_.toLong))
+      val deleteSink = builder.add(indexer.getDeleteSink(esClient))
+      val srcFactory = new AssetSweeperDeletedSource(assetSweeperConfig)
       val streamSource = builder.add(srcFactory)
-      val ignoresFilter = builder.add(new FilterOutIgnores)
+      val sinkSplitter = builder.add(Broadcast[AssetSweeperFile](2, eagerCancel=false))
 
-      val knownStorageSwitch = builder.add(new KnownStorageSwitch(vsPathMap))
-      val vsFileSwitch = builder.add(new VSFileSwitch())  //VSFileSwitch args are implicits
-      val vsFindReplicas = builder.add(new VSFindReplicas())
+      streamSource.out.log("deleteStream").map(file=>{
 
-      val periodicUpdate = builder.add(new PeriodicUpdate(initialJobRecord, updateEvery=500))
+        file
+      }) ~> sinkSplitter
+      sinkSplitter ~> deleteSink
+      sinkSplitter ~> reduceSink
 
-      val merge = builder.add(Merge[MediaCensusEntry](4,eagerComplete = false))
-      val sinkBranch = builder.add(Broadcast[MediaCensusEntry](2,eagerCancel=true))
-      streamSource.out.log("scanner-stream") ~> ignoresFilter ~> knownStorageSwitch
-
-      knownStorageSwitch.out(0) ~> vsFileSwitch
-      knownStorageSwitch.out(1) ~> merge
-
-      vsFileSwitch.out(0) ~> vsFindReplicas
-      vsFileSwitch.out(1) ~> merge
-
-      vsFindReplicas.out(0) ~> merge
-      vsFindReplicas.out(1) ~> merge
-
-      merge ~> periodicUpdate ~> sinkBranch
-
-      sinkBranch.out(0) ~> indexSink
-      sinkBranch.out(1) ~> reduceSink
       ClosedShape
     }}
   }
 
-  /**
-    * returns the vidispine path map, i.e. a Map of the on-disk root path (as a string) to the storage definition
-    * for all "filesystem" type storages
-    * @return a Future, containing either an error message or a Map[String, VSStorage]
-    */
-  def getPathMap() = {
-    val mapper = new VSPathMapper(vsConfig)
-    mapper.getPathMap()
-  }
 
   def getEsClient = Try {
     val uri = esConfig.uri match {
@@ -126,7 +87,7 @@ object CronScanner extends ZonedDateTimeEncoder {
       if(attempt>10) {
         logger.error(s"Failed 10 times, not trying any more")
         Await.ready(complete_run(2, None,None)(null), 60 seconds)
-        throw err //won't actually reach this line, but need an exception or return type
+        throw err
       } else {
         getEsClientWithRetry(attempt+1)
       }
@@ -168,44 +129,14 @@ object CronScanner extends ZonedDateTimeEncoder {
 
     updateFuture.andThen({
       case _=>actorSystem.terminate().andThen({
-          case _ => System.exit(exitCode)
-        })
-    })
-  }
-
-  /**
-    * checks the records for the previous run; if it terminated abnormally then pick up from (roughly) where it left off.
-    * @param esClient
-    * @param jobHistoryDAO
-    * @return
-    */
-  def shouldContinueFrom(esClient:ElasticClient)(implicit jobHistoryDAO: JobHistoryDAO):Future[Option[Long]] = {
-    jobHistoryDAO.mostRecentJob(None).flatMap({
-      case Left(err)=>
-        logger.error(s"Could not look up most recent job: $err. Retrying in 5s.")
-        Thread.sleep(5000)
-        shouldContinueFrom(esClient)
-      case Right(Some(historyItem))=>
-        if(historyItem.scanFinish.isEmpty){
-          logger.info(s"Last scan has no finish time, assuming it crashed. Restarting from ${historyItem.itemsCounted}")
-          Future(Some(historyItem.itemsCounted))
-        } else if(historyItem.lastError.isDefined){
-          logger.info(s"Last scan terminated with an error: ${historyItem.lastError.get}. Restarting from ${historyItem.itemsCounted}")
-          Future(Some(historyItem.itemsCounted))
-        } else {
-          logger.info(s"Last scan terminated normally at ${historyItem.scanFinish}. Restarting from the start")
-          Future(None)
-        }
-      case Right(None)=>
-        logger.info(s"Could not find any record of a previous run. Running from the start.")
-        Future(None)
+        case _ => System.exit(exitCode)
+      })
     })
   }
 
   def main(args: Array[String]): Unit = {
-    val pathMapFuture = getPathMap()
 
-    implicit val esClient = getEsClientWithRetry()
+    val esClient = getEsClientWithRetry()
 
     try {
       checkIndex(esClient)
@@ -217,28 +148,19 @@ object CronScanner extends ZonedDateTimeEncoder {
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
-    val runInfo = JobHistory.newRun(JobType.CensusScan)
+    val runInfo = JobHistory.newRun(JobType.DeletedScan)
 
-    val resultFuture = shouldContinueFrom(esClient).flatMap(maybeStartAt=>{
-      val updatedRunInfo = maybeStartAt match {
-        case None=>runInfo
-        case Some(startAt)=>runInfo.copy(itemsCounted = startAt)
-      }
-      jobHistoryDAO.put(updatedRunInfo).flatMap(_=>{
-        logger.info(s"Saved run info ${updatedRunInfo.toString}")
-        pathMapFuture.flatMap({
-          case Right(pathMap)=>
-            RunnableGraph.fromGraph(buildStream(pathMap, maybeStartAt, updatedRunInfo)).run().map(resultCount=>Right(resultCount))
-          case Left(err)=>
-            Future(Left(err))
-        })
+    val resultFuture = jobHistoryDAO.put(runInfo).map({
+      case Right(_)=>
+        logger.info(s"Saved run info ${runInfo.toString}")
+        RunnableGraph.fromGraph(buildStream(esClient)).run().map(resultCount=>Right(resultCount))
+      case Left(err)=>
+        Left(err)
       })
-    })
 
     resultFuture.onComplete({
       case Success(Right(resultCount))=>
-        println(s"Indexed a total of $resultCount items with a limit of $limit")
-
+        println(s"Deleted a total of $resultCount items that are now moved off primary storage")
         indexer.calculateStats(esClient, runInfo).onComplete({
           case Failure(err)=>
             logger.error(s"Calculate stats crashed: ", err)
@@ -251,10 +173,10 @@ object CronScanner extends ZonedDateTimeEncoder {
 
       case Success(Left(err))=>
         logger.error(s"ERROR: ${err.toString}")
-        complete_run(1,Some(err.toString),Some(runInfo))
+        complete_run(1,Some(err.toString),None)
       case Failure(err)=>
         logger.error(s"Stream failed: ", err)
-        complete_run(1,Some(err.toString), Some(runInfo))
+        complete_run(1,Some(err.toString),None)
     })
   }
 }
