@@ -12,6 +12,7 @@ import { faChevronCircleDown,faChevronCircleRight,faTrashAlt, faFilm, faVolumeUp
 import { faCompressArrowsAlt, faBug, faExclamation, faUnlink, faListAlt, faHistory, faRuler } from '@fortawesome/free-solid-svg-icons'
 import IndexRedirect from "./IndexRedirect.jsx";
 import BannerMenu from "./BannerMenu.jsx";
+import RunsAdmin from "./RunsAdmin.jsx";
 
 library.add(faStroopwafel, faCheckCircle, faCheck, faTimes, faTimesCircle, faRoad,faSearch,faThList,faWrench, faLightbulb, faChevronCircleDown, faChevronCircleRight, faTrashAlt, faFolderPlus, faFolderMinus, faFolder);
 library.add(faFilm, faVolumeUp, faImage, faFile, faClock, faRunning, faExclamationTriangle, faHdd, faBalanceScale, faSyncAlt, faBookReader, faBug, faCompressArrowsAlt, faIndustry, faRedoAlt, faHome, faListOl,);
@@ -25,7 +26,7 @@ class App extends React.Component {
             <Switch>
                 <Route path="/current" component={CurrentStateStats}/>
                 <Route path="/history" component={StatsHistoryGraph}/>
-                {/*<Route path="/runs" component={RunsAdminList}/>*/}
+                <Route path="/runs" component={RunsAdmin}/>
                 <Route path="/" component={IndexRedirect}/>
             </Switch>
         </div>

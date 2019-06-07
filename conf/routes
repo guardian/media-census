@@ -10,7 +10,7 @@ GET     /healthcheck                @controllers.HealthcheckController.healthche
 GET     /api/stats/replicas         @controllers.StatsController.replicaStats
 GET     /api/stats/unattached       @controllers.StatsController.unattachedStats
 
-GET     /api/jobs/forTimespan           @controllers.JobsController.jobsForTimespan(startAt:Option[String]?=None,endAt:Option[String]?=None)
+GET     /api/jobs/forTimespan           @controllers.JobsController.jobsForTimespan(startAt:Option[String]?=None,endAt:Option[String]?=None,showRunning:Boolean?=false)
 GET     /api/jobs/running               @controllers.JobsController.runningJobs
 GET     /api/jobs/:jobType/lastSuccess  @controllers.JobsController.lastSuccessfulJob(jobType)
 

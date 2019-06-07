@@ -56,7 +56,7 @@ class RunsInProgress extends React.Component {
            <h3><FontAwesomeIcon icon="clock" style={{color: "red"}}/> Runs in progress</h3>
             <ul className="no-bullets">{
                 this.state.runData.map(entry=><li key={entry.jobId}>
-                    <ClickableIcon onClick={()=>this.deletionClicked(entry.jobId)} icon="times-circle"/>
+                        {/*<ClickableIcon onClick={()=>this.deletionClicked(entry.jobId)} icon="times-circle"/>*/}
                         {entry.jobType} started <TimestampDiffComponent endTime={entry.scanStart}/><br/>{entry.itemsCounted} items so far
                 </li>)
             }</ul>
