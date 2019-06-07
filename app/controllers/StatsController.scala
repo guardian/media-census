@@ -1,5 +1,6 @@
 package controllers
 
+import com.sksamuel.elastic4s.searches.aggs.SumAggregation
 import helpers.ESClientManager
 import javax.inject.{Inject, Singleton}
 import org.slf4j.LoggerFactory
@@ -33,11 +34,13 @@ class StatsController @Inject() (cc:ControllerComponents, config:Configuration, 
           .field("replicaCount")
           .interval(1)
           .minDocCount(0)
+          .subAggregations(SumAggregation("totalSize").field("originalSource.size"))
       }
     }.map(result=>{
       if(result.isError){
         InternalServerError(GenericResponse("error",result.error.toString).asJson)
       } else {
+        logger.info(result.result.aggregationsAsMap.toString())
         val response = HistogramDataResponse.fromEsData[Double, Int](result.result.aggregationsAsMap("replicaCount").asInstanceOf[Map[String,Any]])
 
         response match {
@@ -54,7 +57,7 @@ class StatsController @Inject() (cc:ControllerComponents, config:Configuration, 
         InternalServerError(ObjectListResponse("db_error","errstring",errSeq, errSeq.length).asJson)
       case Right(statsTuple)=>
         val response = HistogramDataResponse.
-          fromMap[Double,Int,Map[String,Long]](statsTuple._1,Some(Map("unimported"->statsTuple._3, "unattached"->statsTuple._2)))
+          fromStatsEntries[Map[String,Long]](statsTuple._1,Some(Map("unimported"->statsTuple._3, "unattached"->statsTuple._2)))
 
         Ok(response.asJson)
         //Ok(ObjectGetResponse("ok","stats",Map("unattached"->statsTuple._2, "unimported"->statsTuple._3, "replicas"->statsTuple._1)).asJson)
