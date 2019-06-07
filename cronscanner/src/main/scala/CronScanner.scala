@@ -77,7 +77,7 @@ object CronScanner extends ZonedDateTimeEncoder {
       val vsFileSwitch = builder.add(new VSFileSwitch())  //VSFileSwitch args are implicits
       val vsFindReplicas = builder.add(new VSFindReplicas())
 
-      val periodicUpdate = builder.add(new PeriodicUpdate(initialJobRecord, updateEvery=500))
+      val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery=500))
 
       val merge = builder.add(Merge[MediaCensusEntry](4,eagerComplete = false))
       val sinkBranch = builder.add(Broadcast[MediaCensusEntry](2,eagerCancel=true))

@@ -42,13 +42,13 @@ object DeleteScanner extends ZonedDateTimeEncoder {
 
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
-  lazy val indexer = new MediaCensusIndexer(indexName)
+  lazy implicit val indexer = new MediaCensusIndexer(indexName)
 
   /**
     * builds the main stream for conducting the delete scan
     * @return
     */
-  def buildStream(esClient:ElasticClient) = {
+  def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient) = {
     val counterSink = Sink.fold[Int, AssetSweeperFile](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
@@ -56,13 +56,12 @@ object DeleteScanner extends ZonedDateTimeEncoder {
 
       val deleteSink = builder.add(indexer.getDeleteSink(esClient))
       val srcFactory = new AssetSweeperDeletedSource(assetSweeperConfig)
+      val periodicUpdate = builder.add(new PeriodicUpdate[AssetSweeperFile](initialJobRecord, updateEvery = 500))
+      val deletionFilter = builder.add(new DeletionFilter(indexer, esClient))
       val streamSource = builder.add(srcFactory)
       val sinkSplitter = builder.add(Broadcast[AssetSweeperFile](2, eagerCancel=false))
 
-      streamSource.out.log("deleteStream").map(file=>{
-
-        file
-      }) ~> sinkSplitter
+      streamSource.out.log("deleteStream") ~> periodicUpdate ~> deletionFilter ~> sinkSplitter
       sinkSplitter ~> deleteSink
       sinkSplitter ~> reduceSink
 
@@ -135,8 +134,7 @@ object DeleteScanner extends ZonedDateTimeEncoder {
   }
 
   def main(args: Array[String]): Unit = {
-
-    val esClient = getEsClientWithRetry()
+    implicit val esClient = getEsClientWithRetry()
 
     try {
       checkIndex(esClient)
@@ -150,12 +148,12 @@ object DeleteScanner extends ZonedDateTimeEncoder {
 
     val runInfo = JobHistory.newRun(JobType.DeletedScan)
 
-    val resultFuture = jobHistoryDAO.put(runInfo).map({
+    val resultFuture = jobHistoryDAO.put(runInfo).flatMap({
       case Right(_)=>
         logger.info(s"Saved run info ${runInfo.toString}")
-        RunnableGraph.fromGraph(buildStream(esClient)).run().map(resultCount=>Right(resultCount))
+        RunnableGraph.fromGraph(buildStream(runInfo)).run().map(resultCount=>Right(resultCount))
       case Left(err)=>
-        Left(err)
+        Future(Left(err))
       })
 
     resultFuture.onComplete({
