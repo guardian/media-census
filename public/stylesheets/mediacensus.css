@@ -154,10 +154,10 @@ div.inprogress-container {
 }
 
 div.current-stats-container {
-    float: left;
-    display:inline-block;
-    width: 50%;
-    overflow: hidden;
+    margin-left: auto;
+    margin-right: auto;
+    display:block;
+    width: 50vw;
     height: 260px
 }
 
@@ -189,4 +189,21 @@ div.container {
 ul.no-bullets {
     list-style: none;
     padding-left: 0;
+}
+
+.banner-menu {
+    list-style: none;
+    overflow: hidden;
+    margin-left:auto;
+    width: 33vw;
+    margin-right:auto;
+}
+
+.banner-menu-item {
+    display: inline;
+    margin-right: 1em;
+}
+
+.banner-menu-icon {
+    margin-right: 0.2em;
 }

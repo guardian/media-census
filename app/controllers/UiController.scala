@@ -10,7 +10,7 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 class UiController @Inject() (config:Configuration,cc:ControllerComponents) extends AbstractController(cc) {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def index = Action {
+  def rootIndex = Action {
     val cbVersionString = try {
       val prop = new Properties()
       prop.load(getClass.getClassLoader.getResourceAsStream("version.properties"))
@@ -22,4 +22,6 @@ class UiController @Inject() (config:Configuration,cc:ControllerComponents) exte
     }
     Ok(views.html.index("Media Census")(cbVersionString.getOrElse("no-cachebusting")))
   }
+
+  def index(tail:String) = rootIndex
 }

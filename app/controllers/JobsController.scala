@@ -12,7 +12,7 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 import responses.{GenericResponse, ObjectGetResponse, ObjectListResponse}
 import io.circe.generic.auto._
 import io.circe.syntax._
-import models.JobTypeEncoder
+import models.{JobType, JobTypeEncoder}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -75,6 +75,24 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
       case Right(resultSeq)=>
         Ok(ObjectListResponse("ok","jobHistory", resultSeq, resultSeq.length).asJson)
     })
+  }
+
+  def lastSuccessfulJob(jobType:String) = Action.async {
+    Try { JobType.withName(jobType) } match {
+      case Success(jobTypeValue) =>
+        jobsModelDAO.completedJobs(Some(jobTypeValue), Some(1)).map({
+          case Left(err) =>
+            logger.error(s"Could not find most recent job: $err")
+            InternalServerError(GenericResponse("db_error", err.toString).asJson)
+          case Right(resultSeq) =>
+            //works better in the fronend to present as a 200 rather than a 404
+            Ok(ObjectGetResponse("ok", "jobHistory", resultSeq.headOption).asJson)
+
+        })
+      case Failure(exception) =>
+        logger.error(s"Could not convert $jobType into a JobType enum value", exception)
+        Future(BadRequest(GenericResponse("bad_request", s"$jobType is not a valid job type").asJson))
+    }
   }
 
   def manualDelete(idString:String) = Action.async {

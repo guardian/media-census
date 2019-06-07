@@ -95,6 +95,58 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
       }
   })
 
+  /*FIXME: make this a bit DRYer*/
+
+  def completedJobs(maybeJobType:Option[JobType.Value], maybeLimit:Option[Int]) = {
+    val queryDefs = maybeJobType match {
+      case Some(jobType)=>matchQuery("jobType",jobType.toString)
+      case None=>matchAllQuery()
+    }
+
+    val baseQuery = search(indexName) query boolQuery().must(
+      queryDefs,
+      existsQuery("scanFinish"),
+      not(existsQuery("lastError"))
+    )
+    val finalQuery = maybeLimit match {
+      case None=>baseQuery
+      case Some(suppliedLimit)=>baseQuery limit suppliedLimit
+    }
+
+    esClient.execute { finalQuery }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.to[JobHistory])
+      }
+    })
+  }
+
+  def failedJobs(maybeJobType:Option[JobType.Value], maybeLimit:Option[Int]) = {
+    val queryDefs = maybeJobType match {
+      case Some(jobType)=>matchQuery("jobType",jobType.toString)
+      case None=>matchAllQuery()
+    }
+
+    val baseQuery = search(indexName) query boolQuery().must(
+      queryDefs,
+      existsQuery("scanFinish"),
+      existsQuery("lastError")
+    )
+    val finalQuery = maybeLimit match {
+      case None=>baseQuery
+      case Some(suppliedLimit)=>baseQuery limit suppliedLimit
+    }
+
+    esClient.execute { finalQuery }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.to[JobHistory])
+      }
+    })
+  }
+
   /**
     * retrieve the latest [[JobHistory]]
     * @param didComplete if true, the latest history with a completion date, if false the latest history without. If None then
