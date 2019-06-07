@@ -7,6 +7,9 @@ import RunsInProgress from "./RunsInProgress.jsx";
 import TimestampDiffComponent from "./common/TimestampDiffComponent.jsx";
 
 class CurrentStateStats extends React.Component {
+    static COUNT_MODE=1;
+    static SIZE_MODE=2;
+
     constructor(props){
         super(props);
         this.state = {
@@ -14,11 +17,13 @@ class CurrentStateStats extends React.Component {
             lastError: null,
             buckets: [],
             values: [],
+            totalSizes: [],
             colourValues:[],
             unattachedCount: 0,
             unimportedCount: 0,
             lastRunSuccess: null,
-            lastDeleteRunSuccess: null
+            lastDeleteRunSuccess: null,
+            mode: CurrentStateStats.SIZE_MODE
         }
     }
 
@@ -47,13 +52,19 @@ class CurrentStateStats extends React.Component {
         let updatedValues = responseData.values.slice(0);   //clone out values
         updatedValues[zeroBucketIndex] = zeroCount - responseData.extraData.unimported - responseData.extraData.unattached;
 
+        //FIXME: backend is not yet reporting size data for unimported/unattached
+        let updatedSizes = responseData.totalSize;
 
         return {
             buckets: ["Unimported", "Unattached"].concat(responseData.buckets.map(v=>v.toString())),
             values: [
                 responseData.extraData.unimported,
                 responseData.extraData.unattached,
-            ].concat(updatedValues)
+            ].concat(updatedValues),
+            totalSizes: [
+                0,
+                0
+            ].concat(updatedSizes)
         }
     }
 
@@ -75,6 +86,7 @@ class CurrentStateStats extends React.Component {
                 lastError: null,
                 buckets: postProcessed.buckets,
                 values: postProcessed.values,
+                totalSizes: postProcessed.totalSizes,
                 colourValues: CurrentStateStats.makeColourValues(unattachedResult.data.values.length+2,10),
                 lastRunSuccess: completedJobsResult.data.entry,
                 lastDeleteRunSuccess: deleteJobsResult.data.entry
@@ -91,12 +103,21 @@ class CurrentStateStats extends React.Component {
             {/*<RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()} style={{display: "inline"}}/>*/}
             <div  className="current-stats-container">
             <HorizontalBar data={{
-                    datasets: this.state.buckets.map((bucketSize,idx)=>{return {
-                        label: bucketSize + " copies",
-                        data: [this.state.values[idx]],
-                        backgroundColor: this.state.colourValues[idx]
-                    }})
-                }}
+                    datasets: this.state.buckets.map((bucketSize,idx)=>{
+                        let data;
+                        if(this.state.mode===CurrentStateStats.COUNT_MODE){
+                            data = this.state.values[idx];
+                        } else if(this.state.mode===CurrentStateStats.SIZE_MODE){
+                            data = this.state.totalSizes[idx];
+                        } else {
+                            throw "Invalid mode for component, should be count or size."
+                        }
+                        return {
+                            label: bucketSize + " copies",
+                            data: [data],
+                            backgroundColor: this.state.colourValues[idx]
+                        }})
+                    }}
                            options={{
                                title: {
                                    display: true,
@@ -104,6 +125,24 @@ class CurrentStateStats extends React.Component {
                                    fontSize: 24
                                },
                                maintainAspectRatio: false,
+                               tooltips: {
+                                   callbacks: {
+                                       label: (tooltipItem, data)=>{
+                                           console.log(tooltipItem);
+                                           console.log(data);
+                                           let xLabel,yLabel;
+
+                                           if(tooltipItem.xLabel && this.state.mode===CurrentStateStats.SIZE_MODE){
+                                               xLabel = Math.floor(tooltipItem.xLabel/1073741824) + "Gib";
+                                               yLabel = data.datasets[tooltipItem.datasetIndex].label;
+                                           } else {
+                                               xLabel=tooltipItem.xLabel;
+                                               yLabel = data.datasets[tooltipItem.datasetIndex].label;
+                                           }
+                                           return yLabel + ": " + xLabel;
+                                       }
+                                   }
+                               },
                                scales: {
                                    yAxes: [{
                                        type: "category",
@@ -117,7 +156,12 @@ class CurrentStateStats extends React.Component {
                                        stacked: true
                                    }],
                                    xAxes: [{
-                                       stacked: true
+                                       stacked: true,
+                                       labelString: this.state.mode===CurrentStateStats.SIZE_MODE ? "Total size" : "File count",
+                                       ticks: {
+                                           callback: (value,index,series)=>
+                                               this.state.mode===CurrentStateStats.SIZE_MODE ? Math.floor(value/1073741824) + "Gib" : value
+                                       }
                                    }]
                                },
                                legend: {
