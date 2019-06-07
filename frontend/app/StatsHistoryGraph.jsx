@@ -97,6 +97,11 @@ class StatsHistoryGraph extends React.Component {
 
                 }}
                 options={{
+                    title: {
+                        display: true,
+                        text: "Media State History",
+                        fontSize: 24
+                    },
                     scales: {
                         yAxes: [{
                             scaleLabel: {

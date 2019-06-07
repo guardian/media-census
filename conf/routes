@@ -3,17 +3,20 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /                           @controllers.UiController.index
+GET     /                           @controllers.UiController.rootIndex
 
 GET     /healthcheck                @controllers.HealthcheckController.healthcheck
 
 GET     /api/stats/replicas         @controllers.StatsController.replicaStats
 GET     /api/stats/unattached       @controllers.StatsController.unattachedStats
 
-GET     /api/jobs/forTimespan        @controllers.JobsController.jobsForTimespan(startAt:Option[String]?=None,endAt:Option[String]?=None)
-GET     /api/jobs/running           @controllers.JobsController.runningJobs
+GET     /api/jobs/forTimespan           @controllers.JobsController.jobsForTimespan(startAt:Option[String]?=None,endAt:Option[String]?=None,showRunning:Boolean?=false)
+GET     /api/jobs/running               @controllers.JobsController.runningJobs
+GET     /api/jobs/:jobType/lastSuccess  @controllers.JobsController.lastSuccessfulJob(jobType)
+
 GET     /api/job/:jobId             @controllers.JobsController.jobDetail(jobId)
 DELETE  /api/job/:jobId             @controllers.JobsController.manualDelete(jobId)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET     /*tail                      @controllers.UiController.index(tail)

@@ -3,6 +3,8 @@ import axios from 'axios';
 import PropTypes from 'prop-types';
 import {HorizontalBar} from "react-chartjs-2";
 import RefreshButton from "./common/RefreshButton.jsx";
+import RunsInProgress from "./RunsInProgress.jsx";
+import TimestampDiffComponent from "./common/TimestampDiffComponent.jsx";
 
 class CurrentStateStats extends React.Component {
     constructor(props){
@@ -14,7 +16,9 @@ class CurrentStateStats extends React.Component {
             values: [],
             colourValues:[],
             unattachedCount: 0,
-            unimportedCount: 0
+            unimportedCount: 0,
+            lastRunSuccess: null,
+            lastDeleteRunSuccess: null
         }
     }
 
@@ -54,14 +58,26 @@ class CurrentStateStats extends React.Component {
     }
 
     refresh(){
-        this.setState({loading: true}, ()=>axios.get("/api/stats/unattached").then(result=>{
-            const postProcessed = this.postProcessData(result.data);
+        const loadingFuture = Promise.all([
+            axios.get("/api/stats/unattached"),
+            axios.get("/api/jobs/CensusScan/lastSuccess"),
+            axios.get("/api/jobs/DeletedScan/lastSuccess")
+        ]);
+
+        this.setState({loading: true}, ()=>loadingFuture.then(result=>{
+            const unattachedResult = result[0];
+            const completedJobsResult = result[1];
+            const deleteJobsResult = result[2];
+
+            const postProcessed = this.postProcessData(unattachedResult.data);
 
             this.setState({loading: false,
                 lastError: null,
                 buckets: postProcessed.buckets,
                 values: postProcessed.values,
-                colourValues: CurrentStateStats.makeColourValues(result.data.values.length+2,10)
+                colourValues: CurrentStateStats.makeColourValues(unattachedResult.data.values.length+2,10),
+                lastRunSuccess: completedJobsResult.data.entry,
+                lastDeleteRunSuccess: deleteJobsResult.data.entry
             })
         }).catch(err=>{
             console.error(err);
@@ -70,8 +86,10 @@ class CurrentStateStats extends React.Component {
     }
 
     render(){
-        return <div className="current-stats-container">
+        return <div>
+            <RunsInProgress/>
             {/*<RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()} style={{display: "inline"}}/>*/}
+            <div  className="current-stats-container">
             <HorizontalBar data={{
                     datasets: this.state.buckets.map((bucketSize,idx)=>{return {
                         label: bucketSize + " copies",
@@ -109,6 +127,20 @@ class CurrentStateStats extends React.Component {
                            }}
 
             />
+            </div>
+            <ul className="current-stats-bulletpoints">
+                {this.state.lastRunSuccess ?
+                    <li>Last successful census scan completed <TimestampDiffComponent
+                        endTime={this.state.lastRunSuccess.scanFinish}/> and
+                        found {this.state.lastRunSuccess.itemsCounted} items.</li> :
+                    <li>There have not been any successful census scan runs yet!</li>
+                }
+                {this.state.lastDeleteRunSuccess ?
+                    <li>Last successful deletion scan completed <TimestampDiffComponent
+                        endTime={this.state.lastRunSuccess.scanFinish}/>.</li> :
+                    <li>There have not been any successful deletion scan runs yet!</li>
+                }
+            </ul>
         </div>
     }
 }

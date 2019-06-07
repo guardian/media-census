@@ -11,18 +11,31 @@ describe("CurrentStateStats", ()=>{
         const rendered = shallow(<CurrentStateStats/>);
 
         return moxios.wait(()=>{
-            const request = moxios.requests.mostRecent();
-
+            const unattachedRequest = moxios.requests.at(0);
+            const censusRequest = moxios.requests.at(1);
+            const deletedRequest = moxios.requests.at(2);
             try{
-                expect(request.url).toEqual("/api/stats/unattached");
+                expect(unattachedRequest.url).toEqual("/api/stats/unattached");
+                expect(censusRequest.url).toEqual("/api/jobs/CensusScan/lastSuccess");
+                expect(deletedRequest.url).toEqual("/api/jobs/DeletedScan/lastSuccess");
             } catch (err){
                 done.fail(err);
             }
 
-            request.respondWith({
-                status: 200,
-                response: {"status": "ok", "buckets":[1.0],"values":[3573],"extraData":{"unimported":10,"unattached":20}}
-            }).then(()=> {
+            Promise.all([
+                unattachedRequest.respondWith({
+                    status: 200,
+                    response: {"status": "ok", "buckets":[1.0],"values":[3573],"extraData":{"unimported":10,"unattached":20}}
+                }),
+                censusRequest.respondWith({
+                    status: 200,
+                    response: {"status": "ok", entry: null}
+                }),
+                deletedRequest.respondWith({
+                    status: 200,
+                    response: {"status": "ok", entry: null}
+                })
+            ]).then(()=> {
                 expect(rendered.instance().state.buckets).toEqual(["Unimported", "Unattached", "1"]);
                 expect(rendered.instance().state.values).toEqual([10, 20, 3573]);
                 done();
@@ -37,18 +50,31 @@ describe("CurrentStateStats", ()=>{
         const rendered = shallow(<CurrentStateStats/>);
 
         return moxios.wait(()=>{
-            const request = moxios.requests.mostRecent();
-
+            const unattachedRequest = moxios.requests.at(0);
+            const censusRequest = moxios.requests.at(1);
+            const deletedRequest = moxios.requests.at(2);
             try{
-                expect(request.url).toEqual("/api/stats/unattached");
+                expect(unattachedRequest.url).toEqual("/api/stats/unattached");
+                expect(censusRequest.url).toEqual("/api/jobs/CensusScan/lastSuccess");
+                expect(deletedRequest.url).toEqual("/api/jobs/DeletedScan/lastSuccess");
             } catch (err){
                 done.fail(err);
             }
 
-            request.respondWith({
-                status: 200,
-                response: {"status": "ok", "buckets":[0.0, 1.0],"values":[360, 3573],"extraData":{"unimported":10,"unattached":20}}
-            }).then(()=> {
+            Promise.all([
+                unattachedRequest.respondWith({
+                    status: 200,
+                    response: {"status": "ok", "buckets":[0.0, 1.0],"values":[360, 3573],"extraData":{"unimported":10,"unattached":20}}
+                }),
+                censusRequest.respondWith({
+                    status: 200,
+                    response: {"status": "ok", entry: null}
+                }),
+                deletedRequest.respondWith({
+                    status: 200,
+                    response: {"status": "ok", entry: null}
+                })
+            ]).then(()=> {
                 expect(rendered.instance().state.buckets).toEqual(["Unimported", "Unattached", "0", "1"]);
                 expect(rendered.instance().state.values).toEqual([10, 20, 330, 3573]);
                 done();

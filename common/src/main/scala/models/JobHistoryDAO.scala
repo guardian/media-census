@@ -16,6 +16,10 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
   import com.sksamuel.elastic4s.circe._
   private val logger = LoggerFactory.getLogger(getClass)
 
+  object JobState extends Enumeration {
+    val Running,Completed,Failed = Value
+  }
+
   /**
     * save the provided entry to the index
     * @param entry [[JobHistory]] entry to save
@@ -54,14 +58,17 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     * @param startingTime ZonedDateTime representing the start time for the window. If None, then items are returned regardless
     *                     of start time
     * @param endingTime ZonedDateTime representing the ending time for the window. If not set, then defaults to "now"
-    * @return a Future, with either an error object or a List of [[JobHistory]]
+    * @return a Future, with either an error object or a Tuple of (List of [[JobHistory]], total hit count)
     */
-  def jobsForTimespan(startingTime:Option[ZonedDateTime], endingTime:ZonedDateTime=ZonedDateTime.now()) = {
+  def jobsForTimespan(startingTime:Option[ZonedDateTime], endingTime:ZonedDateTime=ZonedDateTime.now(), showRunning:Boolean) = {
     val maybeQueryList = Seq(
       startingTime.map(actualStartingTime=>
         rangeQuery("scanStart").gte(ElasticDate.fromTimestamp(actualStartingTime.toEpochSecond*1000))
       ),
-      Some(rangeQuery("scanFinish").lte(ElasticDate.fromTimestamp(endingTime.toEpochSecond*1000)))
+      showRunning match {
+        case true => Some(rangeQuery("scanFinish").lte(ElasticDate.fromTimestamp(endingTime.toEpochSecond * 1000)))
+        case false => None
+      },
     ).collect({case Some(q)=>q})
 
     val queryList = if(maybeQueryList.nonEmpty) maybeQueryList else Seq(matchAllQuery())
@@ -77,7 +84,7 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
       if(response.isError){
         Left(response.error)
       } else {
-        Right(response.result.to[JobHistory])
+        Right(response.result.to[JobHistory], response.result.totalHits)
       }
     })
   }
@@ -94,6 +101,81 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
         Right(response.result.to[JobHistory])
       }
   })
+
+  def queryJobs(maybeJobType:Option[JobType.Value], maybeJobState:Option[JobState.Value], maybeLimit:Option[Int]) = {
+    val queryDefs = Seq(
+      maybeJobType.map(jobType=>Seq(matchQuery("jobType",jobType.toString))),
+      maybeJobState.map({
+        case JobState.Completed=>Seq(existsQuery("scanFinish"), existsQuery("scanStart"), not(existsQuery("lastError")))
+        case JobState.Failed=>Seq(existsQuery("scanFinish"), existsQuery("scanStart"), not(existsQuery("lastError")))
+        case JobState.Running=>Seq(existsQuery("scanStart"), not(existsQuery("scanFinish")))
+      })
+    ).collect({case Some(defs)=>defs}).flatten
+
+    val query = maybeLimit match {
+      case Some(suppliedLimit)=>search(indexName) query boolQuery().withMust(queryDefs) limit suppliedLimit
+      case None=>search(indexName) query boolQuery().withMust(queryDefs)
+    }
+    esClient.execute { query }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.to[JobHistory])
+      }
+    })
+  }
+
+  /*FIXME: make this a bit DRYer*/
+
+  def completedJobs(maybeJobType:Option[JobType.Value], maybeLimit:Option[Int]) = {
+    val queryDefs = maybeJobType match {
+      case Some(jobType)=>matchQuery("jobType",jobType.toString)
+      case None=>matchAllQuery()
+    }
+
+    val baseQuery = search(indexName) query boolQuery().must(
+      queryDefs,
+      existsQuery("scanFinish"),
+      not(existsQuery("lastError"))
+    )
+    val finalQuery = maybeLimit match {
+      case None=>baseQuery
+      case Some(suppliedLimit)=>baseQuery limit suppliedLimit
+    }
+
+    esClient.execute { finalQuery }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.to[JobHistory])
+      }
+    })
+  }
+
+  def failedJobs(maybeJobType:Option[JobType.Value], maybeLimit:Option[Int]) = {
+    val queryDefs = maybeJobType match {
+      case Some(jobType)=>matchQuery("jobType",jobType.toString)
+      case None=>matchAllQuery()
+    }
+
+    val baseQuery = search(indexName) query boolQuery().must(
+      queryDefs,
+      existsQuery("scanFinish"),
+      existsQuery("lastError")
+    )
+    val finalQuery = maybeLimit match {
+      case None=>baseQuery
+      case Some(suppliedLimit)=>baseQuery limit suppliedLimit
+    }
+
+    esClient.execute { finalQuery }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.to[JobHistory])
+      }
+    })
+  }
 
   /**
     * retrieve the latest [[JobHistory]]

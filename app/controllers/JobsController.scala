@@ -12,7 +12,7 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 import responses.{GenericResponse, ObjectGetResponse, ObjectListResponse}
 import io.circe.generic.auto._
 import io.circe.syntax._
-import models.JobTypeEncoder
+import models.{JobType, JobTypeEncoder}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,7 +24,7 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
   private val jobsModelDAO = jobsModelDAOinj.dao
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def jobsForTimespan(start:Option[String], finish:Option[String]) = Action.async{
+  def jobsForTimespan(start:Option[String], finish:Option[String],showRunning:Boolean) = Action.async{
     try {
       val maybeStartTime = start.map(startTimeString => ZonedDateTime.parse(startTimeString))
 
@@ -33,13 +33,12 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
         case Some(finishTimeString)=>ZonedDateTime.parse(finishTimeString)
       }
 
-      jobsModelDAO.jobsForTimespan(maybeStartTime, finishTime).map({
+      jobsModelDAO.jobsForTimespan(maybeStartTime, finishTime, showRunning).map({
         case Left(err)=>
           logger.error(s"Elasticsearch lookup failed: $err")
           InternalServerError(GenericResponse("db_error", err.toString).asJson)
-        case Right(jobsList)=>
-          //FIXME: should really return "actual" count from DAO and pass it back here
-          Ok(ObjectListResponse("ok","jobsHistory", jobsList, jobsList.length).asJson)
+        case Right((jobsList, totalHitCount))=>
+          Ok(ObjectListResponse("ok","jobsHistory", jobsList, totalHitCount.toInt).asJson)
       })
     } catch {
       case err:Throwable=>
@@ -47,6 +46,7 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
         Future(InternalServerError(GenericResponse("error", err.toString).asJson))
     }
   }
+
 
   def jobDetail(idString:String) = Action.async {
     val maybeUUID = Try { UUID.fromString(idString) }
@@ -68,13 +68,30 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
   }
 
   def runningJobs = Action.async {
-    jobsModelDAO.runningJobs.map({
+    jobsModelDAO.queryJobs(None,Some(jobsModelDAO.JobState.Running),None).map({
       case Left(err)=>
         logger.error(s"Could not list currently running jobs: $err")
         InternalServerError(GenericResponse("db_error", err.toString).asJson)
       case Right(resultSeq)=>
         Ok(ObjectListResponse("ok","jobHistory", resultSeq, resultSeq.length).asJson)
     })
+  }
+
+  def lastSuccessfulJob(jobType:String) = Action.async {
+    Try { JobType.withName(jobType) } match {
+      case Success(jobTypeValue) =>
+        jobsModelDAO.queryJobs(Some(jobTypeValue),Some(jobsModelDAO.JobState.Completed), Some(1)).map({
+          case Left(err) =>
+            logger.error(s"Could not find most recent job: $err")
+            InternalServerError(GenericResponse("db_error", err.toString).asJson)
+          case Right(resultSeq) =>
+            //works better in the frontend to present as a 200 rather than a 404
+            Ok(ObjectGetResponse("ok", "jobHistory", resultSeq.headOption).asJson)
+        })
+      case Failure(exception) =>
+        logger.error(s"Could not convert $jobType into a JobType enum value", exception)
+        Future(BadRequest(GenericResponse("bad_request", s"$jobType is not a valid job type").asJson))
+    }
   }
 
   def manualDelete(idString:String) = Action.async {

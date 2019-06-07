@@ -6,8 +6,13 @@ class TimestampDiffComponent extends React.Component {
     static propTypes = {
         startTime: PropTypes.string.isRequired,
         endTime: PropTypes.string,
-        formatString: PropTypes.string
+        formatString: PropTypes.string,
+        prefix: PropTypes.bool
     };
+
+    choppedTimestamp(momentResult){
+        return momentResult.replace(/^in\s*/,"");
+    }
 
     render(){
         const formatToUse = this.props.formatString ? this.props.formatString : "";
@@ -15,7 +20,9 @@ class TimestampDiffComponent extends React.Component {
         const endMoment = this.props.endTime ? moment(this.props.endTime) : moment();
 
         const out = endMoment.from(startMoment);
-        return <span className="timestamp">{out}</span>
+
+        const formatted = this.props.prefix ? out : this.choppedTimestamp(out.toString());
+        return <span className="timestamp">{formatted}</span>
     }
 }
 

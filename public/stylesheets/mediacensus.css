@@ -154,10 +154,10 @@ div.inprogress-container {
 }
 
 div.current-stats-container {
-    float: left;
-    display:inline-block;
-    width: 50%;
-    overflow: hidden;
+    margin-left: auto;
+    margin-right: auto;
+    display:block;
+    width: 50vw;
     height: 260px
 }
 
@@ -165,6 +165,17 @@ div.container {
     overflow: hidden;
     width: 100%;
     height: 80vw;
+}
+
+.spin {
+    -webkit-transition-duration: 0.6s;
+    -moz-transition-duration: 0.6s;
+    -ms-transition-duration: 0.6s;
+    -o-transition-duration: 0.6s;
+    transition-duration: 0.6s;
+    -webkit-animation:spin 1s linear infinite;
+    -moz-animation:spin 1s linear infinite;
+    animation:spin 1s linear infinite;
 }
 
 .clickable-inline {
@@ -189,4 +200,21 @@ div.container {
 ul.no-bullets {
     list-style: none;
     padding-left: 0;
+}
+
+.banner-menu {
+    list-style: none;
+    overflow: hidden;
+    margin-left:auto;
+    width: 33vw;
+    margin-right:auto;
+}
+
+.banner-menu-item {
+    display: inline;
+    margin-right: 1em;
+}
+
+.banner-menu-icon {
+    margin-right: 0.2em;
 }
