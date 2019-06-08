@@ -7,6 +7,11 @@ import {Scatter} from 'react-chartjs-2';
 import RefreshButton from "./common/RefreshButton.jsx";
 import moment from 'moment';
 
+//see https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 class StatsHistoryGraph extends React.Component {
     constructor(props){
         super(props);
@@ -105,6 +110,24 @@ class StatsHistoryGraph extends React.Component {
                             tension: 0
                         }
                     },
+                    tooltips: {
+                        callbacks: {
+                            label: (tooltipItem, data)=>{
+                                console.log(tooltipItem);
+                                console.log(data);
+                                let xLabel,yLabel;
+
+                                if(tooltipItem.xLabel){
+                                    xLabel = moment(tooltipItem.xLabel*1000).format('dd Do HH:mm');
+                                    yLabel = tooltipItem.yLabel ? numberWithCommas(tooltipItem.yLabel) : data.datasets[tooltipItem.datasetIndex].label;
+                                } else {
+                                    xLabel=tooltipItem.xLabel;
+                                    yLabel = data.datasets[tooltipItem.datasetIndex].label;
+                                }
+                                return xLabel + ": " + yLabel;
+                            }
+                        }
+                    },
                     title: {
                         display: true,
                         text: "Media State History",
@@ -121,7 +144,10 @@ class StatsHistoryGraph extends React.Component {
                         xAxes: [{
                             labelString: "Date",
                             ticks: {
-                                callback: (value,index,series)=>moment(value).format("dd Do MMM HH:mm:ss")
+
+                                callback: (value,index,series)=>{
+                                    return moment(value*1000).format("dd Do MMM HH:mm:ss")
+                                }
                             },
                             stacked: false
                         }]
