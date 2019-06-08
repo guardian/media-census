@@ -77,19 +77,22 @@ class StatsHistoryGraph extends React.Component {
                         labels: this.state.facetData.map(entry=>entry.label),
                         datasets: [{
                             label: "No backups",
-                            backgroundColor: "#FF0000",
+                            backgroundColor: "#FF000088",
+                            borderColor: "#FF0000",
                             showLine: true,
                             fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.noBackupsCount}})
                         },{
                             label: "Partial backups",
-                            backgroundColor: "#0000FF",
+                            backgroundColor: "#0000FF88",
+                            borderColor: "#0000FF",
                             showLine: true,
                             fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.partialBackupsCount}})
                         }, {
                             label: "Full backups",
-                            backgroundColor: "#00FF00",
+                            backgroundColor: "#00FF0088",
+                            borderColor: "#00FF00",
                             showLine: true,
                             fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.fullBackupsCount}})
@@ -97,6 +100,11 @@ class StatsHistoryGraph extends React.Component {
 
                 }}
                 options={{
+                    elements: {
+                        line: {
+                            tension: 0
+                        }
+                    },
                     title: {
                         display: true,
                         text: "Media State History",
@@ -114,7 +122,8 @@ class StatsHistoryGraph extends React.Component {
                             labelString: "Date",
                             ticks: {
                                 callback: (value,index,series)=>moment(value).format("dd Do MMM HH:mm:ss")
-                            }
+                            },
+                            stacked: false
                         }]
                     },
                     legend: {
