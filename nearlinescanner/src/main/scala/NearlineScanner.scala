@@ -42,7 +42,7 @@ object NearlineScanner {
 
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus-nearline")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
-  lazy val indexer = new VSFileIndexer(indexName)
+  lazy val indexer = new VSFileIndexer(indexName, batchSize = 200)
 
   def buildStream(esClient:ElasticClient, storageId:String) = {
     val counterSink = Sink.fold[Int, VSFile](0)((acc,elem)=>acc+1)
