@@ -30,7 +30,10 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
   def aggregateByStateAndStorage(esClient:ElasticClient) = esClient.execute {
     search(indexName) aggregations {
       termsAgg("storage","storage.keyword")
-        .subAggregations(termsAgg("state","state.keyword").subAggregations(sumAgg("totalSize","size")))
+        .subAggregations(
+          sumAgg("totalSize","size"),
+          termsAgg("state","state.keyword").subAggregations(sumAgg("size","size"))
+        )
 
     }
   }.map(result=>{
