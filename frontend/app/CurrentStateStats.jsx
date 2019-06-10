@@ -172,6 +172,15 @@ class CurrentStateStats extends React.Component {
 
             />
             </div>
+            <div>
+                <select value={this.state.mode} onChange={evt=>{
+                    console.log("New value", parseInt(evt.target.value));
+                    this.setState({mode: parseInt(evt.target.value)})
+                }}>
+                    <option value={CurrentStateStats.SIZE_MODE}>View total data size</option>
+                    <option value={CurrentStateStats.COUNT_MODE}>View file count</option>
+                </select>
+            </div>
             <ul className="current-stats-bulletpoints">
                 {this.state.lastRunSuccess ?
                     <li>Last successful census scan completed <TimestampDiffComponent

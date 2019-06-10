@@ -75,13 +75,8 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
           entry("doc_count").asInstanceOf[Int].toLong,
           entry("totalSize").asInstanceOf[Map[String,Any]]("value").asInstanceOf[Double].toLong
         )))
-//        Right((
-//          keyData.map(entry=>entry("key").asInstanceOf[Double]),
-//          keyData.map(entry=>entry("doc_count").asInstanceOf[Int]),
-//          keyData.map(entry=>entry("totalSize").asInstanceOf[Map[String,Long]]("value"))
-//        ))
       }
-    })//.map(_.map(tuples=>tuples._1.zip(tuples._2).toMap))
+    })
 
   /**
     * get the total count of files that exist in VS but are not attached to items
