@@ -246,7 +246,8 @@ object CronScanner extends ZonedDateTimeEncoder {
           case Success(Left(errs))=>
             complete_run(1,Some(errs.mkString("; ")),Some(runInfo))
           case Success(Right(updatedJH))=>
-            complete_run(0,None,Some(updatedJH))
+            val finalJH = updatedJH.copy(itemsCounted = resultCount)
+            complete_run(0,None,Some(finalJH))
         })
 
       case Success(Left(err))=>

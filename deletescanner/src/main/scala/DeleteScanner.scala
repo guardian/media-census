@@ -150,12 +150,12 @@ object DeleteScanner extends ZonedDateTimeEncoder {
 
     val runInfo = JobHistory.newRun(JobType.DeletedScan)
 
-    val resultFuture = jobHistoryDAO.put(runInfo).map({
+    val resultFuture = jobHistoryDAO.put(runInfo).flatMap({
       case Right(_)=>
         logger.info(s"Saved run info ${runInfo.toString}")
         RunnableGraph.fromGraph(buildStream(esClient)).run().map(resultCount=>Right(resultCount))
       case Left(err)=>
-        Left(err)
+        Future(Left(err))
       })
 
     resultFuture.onComplete({
@@ -168,7 +168,8 @@ object DeleteScanner extends ZonedDateTimeEncoder {
           case Success(Left(errs))=>
             complete_run(1,Some(errs.mkString("; ")),Some(runInfo))
           case Success(Right(updatedJH))=>
-            complete_run(0,None,Some(updatedJH))
+            val finalJH = updatedJH.copy(itemsCounted=resultCount)
+            complete_run(0,None,Some(finalJH))
         })
 
       case Success(Left(err))=>
