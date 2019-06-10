@@ -44,8 +44,7 @@ class AssetSweeperDeletedSource(config:DatabaseConfiguration, startAt:Option[Lon
           while(resultSet.next()){
             AssetSweeperFile.fromDeletionTableResultSet(resultSet) match {
               case Failure(err)=>
-                logger.error("Could not marshal result set into object: ", err)
-                failStage(err)
+                logger.error("Could not marshal result set into object; this entry will be dropped: ", err)
               case Success(assetSweeperFile)=>
                 processingQueue ++= Seq(assetSweeperFile)
             }
@@ -55,6 +54,7 @@ class AssetSweeperDeletedSource(config:DatabaseConfiguration, startAt:Option[Lon
           case Some(nextElem)=>
             processingQueue = processingQueue.tail
             lastProcessed+=1
+            logger.debug(s"Outputting $nextElem")
             push(out, nextElem)
           case None=>
             logger.info(s"Rendered all items")

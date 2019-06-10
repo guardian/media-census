@@ -29,11 +29,28 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
 
     Sink.fromSubscriber(client.subscriber[AssetSweeperFile](batchSize, concurrentBatches))
   }
+
   def checkIndex(client:ElasticClient) = {
     client.execute {
       indexExists(indexName)
     }
   }
+
+  /**
+    * checks if the given entry exists in the index.
+    * @param esClient elastic client
+    * @param entryId entry to look for
+    * @return a Future, with either an error object or a Boolean indicating whether the entry exists or not
+    */
+  def doesEntryExist(esClient:ElasticClient, entryId:String) = esClient.execute {
+    get(indexName,"censusentry",entryId)
+  }.map(response=>{
+    if(response.isError){
+      Left(response.error)
+    } else {
+      Right(response.result.found)
+    }
+  })
 
   def getReplicaStats(esClient:ElasticClient) =
     esClient.execute {
