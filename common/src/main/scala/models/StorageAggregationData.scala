@@ -2,7 +2,7 @@ package models
 
 import scala.util.{Failure, Success, Try}
 
-case class StorageAggregationData(storage:String, states:Seq[StateAggregationData])
+case class StorageAggregationData(storage:String, totalHits:Int, states:Seq[StateAggregationData])
 
 case class StateAggregationData(state:String, count:Int, totalSize:Double)
 
@@ -24,7 +24,7 @@ object StorageAggregationData {
   }
 
   def entryForElement(elem: Map[String, Any]) =
-    subEntriesForElement(elem("state").asInstanceOf[Map[String,Any]]).map(elems=>StorageAggregationData(elem("key").asInstanceOf[String], elems))
+    subEntriesForElement(elem("state").asInstanceOf[Map[String,Any]]).map(elems=>StorageAggregationData(elem("key").asInstanceOf[String], elem("doc_count").asInstanceOf[Int], elems))
 
   def fromRawAggregateMap(data:Map[String,Any]):Try[Seq[StorageAggregationData]] = Try {
     val bucketsData = data("buckets").asInstanceOf[List[Map[String,Any]]]
