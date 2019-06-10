@@ -34,6 +34,8 @@ class StatsHistoryGraph extends React.Component {
         return values;
     }
 
+    static colourValues = StatsHistoryGraph.makeColourValues(5, 10);
+
     componentWillMount() {
         this.reload();
     }
@@ -82,22 +84,36 @@ class StatsHistoryGraph extends React.Component {
                         labels: this.state.facetData.map(entry=>entry.label),
                         datasets: [{
                             label: "No backups",
-                            backgroundColor: "#FF000088",
-                            borderColor: "#FF0000",
+                            backgroundColor: StatsHistoryGraph.colourValues[0],
+                            borderColor: StatsHistoryGraph.colourValues[0],
                             showLine: true,
                             fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.noBackupsCount}})
                         },{
+                            label: "Unimported",
+                            backgroundColor: StatsHistoryGraph.colourValues[1],
+                            borderColor: StatsHistoryGraph.colourValues[1],
+                            showLine: true,
+                            fill: true,
+                            data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.unimportedCount}})
+                        },{
+                            label: "Unattached",
+                            backgroundColor: StatsHistoryGraph.colourValues[2],
+                            borderColor: StatsHistoryGraph.colourValues[2],
+                            showLine: true,
+                            fill: true,
+                            data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.unattachedCount}})
+                        },{
                             label: "Partial backups",
-                            backgroundColor: "#0000FF88",
-                            borderColor: "#0000FF",
+                            backgroundColor: StatsHistoryGraph.colourValues[3],
+                            borderColor: StatsHistoryGraph.colourValues[3],
                             showLine: true,
                             fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.partialBackupsCount}})
                         }, {
                             label: "Full backups",
-                            backgroundColor: "#00FF0088",
-                            borderColor: "#00FF00",
+                            backgroundColor: StatsHistoryGraph.colourValues[4],
+                            borderColor: StatsHistoryGraph.colourValues[4],
                             showLine: true,
                             fill: true,
                             data: this.state.facetData.map(entry=>{return {x: entry.epoch, y: entry.fullBackupsCount}})
