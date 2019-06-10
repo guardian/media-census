@@ -16,6 +16,7 @@
     <logger name="streamComponents.PeriodicUpdate" level="INFO"/>
     <logger name="streamComponents.AssetSweeperDeletedSource" level="INFO"/>
 
+    <logger name="models.VSFileIndexer" level="DEBUG"/>
     <logger name="nlstreamcomponents" level="DEBUG"/>
     <logger name="vidispine.VSCommunicator" level="DEBUG"/>
     <root level="INFO">

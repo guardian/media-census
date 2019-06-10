@@ -20,7 +20,7 @@ lazy val commonSettings = Seq(
 
 lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerPlugin, AshScriptPlugin)
   .dependsOn(common)
-  .aggregate(cronscanner, deletescanner)
+  .aggregate(cronscanner, deletescanner, nearlinescanner)
   .settings(version := sys.props.getOrElse("build.number","DEV"),
     dockerPermissionStrategy := DockerPermissionStrategy.Run,
     daemonUserUid in Docker := None,
