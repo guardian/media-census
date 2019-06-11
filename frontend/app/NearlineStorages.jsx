@@ -46,9 +46,9 @@ class NearlineStorages extends React.Component {
                 }
 
                 if(updatedSizePoints.hasOwnProperty(storageState.state)) {
-                    updatedSizePoints[storageState.state] = updatedSizePoints[storageState.state].concat(storageState.totalSize);
+                    updatedSizePoints[storageState.state] = storageState.totalSize < 0 ? updatedSizePoints[storageState.state].concat(0) : updatedSizePoints[storageState.state].concat(storageState.totalSize);
                 } else {
-                    updatedSizePoints[storageState.state] = [storageState.totalSize];
+                    updatedSizePoints[storageState.state] = storageState.totalSize < 0 ? [0] : [storageState.totalSize];
                 }
 
             })
@@ -58,8 +58,10 @@ class NearlineStorages extends React.Component {
     }
 
     refresh(){
+        const fakeData = [{"storage":"VX-9","totalHits":373898,"totalSize":4.8691372696001E13,"states":[{"state":"CLOSED","count":373785,"totalSize":4.8624112814985E13},{"state":"UNKNOWN","count":62,"totalSize":5.7356821052E10},{"state":"LOST","count":44,"totalSize":-44.0},{"state":"BEING_READ","count":7,"totalSize":9.903060008E9}]},{"storage":"VX-4","totalHits":373741,"totalSize":6.226085412042E13,"states":[{"state":"CLOSED","count":373537,"totalSize":6.2097650958378E13},{"state":"UNKNOWN","count":108,"totalSize":1.46351189045E11},{"state":"LOST","count":89,"totalSize":1389345.0},{"state":"BEING_READ","count":7,"totalSize":1.6850583652E10}]}];
+
         this.setState({loading: true}, ()=>axios.get("/api/nearline/currentState").then(response=>{
-            this.setState({loading: false, storageData: response.data}, ()=>this.processData());
+            this.setState({loading: false, storageData: fakeData}, ()=>this.processData());
         }).catch(err=>{
             this.setState({loading: false, lastError: err})
         }))
@@ -108,12 +110,16 @@ class NearlineStorages extends React.Component {
                                display: true,
                                labelString: "Size"
                            },
+                            stacked: true,
                             ticks: {
                                callback: (value,index,series)=>{
                                    const result = BytesFormatterImplementation.getValueAndSuffix(value);
                                    return result[0] + result[1];
                                }
                             }
+                        }],
+                        xAxes: [{
+                            stacked: true,
                         }]
                     },
                     legend: {
