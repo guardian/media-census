@@ -7,6 +7,7 @@ class BannerMenu extends React.Component {
         return <ul className="banner-menu">
             <li className="banner-menu-item"><Link to="/current"><FontAwesomeIcon icon="list-alt" className="banner-menu-icon"/>Current State</Link></li>
             <li className="banner-menu-item"><Link to="/history"><FontAwesomeIcon icon="history" className="banner-menu-icon"/>State History</Link></li>
+            <li className="banner-menu-item"><Link to="/nearlines"><FontAwesomeIcon icon="warehouse" className="banner-menu-icon"/>Nearlines</Link></li>
             <li className="banner-menu-item"><Link to="/runs"><FontAwesomeIcon icon="ruler" className="banner-menu-icon"/>Runs admin</Link></li>
         </ul>
     }
