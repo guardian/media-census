@@ -28,7 +28,7 @@ class DeletionFilter(config:DatabaseConfiguration, esClient:ElasticClient) exten
         val elem = grab(in)
 
         val stmt = connection.createStatement()
-        val stmtSource = s"SELECT id FROM deleted_files WHERE filepath='${elem.originalSource.filepath}' and filename=${elem.originalSource.filename}"
+        val stmtSource = s"SELECT id FROM deleted_files WHERE filepath='${elem.originalSource.filepath}' and filename='${elem.originalSource.filename}'"
         logger.debug(stmtSource)
         val resultSet = stmt.executeQuery(stmtSource)
 
