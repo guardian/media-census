@@ -1,0 +1,1675 @@
+15:51:32,442 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
+15:51:32,442 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.groovy]
+15:51:32,442 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Found resource [logback.xml] at [jar:file:/opt/docker/lib/common.common-1.0.jar!/logback.xml]
+15:51:32,477 |-INFO in ch.qos.logback.core.joran.spi.ConfigurationWatchList@4d95d2a2 - URL [jar:file:/opt/docker/lib/common.common-1.0.jar!/logback.xml] is not of type file
+15:51:32,626 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - debug attribute not set
+15:51:32,627 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - About to instantiate appender of type [ch.qos.logback.core.ConsoleAppender]
+15:51:32,646 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - Naming appender as [STDOUT]
+15:51:32,653 |-INFO in ch.qos.logback.core.joran.action.NestedComplexPropertyIA - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+15:51:32,720 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - About to instantiate appender of type [ch.qos.logback.classic.AsyncAppender]
+15:51:32,723 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - Naming appender as [ASYNCSTDOUT]
+15:51:32,723 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [STDOUT] to ch.qos.logback.classic.AsyncAppender[ASYNCSTDOUT]
+15:51:32,723 |-INFO in ch.qos.logback.classic.AsyncAppender[ASYNCSTDOUT] - Attaching appender named [STDOUT] to AsyncAppender.
+15:51:32,724 |-INFO in ch.qos.logback.classic.AsyncAppender[ASYNCSTDOUT] - Setting discardingThreshold to 51
+15:51:32,725 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting level of logger [streamComponents] to DEBUG
+15:51:32,725 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting level of logger [streamComponents.VSFileSwitch] to WARN
+15:51:32,725 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting level of logger [controllers.TestStreamController] to DEBUG
+15:51:32,725 |-INFO in ch.qos.logback.classic.joran.action.RootLoggerAction - Setting level of ROOT logger to INFO
+15:51:32,726 |-ERROR in ch.qos.logback.core.joran.action.AppenderRefAction - Could not find an appender named [ASYNCFILE]. Did you define it below instead of above in the configuration file?
+15:51:32,726 |-ERROR in ch.qos.logback.core.joran.action.AppenderRefAction - See http://logback.qos.ch/codes.html#appender_order for more details.
+15:51:32,726 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [ASYNCSTDOUT] to Logger[ROOT]
+15:51:32,726 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - End of configuration.
+15:51:32,731 |-INFO in ch.qos.logback.classic.joran.JoranConfigurator@53f65459 - Registering current configuration as safe fallback point
+
+[WARN] [05/31/2019 15:51:34.119] [main] [ManifestInfo(akka://CronScanner)] Detected possible incompatible versions on the classpath. Please note that a given Akka HTTP version MUST be the same across all modules of Akka HTTP that you are using, e.g. if you use [10.1.8] all other modules that are released together MUST be of the same version. Make sure you're using a compatible set of libraries. Possibly conflicting versions [10.1.8, 10.0.10] in libraries [akka-parsing:10.1.8, akka-http:10.0.10, akka-http-core:10.1.8]
+2019-05-31 15:51:40,985 [INFO] from streamComponents.AssetSweeperFilesSource$$anon$2 in CronScanner-akka.actor.default-dispatcher-2 - Established connection to asset sweeper db
+2019-05-31 15:51:40,994 [DEBUG] from streamComponents.AssetSweeperFilesSource$$anon$2 in CronScanner-akka.actor.default-dispatcher-2 - SELECT * FROM files OFFSET 0 LIMIT 20
+2019-05-31 15:51:41,019 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS BASS.mp3)
+2019-05-31 15:51:41,219 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-77,0,original,audio/mpeg,List(VSFile(VX-780,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20BASS.mp3,CLOSED,3674945,Some(6cf111d95b8f17986dc9f385d00113ea72cf746c),2019-05-21T12:22:50.081+01:00,1,VX-2,Some(Map(created -> 1527155140122, mtime -> 1527155140122)),None))))) for shape list enquiry
+2019-05-31 15:51:41,222 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-780,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20BASS.mp3,CLOSED,3674945,Some(6cf111d95b8f17986dc9f385d00113ea72cf746c),2019-05-21T12:22:50.081+01:00,1,VX-2,Some(Map(created -> 1527155140122, mtime -> 1527155140122)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS BASS.mp3)
+2019-05-31 15:51:41,225 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests.MP4)
+2019-05-31 15:51:41,356 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-221,0,original,video/mp4,List(VSFile(VX-1229,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests.MP4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark%20protests.MP4,CLOSED,157446593,Some(973264a6225e682ad8cc0cf089afe439391471ea),2019-05-21T12:23:10.456+01:00,1,VX-2,Some(Map(created -> 1533153884418, mtime -> 1533153884418)),None))))) for shape list enquiry
+2019-05-31 15:51:41,356 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-1229,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests.MP4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark%20protests.MP4,CLOSED,157446593,Some(973264a6225e682ad8cc0cf089afe439391471ea),2019-05-21T12:23:10.456+01:00,1,VX-2,Some(Map(created -> 1533153884418, mtime -> 1533153884418)),None)) for Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests.MP4)
+2019-05-31 15:51:41,356 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff)
+2019-05-31 15:51:41,525 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-30,0,original,audio/x-aiff,List(VSFile(VX-759,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff,CLOSED,25702410,Some(4dda17c0df5acc987c328ef10d10d2b59abed173),2019-05-21T12:22:49.902+01:00,1,VX-2,Some(Map(created -> 1507212270249, mtime -> 1507212270249)),None))))) for shape list enquiry
+2019-05-31 15:51:41,525 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-759,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff,CLOSED,25702410,Some(4dda17c0df5acc987c328ef10d10d2b59abed173),2019-05-21T12:22:49.902+01:00,1,VX-2,Some(Map(created -> 1507212270249, mtime -> 1507212270249)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff)
+2019-05-31 15:51:41,526 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS MELODY.mp3)
+2019-05-31 15:51:41,694 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-61,0,original,audio/mpeg,List(VSFile(VX-783,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS MELODY.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20MELODY.mp3,CLOSED,3674944,Some(1d41f354a54cab0692bf383945563ba967db3a37),2019-05-21T12:22:50.121+01:00,1,VX-2,Some(Map(created -> 1527103465970, mtime -> 1527103465970)),None))))) for shape list enquiry
+2019-05-31 15:51:41,694 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-783,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS MELODY.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20MELODY.mp3,CLOSED,3674944,Some(1d41f354a54cab0692bf383945563ba967db3a37),2019-05-21T12:22:50.121+01:00,1,VX-2,Some(Map(created -> 1527103465970, mtime -> 1527103465970)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS MELODY.mp3)
+2019-05-31 15:51:41,694 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip/Clip0057M01.XML)
+2019-05-31 15:51:41,829 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-531,0,original,application/xml,List()))) for shape list enquiry
+2019-05-31 15:51:41,830 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip/Clip0057M01.XML)
+2019-05-31 15:51:41,831 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS DRUMS.mp3)
+2019-05-31 15:51:41,984 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-65,0,original,audio/mpeg,List(VSFile(VX-781,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS DRUMS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20DRUMS.mp3,CLOSED,3674945,Some(dc9362dcf463043975b09d9da86ee24963ef5d8c),2019-05-21T12:22:50.087+01:00,1,VX-2,Some(Map(created -> 1527103462518, mtime -> 1527103462518)),None))))) for shape list enquiry
+2019-05-31 15:51:41,984 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-781,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS DRUMS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20DRUMS.mp3,CLOSED,3674945,Some(dc9362dcf463043975b09d9da86ee24963ef5d8c),2019-05-21T12:22:50.087+01:00,1,VX-2,Some(Map(created -> 1527103462518, mtime -> 1527103462518)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS DRUMS.mp3)
+2019-05-31 15:51:41,985 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS MELODY.mp3)
+2019-05-31 15:51:42,146 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-93,0,original,audio/mpeg,List(VSFile(VX-769,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS MELODY.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20MELODY.mp3,CLOSED,6160145,Some(1e46d65f8d404f3f5b1423c7f905375fcb742705),2019-05-21T12:22:49.998+01:00,1,VX-2,Some(Map(created -> 1527098666210, mtime -> 1527098666210)),None))))) for shape list enquiry
+2019-05-31 15:51:42,146 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-769,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS MELODY.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20MELODY.mp3,CLOSED,6160145,Some(1e46d65f8d404f3f5b1423c7f905375fcb742705),2019-05-21T12:22:49.998+01:00,1,VX-2,Some(Map(created -> 1527098666210, mtime -> 1527098666210)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS MELODY.mp3)
+2019-05-31 15:51:42,146 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS DRUMS.mp3)
+2019-05-31 15:51:42,354 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-15 - Got List(Right(VSShape(VX-90,0,original,audio/mpeg,List(VSFile(VX-766,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS DRUMS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20DRUMS.mp3,CLOSED,6160144,Some(31e1c5f98f9dd6090d9275f3d1b82a6f030eca6a),2019-05-21T12:22:49.963+01:00,1,VX-2,Some(Map(created -> 1527098666182, mtime -> 1527098666182)),None))))) for shape list enquiry
+2019-05-31 15:51:42,354 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-15 - Found replicas list List(VSFile(VX-766,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS DRUMS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20DRUMS.mp3,CLOSED,6160144,Some(31e1c5f98f9dd6090d9275f3d1b82a6f030eca6a),2019-05-21T12:22:49.963+01:00,1,VX-2,Some(Map(created -> 1527098666182, mtime -> 1527098666182)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS DRUMS.mp3)
+2019-05-31 15:51:42,355 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff)
+2019-05-31 15:51:42,539 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-40,0,original,audio/x-aiff,List(VSFile(VX-761,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff,CLOSED,27269558,Some(755cb6ac32445a3a39d169fc10c34c2527b506d1),2019-05-21T12:22:49.915+01:00,1,VX-2,Some(Map(created -> 1507212271293, mtime -> 1507212271293)),None))))) for shape list enquiry
+2019-05-31 15:51:42,540 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-761,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff,CLOSED,27269558,Some(755cb6ac32445a3a39d169fc10c34c2527b506d1),2019-05-21T12:22:49.915+01:00,1,VX-2,Some(Map(created -> 1507212271293, mtime -> 1507212271293)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff)
+2019-05-31 15:51:42,541 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-4 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:42,725 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-95,0,original,audio/mpeg,List(VSFile(VX-768,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20INSTRUMENTS.mp3,CLOSED,6160150,Some(123797fd2dda90f647537b96535049f8f9b7dd70),2019-05-21T12:22:49.991+01:00,1,VX-2,Some(Map(created -> 1527098667225, mtime -> 1527098667225)),None))))) for shape list enquiry
+2019-05-31 15:51:42,725 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-768,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20INSTRUMENTS.mp3,CLOSED,6160150,Some(123797fd2dda90f647537b96535049f8f9b7dd70),2019-05-21T12:22:49.991+01:00,1,VX-2,Some(Map(created -> 1527098667225, mtime -> 1527098667225)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:42,726 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-17 - Found item on storage Some(VX-2) at relative path Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim - 3154 tear gas.MP4)
+2019-05-31 15:51:42,883 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-15 - Got List(Right(VSShape(VX-225,0,original,video/mp4,List(VSFile(VX-1238,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim - 3154 tear gas.MP4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim%20-%203154%20tear%20gas.MP4,CLOSED,118960822,Some(635718d7234993be7aa0045ef1e82ae4b9ad7e87),2019-05-21T12:23:10.497+01:00,1,VX-2,Some(Map(created -> 1533145216581, mtime -> 1533145216581)),None))))) for shape list enquiry
+2019-05-31 15:51:42,884 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-15 - Found replicas list List(VSFile(VX-1238,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim - 3154 tear gas.MP4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim%20-%203154%20tear%20gas.MP4,CLOSED,118960822,Some(635718d7234993be7aa0045ef1e82ae4b9ad7e87),2019-05-21T12:23:10.497+01:00,1,VX-2,Some(Map(created -> 1533145216581, mtime -> 1533145216581)),None)) for Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim - 3154 tear gas.MP4)
+2019-05-31 15:51:42,885 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff)
+2019-05-31 15:51:43,066 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-48,0,original,audio/x-aiff,List(VSFile(VX-760,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff,CLOSED,28517524,Some(659fd61bbeed04dfab3e35e9bf7ef56cbc18b69d),2019-05-21T12:22:49.905+01:00,1,VX-2,Some(Map(created -> 1507212270255, mtime -> 1507212270255)),None))))) for shape list enquiry
+2019-05-31 15:51:43,066 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-760,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff,CLOSED,28517524,Some(659fd61bbeed04dfab3e35e9bf7ef56cbc18b69d),2019-05-21T12:22:49.905+01:00,1,VX-2,Some(Map(created -> 1507212270255, mtime -> 1507212270255)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff)
+2019-05-31 15:51:43,068 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-17 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This Old Soil 5 - Gunnar Johnsén/ES_This Old Soil 5 STEMS BASS.mp3)
+2019-05-31 15:51:43,237 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-105,0,original,audio/mpeg,List(VSFile(VX-775,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This Old Soil 5 - Gunnar Johnsén/ES_This Old Soil 5 STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This%20Old%20Soil%205%20-%20Gunnar%20Johnsén/ES_This%20Old%20Soil%205%20STEMS%20BASS.mp3,CLOSED,5744027,Some(353e7e8cc12154ce9443001a29482e0923a85e86),2019-05-21T12:22:50.039+01:00,1,VX-2,Some(Map(created -> 1527089798973, mtime -> 1527089798973)),None))))) for shape list enquiry
+2019-05-31 15:51:43,237 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-775,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This Old Soil 5 - Gunnar Johnsén/ES_This Old Soil 5 STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This%20Old%20Soil%205%20-%20Gunnar%20Johnsén/ES_This%20Old%20Soil%205%20STEMS%20BASS.mp3,CLOSED,5744027,Some(353e7e8cc12154ce9443001a29482e0923a85e86),2019-05-21T12:22:50.039+01:00,1,VX-2,Some(Map(created -> 1527089798973, mtime -> 1527089798973)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This Old Soil 5 - Gunnar Johnsén/ES_This Old Soil 5 STEMS BASS.mp3)
+2019-05-31 15:51:43,238 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff)
+2019-05-31 15:51:43,405 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-42,0,original,audio/x-aiff,List(VSFile(VX-758,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff,CLOSED,18626434,Some(6578ca1aca7287ed6d308ab651b5a1a47191e2c9),2019-05-21T12:22:49.899+01:00,1,VX-2,Some(Map(created -> 1507212270243, mtime -> 1507212270243)),None))))) for shape list enquiry
+2019-05-31 15:51:43,405 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-758,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff,CLOSED,18626434,Some(6578ca1aca7287ed6d308ab651b5a1a47191e2c9),2019-05-21T12:22:49.899+01:00,1,VX-2,Some(Map(created -> 1507212270243, mtime -> 1507212270243)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff)
+2019-05-31 15:51:43,406 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0121.MXF)
+2019-05-31 15:51:43,592 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Got List(Right(VSShape(VX-813,0,original,video/x-mxf-h264-pcm_s24le,List(VSFile(VX-293,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0121.MXF,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS%20FOOTAGE/Card%202/PRIVATE/XDROOT/Clip/Clip0121.MXF,CLOSED,1653987888,Some(9a8e0802bb24ca2c45b630ff043f104987d3fa55),2019-05-21T12:23:01.832+01:00,1,VX-2,Some(Map(created -> 1506525033000, mtime -> 1506525033000)),None))))) for shape list enquiry
+2019-05-31 15:51:43,593 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Found replicas list List(VSFile(VX-293,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0121.MXF,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS%20FOOTAGE/Card%202/PRIVATE/XDROOT/Clip/Clip0121.MXF,CLOSED,1653987888,Some(9a8e0802bb24ca2c45b630ff043f104987d3fa55),2019-05-21T12:23:01.832+01:00,1,VX-2,Some(Map(created -> 1506525033000, mtime -> 1506525033000)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0121.MXF)
+2019-05-31 15:51:43,593 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-17 - Found item on storage Some(VX-2) at relative path Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish crown jewels.mp4)
+2019-05-31 15:51:43,730 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Got List(Right(VSShape(VX-226,0,original,video/mp4,List(VSFile(VX-1236,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish crown jewels.mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish%20crown%20jewels.mp4,CLOSED,183430724,Some(f3bd16ae42067708d09b42cbe4df9c48091cae5a),2019-05-21T12:23:10.476+01:00,1,VX-2,Some(Map(created -> 1533131250191, mtime -> 1533131250191)),None))))) for shape list enquiry
+2019-05-31 15:51:43,730 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Found replicas list List(VSFile(VX-1236,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish crown jewels.mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish%20crown%20jewels.mp4,CLOSED,183430724,Some(f3bd16ae42067708d09b42cbe4df9c48091cae5a),2019-05-21T12:23:10.476+01:00,1,VX-2,Some(Map(created -> 1533131250191, mtime -> 1533131250191)),None)) for Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish crown jewels.mp4)
+2019-05-31 15:51:43,730 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0213.MXF)
+2019-05-31 15:51:43,873 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-857,0,original,video/x-mxf-h264-pcm_s24le,List(VSFile(VX-328,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0213.MXF,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS%20FOOTAGE/Card%202/PRIVATE/XDROOT/Clip/Clip0213.MXF,CLOSED,155387952,Some(ca33ace98dafdb7f6081a37da50ea28c0d59461f),2019-05-21T12:23:07.747+01:00,1,VX-2,Some(Map(created -> 1506611894000, mtime -> 1506611894000)),None))))) for shape list enquiry
+2019-05-31 15:51:43,873 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-328,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0213.MXF,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS%20FOOTAGE/Card%202/PRIVATE/XDROOT/Clip/Clip0213.MXF,CLOSED,155387952,Some(ca33ace98dafdb7f6081a37da50ea28c0d59461f),2019-05-21T12:23:07.747+01:00,1,VX-2,Some(Map(created -> 1506611894000, mtime -> 1506611894000)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0213.MXF)
+2019-05-31 15:51:43,873 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-18 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0220M01.XML)
+2019-05-31 15:51:44,036 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-864,0,original,application/xml,List()))) for shape list enquiry
+2019-05-31 15:51:44,036 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0220M01.XML)
+2019-05-31 15:51:44,038 [DEBUG] from streamComponents.AssetSweeperFilesSource$$anon$2 in CronScanner-akka.actor.default-dispatcher-17 - SELECT * FROM files OFFSET 20 LIMIT 20
+2019-05-31 15:51:44,053 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-17 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS BASS.mp3)
+2019-05-31 15:51:44,223 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Got List(Right(VSShape(VX-97,0,original,audio/mpeg,List(VSFile(VX-765,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20BASS.mp3,CLOSED,6160143,Some(c6240288a1302c3addb76d6d3859b0d1927651f5),2019-05-21T12:22:49.959+01:00,1,VX-2,Some(Map(created -> 1527098666170, mtime -> 1527098666170)),None))))) for shape list enquiry
+2019-05-31 15:51:44,223 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Found replicas list List(VSFile(VX-765,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20BASS.mp3,CLOSED,6160143,Some(c6240288a1302c3addb76d6d3859b0d1927651f5),2019-05-21T12:22:49.959+01:00,1,VX-2,Some(Map(created -> 1527098666170, mtime -> 1527098666170)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS BASS.mp3)
+2019-05-31 15:51:44,223 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-2 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:44,421 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Got List(Right(VSShape(VX-88,0,original,audio/mpeg,List(VSFile(VX-763,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma%20STEMS%20INSTRUMENTS%20-%20Silver%20Maple/ES_Chasma%20STEMS%20INSTRUMENTS.mp3,CLOSED,5642195,Some(e95a52009a3b4f83fc407815097070faf9e9f902),2019-05-21T12:22:49.939+01:00,1,VX-2,Some(Map(created -> 1527072569370, mtime -> 1527072569370)),None))))) for shape list enquiry
+2019-05-31 15:51:44,421 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-34 - Found replicas list List(VSFile(VX-763,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma%20STEMS%20INSTRUMENTS%20-%20Silver%20Maple/ES_Chasma%20STEMS%20INSTRUMENTS.mp3,CLOSED,5642195,Some(e95a52009a3b4f83fc407815097070faf9e9f902),2019-05-21T12:22:49.939+01:00,1,VX-2,Some(Map(created -> 1527072569370, mtime -> 1527072569370)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:44,422 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-17 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V5-LTR.3dl)
+2019-05-31 15:51:44,540 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-14,0,original,text/plain,List()))) for shape list enquiry
+2019-05-31 15:51:44,540 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V5-LTR.3dl)
+2019-05-31 15:51:44,540 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-17 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:44,702 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-86,0,original,audio/mpeg,List(VSFile(VX-782,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20INSTRUMENTS.mp3,CLOSED,3674945,Some(5e8017e33347435f5f54f16523c9393000242803),2019-05-21T12:22:50.099+01:00,1,VX-2,Some(Map(created -> 1527103465949, mtime -> 1527103465949)),None))))) for shape list enquiry
+2019-05-31 15:51:44,702 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-782,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20INSTRUMENTS.mp3,CLOSED,3674945,Some(5e8017e33347435f5f54f16523c9393000242803),2019-05-21T12:22:50.099+01:00,1,VX-2,Some(Map(created -> 1527103465949, mtime -> 1527103465949)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:44,702 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/KP-27179 RICH.prproj)
+2019-05-31 15:51:44,805 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-26,0,original,application/x-gzip,List()))) for shape list enquiry
+2019-05-31 15:51:44,805 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/KP-27179 RICH.prproj)
+2019-05-31 15:51:44,806 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff)
+2019-05-31 15:51:44,991 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-53,0,original,audio/x-aiff,List(VSFile(VX-754,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff,CLOSED,18394240,Some(183f8ce0c76293fc2948c2f832d2f971393b5731),2019-05-21T12:22:49.858+01:00,1,VX-2,Some(Map(created -> 1507213934452, mtime -> 1507213934452)),None))))) for shape list enquiry
+2019-05-31 15:51:44,991 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-754,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff,CLOSED,18394240,Some(183f8ce0c76293fc2948c2f832d2f971393b5731),2019-05-21T12:22:49.858+01:00,1,VX-2,Some(Map(created -> 1507213934452, mtime -> 1507213934452)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff)
+2019-05-31 15:51:44,991 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip/Clip0048M01.XML)
+2019-05-31 15:51:45,104 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-532,0,original,application/xml,List()))) for shape list enquiry
+2019-05-31 15:51:45,104 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip/Clip0048M01.XML)
+2019-05-31 15:51:45,106 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-4 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS FULL.mp3)
+2019-05-31 15:51:45,271 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-59,0,original,audio/mpeg,List(VSFile(VX-762,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS FULL.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma%20STEMS%20INSTRUMENTS%20-%20Silver%20Maple/ES_Chasma%20STEMS%20FULL.mp3,CLOSED,5642177,Some(ecc6f6e489241d5ca33d4544d957aaa8e5823da6),2019-05-21T12:22:49.923+01:00,1,VX-2,Some(Map(created -> 1527072569360, mtime -> 1527072569360)),None))))) for shape list enquiry
+2019-05-31 15:51:45,271 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-762,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS FULL.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma%20STEMS%20INSTRUMENTS%20-%20Silver%20Maple/ES_Chasma%20STEMS%20FULL.mp3,CLOSED,5642177,Some(ecc6f6e489241d5ca33d4544d957aaa8e5823da6),2019-05-21T12:22:49.923+01:00,1,VX-2,Some(Map(created -> 1527072569360, mtime -> 1527072569360)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS FULL.mp3)
+2019-05-31 15:51:45,272 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-16 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS DRUMS.mp3)
+2019-05-31 15:51:45,431 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-76,0,original,audio/mpeg,List(VSFile(VX-771,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS DRUMS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20DRUMS.mp3,CLOSED,5551821,Some(11e329c3d2088aa896c73ca43a1285be2e1c6474),2019-05-21T12:22:50.011+01:00,1,VX-2,Some(Map(created -> 1527075029094, mtime -> 1527075029094)),None))))) for shape list enquiry
+2019-05-31 15:51:45,431 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-771,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS DRUMS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20DRUMS.mp3,CLOSED,5551821,Some(11e329c3d2088aa896c73ca43a1285be2e1c6474),2019-05-21T12:22:50.011+01:00,1,VX-2,Some(Map(created -> 1527075029094, mtime -> 1527075029094)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS DRUMS.mp3)
+2019-05-31 15:51:45,432 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-4 - Found item on storage Some(VX-2) at relative path Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe - Gunfire disperse.mp4)
+2019-05-31 15:51:45,597 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-219,0,original,video/mp4,List(VSFile(VX-1241,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe - Gunfire disperse.mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe%20-%20Gunfire%20disperse.mp4,CLOSED,133298677,Some(148c0ec458930f218faa6618a03ede3ebd48c2db),2019-05-21T12:23:10.524+01:00,1,VX-2,Some(Map(created -> 1533132497663, mtime -> 1533132497663)),None))))) for shape list enquiry
+2019-05-31 15:51:45,597 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-1241,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe - Gunfire disperse.mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe%20-%20Gunfire%20disperse.mp4,CLOSED,133298677,Some(148c0ec458930f218faa6618a03ede3ebd48c2db),2019-05-21T12:23:10.524+01:00,1,VX-2,Some(Map(created -> 1533132497663, mtime -> 1533132497663)),None)) for Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe - Gunfire disperse.mp4)
+2019-05-31 15:51:45,598 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-16 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff)
+2019-05-31 15:51:45,760 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-51,0,original,audio/x-aiff,List(VSFile(VX-753,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff,CLOSED,21011074,Some(499844bfb782286f08c49bfe3b0303fb15419862),2019-05-21T12:22:49.846+01:00,1,VX-2,Some(Map(created -> 1507213934446, mtime -> 1507213934446)),None))))) for shape list enquiry
+2019-05-31 15:51:45,760 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-753,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff,CLOSED,21011074,Some(499844bfb782286f08c49bfe3b0303fb15419862),2019-05-21T12:22:49.846+01:00,1,VX-2,Some(Map(created -> 1507213934446, mtime -> 1507213934446)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff)
+2019-05-31 15:51:45,760 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS MELODY.mp3)
+2019-05-31 15:51:45,961 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-39,0,original,audio/mpeg,List(VSFile(VX-773,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS MELODY.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20MELODY.mp3,CLOSED,5551822,Some(674ae0adf050759d72bf718c8e58fe962f9f1a9c),2019-05-21T12:22:50.021+01:00,1,VX-2,Some(Map(created -> 1527075029105, mtime -> 1527075029105)),None))))) for shape list enquiry
+2019-05-31 15:51:45,961 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-773,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS MELODY.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20MELODY.mp3,CLOSED,5551822,Some(674ae0adf050759d72bf718c8e58fe962f9f1a9c),2019-05-21T12:22:50.021+01:00,1,VX-2,Some(Map(created -> 1527075029105, mtime -> 1527075029105)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS MELODY.mp3)
+2019-05-31 15:51:45,962 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:46,121 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-82,0,original,audio/mpeg,List(VSFile(VX-772,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS.mp3,CLOSED,5551827,Some(e3d5f9e0183f406b39c825569a959bf72aec0eec),2019-05-21T12:22:50.014+01:00,1,VX-2,Some(Map(created -> 1527180610245, mtime -> 1527180610245)),None))))) for shape list enquiry
+2019-05-31 15:51:46,121 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-772,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS INSTRUMENTS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS.mp3,CLOSED,5551827,Some(e3d5f9e0183f406b39c825569a959bf72aec0eec),2019-05-21T12:22:50.014+01:00,1,VX-2,Some(Map(created -> 1527180610245, mtime -> 1527180610245)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS INSTRUMENTS.mp3)
+2019-05-31 15:51:46,122 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-16 - Found item on storage Some(VX-2) at relative path Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests 2 .mp4)
+2019-05-31 15:51:46,239 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-213,0,original,video/mp4,List(VSFile(VX-1228,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests 2 .mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark%20protests%202%20.mp4,CLOSED,267491123,Some(6b41a84584cb4de06fdd0430ff26dfca54c9a367),2019-05-21T12:23:10.445+01:00,1,VX-2,Some(Map(created -> 1533154745561, mtime -> 1533154745561)),None))))) for shape list enquiry
+2019-05-31 15:51:46,240 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-1228,Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests 2 .mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark%20protests%202%20.mp4,CLOSED,267491123,Some(6b41a84584cb4de06fdd0430ff26dfca54c9a367),2019-05-21T12:23:10.445+01:00,1,VX-2,Some(Map(created -> 1533154745561, mtime -> 1533154745561)),None)) for Some(Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests 2 .mp4)
+2019-05-31 15:51:46,241 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-16 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS BASS.mp3)
+2019-05-31 15:51:46,412 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-84,0,original,audio/mpeg,List(VSFile(VX-770,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20BASS.mp3,CLOSED,5551820,Some(c252b15f71a657f4346afeee2dff6c07ef92653b),2019-05-21T12:22:50.007+01:00,1,VX-2,Some(Map(created -> 1527075029082, mtime -> 1527075029082)),None))))) for shape list enquiry
+2019-05-31 15:51:46,412 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-770,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS BASS.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20BASS.mp3,CLOSED,5551820,Some(c252b15f71a657f4346afeee2dff6c07ef92653b),2019-05-21T12:22:50.007+01:00,1,VX-2,Some(Map(created -> 1527075029082, mtime -> 1527075029082)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS BASS.mp3)
+2019-05-31 15:51:46,413 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3.mp3)
+2019-05-31 15:51:46,571 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-78,0,original,audio/mpeg,List(VSFile(VX-774,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203.mp3,CLOSED,5551809,Some(c288e991ad337cfe87324596ccdf3ee53ad099c8),2019-05-21T12:22:50.034+01:00,1,VX-2,Some(Map(created -> 1527075029117, mtime -> 1527075029117)),None))))) for shape list enquiry
+2019-05-31 15:51:46,571 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-774,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3.mp3,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203.mp3,CLOSED,5551809,Some(c288e991ad337cfe87324596ccdf3ee53ad099c8),2019-05-21T12:22:50.034+01:00,1,VX-2,Some(Map(created -> 1527075029117, mtime -> 1527075029117)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3.mp3)
+2019-05-31 15:51:46,572 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff)
+2019-05-31 15:51:46,741 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-49,0,original,audio/x-aiff,List(VSFile(VX-749,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th%20oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff,CLOSED,38615148,Some(3895a4bbfb99707deb26f51c7936ffccf06d606a),2019-05-21T12:22:49.823+01:00,1,VX-2,Some(Map(created -> 1507722036807, mtime -> 1507722036807)),None))))) for shape list enquiry
+2019-05-31 15:51:46,741 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-749,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th%20oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff,CLOSED,38615148,Some(3895a4bbfb99707deb26f51c7936ffccf06d606a),2019-05-21T12:22:49.823+01:00,1,VX-2,Some(Map(created -> 1507722036807, mtime -> 1507722036807)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff)
+2019-05-31 15:51:46,741 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V3-LTR.3dl)
+2019-05-31 15:51:46,840 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-15,0,original,text/plain,List()))) for shape list enquiry
+2019-05-31 15:51:46,840 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V3-LTR.3dl)
+2019-05-31 15:51:46,841 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff)
+2019-05-31 15:51:47,004 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-23,0,original,audio/x-aiff,List(VSFile(VX-755,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff,CLOSED,27648612,Some(4a1166b4d0581d2a7bd51541297fae52c78acc2d),2019-05-21T12:22:49.867+01:00,1,VX-2,Some(Map(created -> 1507213934458, mtime -> 1507213934458)),None))))) for shape list enquiry
+2019-05-31 15:51:47,004 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List(VSFile(VX-755,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff,CLOSED,27648612,Some(4a1166b4d0581d2a7bd51541297fae52c78acc2d),2019-05-21T12:22:49.867+01:00,1,VX-2,Some(Map(created -> 1507213934458, mtime -> 1507213934458)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff)
+2019-05-31 15:51:47,005 [DEBUG] from streamComponents.AssetSweeperFilesSource$$anon$2 in CronScanner-akka.actor.default-dispatcher-18 - SELECT * FROM files OFFSET 40 LIMIT 20
+2019-05-31 15:51:47,016 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-18 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff)
+2019-05-31 15:51:47,224 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-44,0,original,audio/x-aiff,List(VSFile(VX-750,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th%20oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff,CLOSED,38615146,Some(9142ce73393427c2d41e838f16c7b30ba6fc3ac3),2019-05-21T12:22:49.832+01:00,1,VX-2,Some(Map(created -> 1507722036813, mtime -> 1507722036813)),None))))) for shape list enquiry
+2019-05-31 15:51:47,224 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-750,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th%20oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff,CLOSED,38615146,Some(9142ce73393427c2d41e838f16c7b30ba6fc3ac3),2019-05-21T12:22:49.832+01:00,1,VX-2,Some(Map(created -> 1507722036813, mtime -> 1507722036813)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff)
+2019-05-31 15:51:47,225 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-18 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4)
+2019-05-31 15:51:47,368 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-34,0,original,video/mp4,List(VSFile(VX-979,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4,CLOSED,44957096,Some(e4c1b2ec8427e9d4f2ce58091228a61657e7b819),2019-05-21T12:23:10.432+01:00,1,VX-2,Some(Map(created -> 1527066141098, mtime -> 1527066141098)),None))))) for shape list enquiry
+2019-05-31 15:51:47,368 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-979,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4,CLOSED,44957096,Some(e4c1b2ec8427e9d4f2ce58091228a61657e7b819),2019-05-21T12:23:10.432+01:00,1,VX-2,Some(Map(created -> 1527066141098, mtime -> 1527066141098)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4)
+2019-05-31 15:51:47,369 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic 2_01.wav)
+2019-05-31 15:51:47,490 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-17,0,original,audio/x-wav,List(VSFile(VX-975,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic 2_01.wav,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic%202_01.wav,CLOSED,50272450,Some(ecc8b64442d0a4f1cd6f8f41da4087ae0dcfdaea),2019-05-21T12:23:10.401+01:00,1,VX-2,Some(Map(created -> 1527179152232, mtime -> 1527179152232)),None))))) for shape list enquiry
+2019-05-31 15:51:47,490 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-975,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic 2_01.wav,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic%202_01.wav,CLOSED,50272450,Some(ecc8b64442d0a4f1cd6f8f41da4087ae0dcfdaea),2019-05-21T12:23:10.401+01:00,1,VX-2,Some(Map(created -> 1527179152232, mtime -> 1527179152232)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic 2_01.wav)
+2019-05-31 15:51:47,491 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff)
+2019-05-31 15:51:47,670 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-37,0,original,audio/x-aiff,List(VSFile(VX-756,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff,CLOSED,14766744,Some(3c5981d0df6b512cea87a3ad6e7be21106a5ff00),2019-05-21T12:22:49.882+01:00,1,VX-2,Some(Map(created -> 1507213934464, mtime -> 1507213934464)),None))))) for shape list enquiry
+2019-05-31 15:51:47,670 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-756,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff,CLOSED,14766744,Some(3c5981d0df6b512cea87a3ad6e7be21106a5ff00),2019-05-21T12:22:49.882+01:00,1,VX-2,Some(Map(created -> 1507213934464, mtime -> 1507213934464)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff)
+2019-05-31 15:51:47,671 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff)
+2019-05-31 15:51:47,831 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-24,0,original,audio/x-aiff,List(VSFile(VX-757,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff,CLOSED,23355464,Some(7f5099881000989eb3ce16f350af13abd3cb86f3),2019-05-21T12:22:49.895+01:00,1,VX-2,Some(Map(created -> 1507213934470, mtime -> 1507213934470)),None))))) for shape list enquiry
+2019-05-31 15:51:47,832 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List(VSFile(VX-757,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff,CLOSED,23355464,Some(7f5099881000989eb3ce16f350af13abd3cb86f3),2019-05-21T12:22:49.895+01:00,1,VX-2,Some(Map(created -> 1507213934470, mtime -> 1507213934470)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff)
+2019-05-31 15:51:47,833 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-18 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff)
+2019-05-31 15:51:47,981 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Got List(Right(VSShape(VX-46,0,original,audio/x-aiff,List(VSFile(VX-752,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff,CLOSED,30033554,Some(917e9e21bdbfba22356c958735a95c5004fc7b3e),2019-05-21T12:22:49.841+01:00,1,VX-2,Some(Map(created -> 1507213934440, mtime -> 1507213934440)),None))))) for shape list enquiry
+2019-05-31 15:51:47,981 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-32 - Found replicas list List(VSFile(VX-752,Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff,file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff,CLOSED,30033554,Some(917e9e21bdbfba22356c958735a95c5004fc7b3e),2019-05-21T12:22:49.841+01:00,1,VX-2,Some(Map(created -> 1507213934440, mtime -> 1507213934440)),None)) for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff)
+2019-05-31 15:51:47,981 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V1-LTR.3dl)
+2019-05-31 15:51:48,126 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Got List(Right(VSShape(VX-13,0,original,text/plain,List()))) for shape list enquiry
+2019-05-31 15:51:48,126 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-29 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V1-LTR.3dl)
+2019-05-31 15:51:48,127 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V6-LTR.3dl)
+2019-05-31 15:51:48,246 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-11,0,original,text/plain,List()))) for shape list enquiry
+2019-05-31 15:51:48,247 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V6-LTR.3dl)
+2019-05-31 15:51:48,248 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-5 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V8-LTR.3dl)
+2019-05-31 15:51:48,354 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-22,0,original,text/plain,List()))) for shape list enquiry
+2019-05-31 15:51:48,354 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V8-LTR.3dl)
+2019-05-31 15:51:48,355 [INFO] from streamComponents.KnownStorageSwitch$$anon$4 in CronScanner-akka.actor.default-dispatcher-18 - Found item on storage Some(VX-2) at relative path Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V7-LTR.3dl)
+2019-05-31 15:51:48,451 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Got List(Right(VSShape(VX-16,0,original,text/plain,List()))) for shape list enquiry
+2019-05-31 15:51:48,451 [INFO] from streamComponents.VSFindReplicas$$anon$4 in scala-execution-context-global-28 - Found replicas list List() for Some(Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V7-LTR.3dl)
+2019-05-31 15:51:48,452 [INFO] from streamComponents.AssetSweeperFilesSource$$anon$2 in CronScanner-akka.actor.default-dispatcher-5 - Processed up to limit of 50, stopping
+Final results: 
+[
+  {
+    "originalSource" : {
+      "id" : 382867292,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard",
+      "filename" : "ES_Timeline STEMS BASS.mp3",
+      "mtime" : "2018-05-24T09:45:40.12Z",
+      "ctime" : "2018-06-05T16:23:01.81Z",
+      "atime" : "2018-06-05T16:34:03.59Z",
+      "imported_id" : "VX-52",
+      "importedAt" : "2018-06-15T17:04:52.185879Z",
+      "size" : 3674945,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS BASS.mp3",
+    "vsFileId" : "VX-780",
+    "vsItemId" : "VX-52",
+    "vsShapeIds" : [
+      "VX-77"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-780",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20BASS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382868252,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2",
+      "filename" : "Denmark protests.MP4",
+      "mtime" : "2018-08-01T20:04:44.42Z",
+      "ctime" : "2018-08-02T09:52:43.8Z",
+      "atime" : "2018-08-01T20:28:52.43Z",
+      "imported_id" : "VX-163",
+      "importedAt" : "2018-08-02T11:10:14.029376Z",
+      "size" : 157446593,
+      "owner" : 1280531731,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "video/mp4",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests.MP4",
+    "vsFileId" : "VX-1229",
+    "vsItemId" : "VX-163",
+    "vsShapeIds" : [
+      "VX-221"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-1229",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark%20protests.MP4"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867275,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC",
+      "filename" : "FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff",
+      "mtime" : "2017-10-05T14:04:30.25Z",
+      "ctime" : "2018-06-05T16:23:02.86Z",
+      "atime" : "2018-06-05T16:34:01.95Z",
+      "imported_id" : "VX-30",
+      "importedAt" : "2018-06-07T17:00:45.221975Z",
+      "size" : 25702410,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff",
+    "vsFileId" : "VX-759",
+    "vsItemId" : "VX-30",
+    "vsShapeIds" : [
+      "VX-30"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-759",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO263e_4_Nonlinear_Instrumental_Elias_Trevino_967654.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867293,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard",
+      "filename" : "ES_Timeline STEMS MELODY.mp3",
+      "mtime" : "2018-05-23T19:24:25.97Z",
+      "ctime" : "2018-06-05T16:23:01.82Z",
+      "atime" : "2018-06-05T16:34:03.83Z",
+      "imported_id" : "VX-47",
+      "importedAt" : "2018-06-15T17:04:52.208637Z",
+      "size" : 3674944,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS MELODY.mp3",
+    "vsFileId" : "VX-783",
+    "vsItemId" : "VX-47",
+    "vsShapeIds" : [
+      "VX-61"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-783",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20MELODY.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867897,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip",
+      "filename" : "Clip0057M01.XML",
+      "mtime" : "2017-09-27T11:18:07Z",
+      "ctime" : "2018-06-05T16:20:57.59Z",
+      "atime" : "2018-06-05T16:39:19.26Z",
+      "imported_id" : "VX-977",
+      "importedAt" : "2018-08-02T14:41:06.927996Z",
+      "size" : 1718,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/xml",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip/Clip0057M01.XML",
+    "vsFileId" : "VX-524",
+    "vsItemId" : "VX-977",
+    "vsShapeIds" : [
+      "VX-531"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867291,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard",
+      "filename" : "ES_Timeline STEMS DRUMS.mp3",
+      "mtime" : "2018-05-23T19:24:22.52Z",
+      "ctime" : "2018-06-05T16:23:01.79Z",
+      "atime" : "2018-06-05T16:34:03.59Z",
+      "imported_id" : "VX-48",
+      "importedAt" : "2018-06-07T17:47:22.770306Z",
+      "size" : 3674945,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS DRUMS.mp3",
+    "vsFileId" : "VX-781",
+    "vsItemId" : "VX-48",
+    "vsShapeIds" : [
+      "VX-65"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-781",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20DRUMS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867282,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society",
+      "filename" : "ES_I Don't Smoke STEMS MELODY.mp3",
+      "mtime" : "2018-05-23T18:04:26.21Z",
+      "ctime" : "2018-06-05T16:23:01.48Z",
+      "atime" : "2018-06-05T16:34:02.75Z",
+      "imported_id" : "VX-45",
+      "importedAt" : "2018-06-15T18:00:03.662213Z",
+      "size" : 6160145,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS MELODY.mp3",
+    "vsFileId" : "VX-769",
+    "vsItemId" : "VX-45",
+    "vsShapeIds" : [
+      "VX-93"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-769",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20MELODY.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867285,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society",
+      "filename" : "ES_I Don't Smoke STEMS DRUMS.mp3",
+      "mtime" : "2018-05-23T18:04:26.18Z",
+      "ctime" : "2018-06-05T16:23:01.55Z",
+      "atime" : "2018-06-05T16:34:02.6Z",
+      "imported_id" : "VX-58",
+      "importedAt" : "2018-06-07T17:48:24.951687Z",
+      "size" : 6160144,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS DRUMS.mp3",
+    "vsFileId" : "VX-766",
+    "vsItemId" : "VX-58",
+    "vsShapeIds" : [
+      "VX-90"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-766",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20DRUMS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867272,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC",
+      "filename" : "FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff",
+      "mtime" : "2017-10-05T14:04:31.29Z",
+      "ctime" : "2018-06-05T16:23:02.09Z",
+      "atime" : "2018-06-05T16:34:02.32Z",
+      "imported_id" : "VX-46",
+      "importedAt" : "2018-06-07T17:46:27.502566Z",
+      "size" : 27269558,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff",
+    "vsFileId" : "VX-761",
+    "vsItemId" : "VX-46",
+    "vsShapeIds" : [
+      "VX-40"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-761",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_2_Variety_And_Invention_Instrumental_Doddy_974574.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867281,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society",
+      "filename" : "ES_I Don't Smoke STEMS INSTRUMENTS.mp3",
+      "mtime" : "2018-05-23T18:04:27.23Z",
+      "ctime" : "2018-06-05T16:23:01.46Z",
+      "atime" : "2018-06-05T16:34:02.74Z",
+      "imported_id" : "VX-61",
+      "importedAt" : "2018-06-15T18:00:03.658309Z",
+      "size" : 6160150,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS INSTRUMENTS.mp3",
+    "vsFileId" : "VX-768",
+    "vsItemId" : "VX-61",
+    "vsShapeIds" : [
+      "VX-95"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-768",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20INSTRUMENTS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382868250,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2",
+      "filename" : "Zim - 3154 tear gas.MP4",
+      "mtime" : "2018-08-01T17:40:16.58Z",
+      "ctime" : "2018-08-02T09:52:42.58Z",
+      "atime" : "2018-08-01T20:13:15.33Z",
+      "imported_id" : "VX-165",
+      "importedAt" : "2018-08-02T11:11:19.310249Z",
+      "size" : 118960822,
+      "owner" : 1280531731,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "video/mp4",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim - 3154 tear gas.MP4",
+    "vsFileId" : "VX-1238",
+    "vsItemId" : "VX-165",
+    "vsShapeIds" : [
+      "VX-225"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-1238",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zim%20-%203154%20tear%20gas.MP4"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867273,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC",
+      "filename" : "FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff",
+      "mtime" : "2017-10-05T14:04:30.26Z",
+      "ctime" : "2018-06-05T16:23:02.16Z",
+      "atime" : "2018-06-05T16:34:02.06Z",
+      "imported_id" : "VX-20",
+      "importedAt" : "2018-06-07T17:46:11.954043Z",
+      "size" : 28517524,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff",
+    "vsFileId" : "VX-760",
+    "vsItemId" : "VX-20",
+    "vsShapeIds" : [
+      "VX-48"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-760",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_EVO266_11_In_The_Past_Instrumental_Doddy_974619.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867280,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This Old Soil 5 - Gunnar Johnsén",
+      "filename" : "ES_This Old Soil 5 STEMS BASS.mp3",
+      "mtime" : "2018-05-23T15:36:38.97Z",
+      "ctime" : "2018-06-05T16:23:01.38Z",
+      "atime" : "2018-06-05T16:34:03.19Z",
+      "imported_id" : "VX-130",
+      "importedAt" : "2018-08-02T11:07:48.120936Z",
+      "size" : 5744027,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This Old Soil 5 - Gunnar Johnsén/ES_This Old Soil 5 STEMS BASS.mp3",
+    "vsFileId" : "VX-775",
+    "vsItemId" : "VX-130",
+    "vsShapeIds" : [
+      "VX-105"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-775",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_This%20Old%20Soil%205%20-%20Gunnar%20Johnsén/ES_This%20Old%20Soil%205%20STEMS%20BASS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867274,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC",
+      "filename" : "FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff",
+      "mtime" : "2017-10-05T14:04:30.24Z",
+      "ctime" : "2018-06-05T16:23:02.38Z",
+      "atime" : "2018-06-05T16:34:01.59Z",
+      "imported_id" : "VX-25",
+      "importedAt" : "2018-06-07T17:03:25.899718Z",
+      "size" : 18626434,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff",
+    "vsFileId" : "VX-758",
+    "vsItemId" : "VX-25",
+    "vsShapeIds" : [
+      "VX-42"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-758",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/FC_DF21_17_Slow_Discovery_Main_Track_Jones_822129.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867650,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip",
+      "filename" : "Clip0121.MXF",
+      "mtime" : "2017-09-27T15:10:33Z",
+      "ctime" : "2018-06-05T16:19:46.43Z",
+      "atime" : "2018-06-05T16:26:04.32Z",
+      "imported_id" : "VX-1399",
+      "importedAt" : "2018-08-02T15:01:54.717738Z",
+      "size" : 1653987888,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "application/mxf",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0121.MXF",
+    "vsFileId" : "VX-293",
+    "vsItemId" : "VX-1399",
+    "vsShapeIds" : [
+      "VX-813"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-293",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS%20FOOTAGE/Card%202/PRIVATE/XDROOT/Clip/Clip0121.MXF"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382868251,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2",
+      "filename" : "Swedish crown jewels.mp4",
+      "mtime" : "2018-08-01T13:47:30.19Z",
+      "ctime" : "2018-08-02T09:52:43.19Z",
+      "atime" : "2018-08-01T20:13:15.02Z",
+      "imported_id" : "VX-171",
+      "importedAt" : "2018-08-02T11:11:40.354921Z",
+      "size" : 183430724,
+      "owner" : 1280531731,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "video/mp4",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish crown jewels.mp4",
+    "vsFileId" : "VX-1236",
+    "vsItemId" : "VX-171",
+    "vsShapeIds" : [
+      "VX-226"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-1236",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Swedish%20crown%20jewels.mp4"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867606,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip",
+      "filename" : "Clip0213.MXF",
+      "mtime" : "2017-09-28T15:18:14Z",
+      "ctime" : "2018-06-05T16:19:07.01Z",
+      "atime" : "2018-06-05T16:28:56.45Z",
+      "imported_id" : "VX-1427",
+      "importedAt" : "2018-08-02T15:04:29.303539Z",
+      "size" : 155387952,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "application/mxf",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0213.MXF",
+    "vsFileId" : "VX-328",
+    "vsItemId" : "VX-1427",
+    "vsShapeIds" : [
+      "VX-857"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-328",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS%20FOOTAGE/Card%202/PRIVATE/XDROOT/Clip/Clip0213.MXF"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867602,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip",
+      "filename" : "Clip0220M01.XML",
+      "mtime" : "2017-09-28T15:25:06Z",
+      "ctime" : "2018-06-05T16:19:06.12Z",
+      "atime" : "2018-06-05T16:25:08.49Z",
+      "imported_id" : "VX-1431",
+      "importedAt" : "2018-08-02T15:04:57.84059Z",
+      "size" : 1716,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/xml",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 2/PRIVATE/XDROOT/Clip/Clip0220M01.XML",
+    "vsFileId" : "VX-267",
+    "vsItemId" : "VX-1431",
+    "vsShapeIds" : [
+      "VX-864"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867284,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society",
+      "filename" : "ES_I Don't Smoke STEMS BASS.mp3",
+      "mtime" : "2018-05-23T18:04:26.17Z",
+      "ctime" : "2018-06-05T16:23:01.53Z",
+      "atime" : "2018-06-05T16:34:02.48Z",
+      "imported_id" : "VX-59",
+      "importedAt" : "2018-06-07T17:48:26.33779Z",
+      "size" : 6160143,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I Don't Smoke - Mythical Score Society/ES_I Don't Smoke STEMS BASS.mp3",
+    "vsFileId" : "VX-765",
+    "vsItemId" : "VX-59",
+    "vsShapeIds" : [
+      "VX-97"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-765",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_I%20Don't%20Smoke%20-%20Mythical%20Score%20Society/ES_I%20Don't%20Smoke%20STEMS%20BASS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867287,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple",
+      "filename" : "ES_Chasma STEMS INSTRUMENTS.mp3",
+      "mtime" : "2018-05-23T10:49:29.37Z",
+      "ctime" : "2018-06-05T16:23:01.63Z",
+      "atime" : "2018-06-05T16:34:02.34Z",
+      "imported_id" : "VX-57",
+      "importedAt" : "2018-06-07T17:48:08.487332Z",
+      "size" : 5642195,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS INSTRUMENTS.mp3",
+    "vsFileId" : "VX-763",
+    "vsItemId" : "VX-57",
+    "vsShapeIds" : [
+      "VX-88"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-763",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma%20STEMS%20INSTRUMENTS%20-%20Silver%20Maple/ES_Chasma%20STEMS%20INSTRUMENTS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867311,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs",
+      "filename" : "U-SONY-S-LOG3-V5-LTR.3dl",
+      "mtime" : "2017-04-06T21:24:02Z",
+      "ctime" : "2018-06-05T16:23:03.53Z",
+      "atime" : "2018-06-05T16:33:59.85Z",
+      "imported_id" : "VX-14",
+      "importedAt" : "2018-06-07T16:53:02.27995Z",
+      "size" : 64393,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/plain",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V5-LTR.3dl",
+    "vsFileId" : "VX-745",
+    "vsItemId" : "VX-14",
+    "vsShapeIds" : [
+      "VX-14"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867289,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard",
+      "filename" : "ES_Timeline STEMS INSTRUMENTS.mp3",
+      "mtime" : "2018-05-23T19:24:25.95Z",
+      "ctime" : "2018-06-05T16:23:01.75Z",
+      "atime" : "2018-06-05T16:34:03.72Z",
+      "imported_id" : "VX-56",
+      "importedAt" : "2018-06-07T17:47:55.482787Z",
+      "size" : 3674945,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline - Rannar Sillard/ES_Timeline STEMS INSTRUMENTS.mp3",
+    "vsFileId" : "VX-782",
+    "vsItemId" : "VX-56",
+    "vsShapeIds" : [
+      "VX-86"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-782",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Timeline%20-%20Rannar%20Sillard/ES_Timeline%20STEMS%20INSTRUMENTS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867271,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA",
+      "filename" : "KP-27179 RICH.prproj",
+      "mtime" : "2017-10-03T17:00:44.88Z",
+      "ctime" : "2018-06-05T16:23:03.37Z",
+      "atime" : "2018-06-05T16:36:48.07Z",
+      "imported_id" : "VX-26",
+      "importedAt" : "2018-06-07T16:56:57.068473Z",
+      "size" : 598445,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "application/x-gzip",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/KP-27179 RICH.prproj",
+    "vsFileId" : "VX-1",
+    "vsItemId" : "VX-26",
+    "vsShapeIds" : [
+      "VX-26"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867303,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532",
+      "filename" : "UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff",
+      "mtime" : "2017-10-05T14:32:14.45Z",
+      "ctime" : "2018-06-05T16:23:02.6Z",
+      "atime" : "2018-06-05T16:34:01.09Z",
+      "imported_id" : "VX-38",
+      "importedAt" : "2018-06-15T17:04:52.138683Z",
+      "size" : 18394240,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff",
+    "vsFileId" : "VX-754",
+    "vsItemId" : "VX-38",
+    "vsShapeIds" : [
+      "VX-53"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-754",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_1_New_Neighbors_Main_Track_Balloonknot_Kron_371736.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867891,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip",
+      "filename" : "Clip0048M01.XML",
+      "mtime" : "2017-09-27T11:05:05Z",
+      "ctime" : "2018-06-05T16:20:56.08Z",
+      "atime" : "2018-06-05T16:39:15.03Z",
+      "imported_id" : "VX-987",
+      "importedAt" : "2018-08-02T14:41:18.403482Z",
+      "size" : 1716,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/xml",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MYS FOOTAGE/Card 1/PRIVATE/XDROOT/Clip/Clip0048M01.XML",
+    "vsFileId" : "VX-509",
+    "vsItemId" : "VX-987",
+    "vsShapeIds" : [
+      "VX-532"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867288,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple",
+      "filename" : "ES_Chasma STEMS FULL.mp3",
+      "mtime" : "2018-05-23T10:49:29.36Z",
+      "ctime" : "2018-06-05T16:23:01.66Z",
+      "atime" : "2018-06-05T16:34:02.2Z",
+      "imported_id" : "VX-43",
+      "importedAt" : "2018-06-15T17:04:52.187953Z",
+      "size" : 5642177,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma STEMS INSTRUMENTS - Silver Maple/ES_Chasma STEMS FULL.mp3",
+    "vsFileId" : "VX-762",
+    "vsItemId" : "VX-43",
+    "vsShapeIds" : [
+      "VX-59"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-762",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Chasma%20STEMS%20INSTRUMENTS%20-%20Silver%20Maple/ES_Chasma%20STEMS%20FULL.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867296,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin",
+      "filename" : "ES_Ominous Ambience 3 STEMS DRUMS.mp3",
+      "mtime" : "2018-05-23T11:30:29.09Z",
+      "ctime" : "2018-06-05T16:23:01.96Z",
+      "atime" : "2018-06-05T16:34:02.89Z",
+      "imported_id" : "VX-51",
+      "importedAt" : "2018-06-15T17:04:52.195509Z",
+      "size" : 5551821,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS DRUMS.mp3",
+    "vsFileId" : "VX-771",
+    "vsItemId" : "VX-51",
+    "vsShapeIds" : [
+      "VX-76"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-771",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20DRUMS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382868255,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2",
+      "filename" : "Zimbabwe - Gunfire disperse.mp4",
+      "mtime" : "2018-08-01T14:08:17.66Z",
+      "ctime" : "2018-08-02T09:52:46.82Z",
+      "atime" : "2018-08-01T20:13:15.94Z",
+      "imported_id" : "VX-167",
+      "importedAt" : "2018-08-02T11:07:47.580134Z",
+      "size" : 133298677,
+      "owner" : 1280531731,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "video/mp4",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe - Gunfire disperse.mp4",
+    "vsFileId" : "VX-1241",
+    "vsItemId" : "VX-167",
+    "vsShapeIds" : [
+      "VX-219"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-1241",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Zimbabwe%20-%20Gunfire%20disperse.mp4"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867302,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532",
+      "filename" : "UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff",
+      "mtime" : "2017-10-05T14:32:14.45Z",
+      "ctime" : "2018-06-05T16:23:02.55Z",
+      "atime" : "2018-06-05T16:34:00.97Z",
+      "imported_id" : "VX-37",
+      "importedAt" : "2018-06-07T17:46:11.938387Z",
+      "size" : 21011074,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff",
+    "vsFileId" : "VX-753",
+    "vsItemId" : "VX-37",
+    "vsShapeIds" : [
+      "VX-51"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-753",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_9_Jolly_Pond_Activity_Main_Track_Allagnat_883240.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867298,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin",
+      "filename" : "ES_Ominous Ambience 3 STEMS MELODY.mp3",
+      "mtime" : "2018-05-23T11:30:29.11Z",
+      "ctime" : "2018-06-05T16:23:02.02Z",
+      "atime" : "2018-06-05T16:34:03.05Z",
+      "imported_id" : "VX-35",
+      "importedAt" : "2018-06-07T17:47:38.811234Z",
+      "size" : 5551822,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS MELODY.mp3",
+    "vsFileId" : "VX-773",
+    "vsItemId" : "VX-35",
+    "vsShapeIds" : [
+      "VX-39"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-773",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20MELODY.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867294,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin",
+      "filename" : "ES_Ominous Ambience 3 STEMS INSTRUMENTS.mp3",
+      "mtime" : "2018-05-24T16:50:10.25Z",
+      "ctime" : "2018-06-05T16:23:01.89Z",
+      "atime" : "2018-06-05T16:34:03.04Z",
+      "imported_id" : "VX-54",
+      "importedAt" : "2018-06-07T17:47:52.089624Z",
+      "size" : 5551827,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS INSTRUMENTS.mp3",
+    "vsFileId" : "VX-772",
+    "vsItemId" : "VX-54",
+    "vsShapeIds" : [
+      "VX-82"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-772",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382868254,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2",
+      "filename" : "Denmark protests 2 .mp4",
+      "mtime" : "2018-08-01T20:19:05.56Z",
+      "ctime" : "2018-08-02T09:52:46.26Z",
+      "atime" : "2018-08-01T20:28:47.04Z",
+      "imported_id" : "VX-161",
+      "importedAt" : "2018-08-02T11:08:52.259919Z",
+      "size" : 267491123,
+      "owner" : 1280531731,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "video/mp4",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark protests 2 .mp4",
+    "vsFileId" : "VX-1228",
+    "vsItemId" : "VX-161",
+    "vsShapeIds" : [
+      "VX-213"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-1228",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_News/Andy_s_Ingesta_Testa/andy_gallagher_Andy_s_Ingesta_Testa_2/Denmark%20protests%202%20.mp4"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867295,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin",
+      "filename" : "ES_Ominous Ambience 3 STEMS BASS.mp3",
+      "mtime" : "2018-05-23T11:30:29.08Z",
+      "ctime" : "2018-06-05T16:23:01.94Z",
+      "atime" : "2018-06-05T16:34:02.91Z",
+      "imported_id" : "VX-55",
+      "importedAt" : "2018-06-07T17:48:09.655694Z",
+      "size" : 5551820,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3 STEMS BASS.mp3",
+    "vsFileId" : "VX-770",
+    "vsItemId" : "VX-55",
+    "vsShapeIds" : [
+      "VX-84"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-770",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203%20STEMS%20BASS.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867297,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin",
+      "filename" : "ES_Ominous Ambience 3.mp3",
+      "mtime" : "2018-05-23T11:30:29.12Z",
+      "ctime" : "2018-06-05T16:23:02Z",
+      "atime" : "2018-06-05T16:34:03.18Z",
+      "imported_id" : "VX-53",
+      "importedAt" : "2018-06-07T17:47:42.818896Z",
+      "size" : 5551809,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/mpeg",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous Ambience 3 STEMS INSTRUMENTS - John Åhlin/ES_Ominous Ambience 3.mp3",
+    "vsFileId" : "VX-774",
+    "vsItemId" : "VX-53",
+    "vsShapeIds" : [
+      "VX-78"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-774",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/JT/ES_Ominous%20Ambience%203%20STEMS%20INSTRUMENTS%20-%20John%20Åhlin/ES_Ominous%20Ambience%203.mp3"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867299,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct",
+      "filename" : "FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff",
+      "mtime" : "2017-10-11T11:40:36.81Z",
+      "ctime" : "2018-06-05T16:23:02.25Z",
+      "atime" : "2018-06-05T16:34:00.35Z",
+      "imported_id" : "VX-41",
+      "importedAt" : "2018-06-07T17:46:11.947939Z",
+      "size" : 38615148,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff",
+    "vsFileId" : "VX-749",
+    "vsItemId" : "VX-41",
+    "vsShapeIds" : [
+      "VX-49"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-749",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th%20oct/FC_HM_116_16_We_Wait_Beyond_Underscore_De_La_Barreda_Ehlert_835577.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867313,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs",
+      "filename" : "U-SONY-S-LOG3-V3-LTR.3dl",
+      "mtime" : "2017-04-06T21:24:02Z",
+      "ctime" : "2018-06-05T16:23:03.56Z",
+      "atime" : "2018-06-05T16:33:59.78Z",
+      "imported_id" : "VX-15",
+      "importedAt" : "2018-06-07T16:56:57.075359Z",
+      "size" : 69434,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/plain",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V3-LTR.3dl",
+    "vsFileId" : "VX-743",
+    "vsItemId" : "VX-15",
+    "vsShapeIds" : [
+      "VX-15"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867305,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532",
+      "filename" : "UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff",
+      "mtime" : "2017-10-05T14:32:14.46Z",
+      "ctime" : "2018-06-05T16:23:02.71Z",
+      "atime" : "2018-06-05T16:34:01.31Z",
+      "imported_id" : "VX-23",
+      "importedAt" : "2018-06-07T17:02:53.032076Z",
+      "size" : 27648612,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff",
+    "vsFileId" : "VX-755",
+    "vsItemId" : "VX-23",
+    "vsShapeIds" : [
+      "VX-23"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-755",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_2_Living_In_Paradise_Main_Track_Nystrom_371739.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867300,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct",
+      "filename" : "FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff",
+      "mtime" : "2017-10-11T11:40:36.81Z",
+      "ctime" : "2018-06-05T16:23:02.32Z",
+      "atime" : "2018-06-05T16:34:00.42Z",
+      "imported_id" : "VX-36",
+      "importedAt" : "2018-06-07T17:45:26.440521Z",
+      "size" : 38615146,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff",
+    "vsFileId" : "VX-750",
+    "vsItemId" : "VX-36",
+    "vsShapeIds" : [
+      "VX-44"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-750",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/11th%20oct/FC_HM_116_1_We_Wait_Beyond_Main_Track_De_La_Barreda_Ehlert_835573.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867308,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive",
+      "filename" : "CRN_CLOUD9_1MIN_mp4.mp4",
+      "mtime" : "2018-05-23T09:02:21.1Z",
+      "ctime" : "2018-06-05T16:23:03.26Z",
+      "atime" : "2018-06-05T16:41:21.19Z",
+      "imported_id" : "VX-33",
+      "importedAt" : "2018-06-07T17:00:45.233448Z",
+      "size" : 44957096,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "video/mp4",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4",
+    "vsFileId" : "VX-979",
+    "vsItemId" : "VX-33",
+    "vsShapeIds" : [
+      "VX-34"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-979",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/archive/CRN_CLOUD9_1MIN_mp4.mp4"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867317,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO",
+      "filename" : "Mic 2_01.wav",
+      "mtime" : "2018-05-24T16:25:52.23Z",
+      "ctime" : "2018-06-05T16:23:03.06Z",
+      "atime" : "2018-06-05T16:32:34.65Z",
+      "imported_id" : "VX-17",
+      "importedAt" : "2018-06-07T17:45:26.442698Z",
+      "size" : 50272450,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-wav",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic 2_01.wav",
+    "vsFileId" : "VX-975",
+    "vsItemId" : "VX-17",
+    "vsShapeIds" : [
+      "VX-17"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-975",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/VO/Mic%202_01.wav"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867307,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532",
+      "filename" : "UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff",
+      "mtime" : "2017-10-05T14:32:14.46Z",
+      "ctime" : "2018-06-05T16:23:02.81Z",
+      "atime" : "2018-06-05T16:34:01.31Z",
+      "imported_id" : "VX-34",
+      "importedAt" : "2018-06-07T17:45:26.436102Z",
+      "size" : 14766744,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff",
+    "vsFileId" : "VX-756",
+    "vsItemId" : "VX-34",
+    "vsShapeIds" : [
+      "VX-37"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-756",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT204_4_White_Picket_Fence_Main_Track_Balloonknot_Kron_371745.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867304,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532",
+      "filename" : "UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff",
+      "mtime" : "2017-10-05T14:32:14.47Z",
+      "ctime" : "2018-06-05T16:23:02.65Z",
+      "atime" : "2018-06-05T16:34:01.65Z",
+      "imported_id" : "VX-24",
+      "importedAt" : "2018-06-07T17:01:01.903012Z",
+      "size" : 23355464,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff",
+    "vsFileId" : "VX-757",
+    "vsItemId" : "VX-24",
+    "vsShapeIds" : [
+      "VX-24"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-757",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KT216_1_Electric_Interplay_Main_Track_Kron_Synowiec_410374.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867306,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532",
+      "filename" : "UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff",
+      "mtime" : "2017-10-05T14:32:14.44Z",
+      "ctime" : "2018-06-05T16:23:02.77Z",
+      "atime" : "2018-06-05T16:34:00.82Z",
+      "imported_id" : "VX-19",
+      "importedAt" : "2018-06-07T17:45:26.43611Z",
+      "size" : 30033554,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "audio/x-aiff",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff",
+    "vsFileId" : "VX-752",
+    "vsItemId" : "VX-19",
+    "vsShapeIds" : [
+      "VX-46"
+    ],
+    "replicas" : [
+      {
+        "storageId" : "VX-2",
+        "fileId" : "VX-752",
+        "fileUri" : "file:///srv/Proxies2/DevSystem/Media%20Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/MUSIC/1532/UPM_KOK2400_5_Quirky_Versailles_Main_Track_Davoli_883219.aiff"
+      }
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867309,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs",
+      "filename" : "U-SONY-S-LOG3-V1-LTR.3dl",
+      "mtime" : "2017-04-06T21:24:02Z",
+      "ctime" : "2018-06-05T16:23:03.5Z",
+      "atime" : "2018-06-05T16:33:59.55Z",
+      "imported_id" : "VX-13",
+      "importedAt" : "2018-06-07T16:53:02.290528Z",
+      "size" : 58716,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/plain",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V1-LTR.3dl",
+    "vsFileId" : "VX-741",
+    "vsItemId" : "VX-13",
+    "vsShapeIds" : [
+      "VX-13"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867312,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs",
+      "filename" : "U-SONY-S-LOG3-V6-LTR.3dl",
+      "mtime" : "2017-04-06T21:24:02Z",
+      "ctime" : "2018-06-05T16:23:03.55Z",
+      "atime" : "2018-06-05T16:31:13.03Z",
+      "imported_id" : "VX-12",
+      "importedAt" : "2018-06-07T16:46:53.221895Z",
+      "size" : 62165,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/plain",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V6-LTR.3dl",
+    "vsFileId" : "VX-746",
+    "vsItemId" : "VX-12",
+    "vsShapeIds" : [
+      "VX-11"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867314,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs",
+      "filename" : "U-SONY-S-LOG3-V8-LTR.3dl",
+      "mtime" : "2017-04-06T21:24:02Z",
+      "ctime" : "2018-06-05T16:23:03.58Z",
+      "atime" : "2018-06-05T16:33:59.92Z",
+      "imported_id" : "VX-22",
+      "importedAt" : "2018-06-07T16:53:02.282541Z",
+      "size" : 69455,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/plain",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V8-LTR.3dl",
+    "vsFileId" : "VX-748",
+    "vsItemId" : "VX-22",
+    "vsShapeIds" : [
+      "VX-22"
+    ],
+    "replicas" : [
+    ]
+  },
+  {
+    "originalSource" : {
+      "id" : 382867315,
+      "filepath" : "/srv/Proxies2/DevSystem/Media Production/Assets/Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs",
+      "filename" : "U-SONY-S-LOG3-V7-LTR.3dl",
+      "mtime" : "2017-04-06T21:24:02Z",
+      "ctime" : "2018-06-05T16:23:03.6Z",
+      "atime" : "2018-06-05T16:33:59.86Z",
+      "imported_id" : "VX-16",
+      "importedAt" : "2018-06-07T16:48:46.671818Z",
+      "size" : 60624,
+      "owner" : 284784764,
+      "gid" : 696631985,
+      "prelude_ref" : null,
+      "ignore" : false,
+      "mime_type" : "text/plain",
+      "asset_folder" : null
+    },
+    "sourceStorage" : "VX-2",
+    "storageSubpath" : "Multimedia_Documentaries/Yusuf_Test_5_June/yusuf_parkar_Yusuf_Test_5_June_WITH_MEDIA/GRADE/LUTs/U-SONY-S-LOG3-V7-LTR.3dl",
+    "vsFileId" : "VX-747",
+    "vsItemId" : "VX-16",
+    "vsShapeIds" : [
+      "VX-16"
+    ],
+    "replicas" : [
+    ]
+  }
+]
+Got a total of 47 items with a limit of Some(50)

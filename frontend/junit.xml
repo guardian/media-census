@@ -1,0 +1,20 @@
+<testsuites name="jest tests" tests="6" failures="0" time="3.754">
+  <testsuite name="StatsHistoryGraph.objectToQueryString" errors="0" failures="0" skipped="0" timestamp="2019-06-11T10:04:16" time="0.904" tests="3">
+    <testcase classname="StatsHistoryGraph.objectToQueryString should take a set of mappings and make a query string" name="StatsHistoryGraph.objectToQueryString should take a set of mappings and make a query string" time="0.039">
+    </testcase>
+    <testcase classname="StatsHistoryGraph.objectToQueryString should return an empty string if there are no keys" name="StatsHistoryGraph.objectToQueryString should return an empty string if there are no keys" time="0.003">
+    </testcase>
+    <testcase classname="StatsHistoryGraph.objectToQueryString should return an empty string if passed NULL" name="StatsHistoryGraph.objectToQueryString should return an empty string if passed NULL" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="NearlineStorages.processData" errors="0" failures="0" skipped="0" timestamp="2019-06-11T10:04:16" time="1.141" tests="1">
+    <testcase classname="NearlineStorages.processData should break down incoming data from the state" name="NearlineStorages.processData should break down incoming data from the state" time="0.022">
+    </testcase>
+  </testsuite>
+  <testsuite name="CurrentStateStats" errors="0" failures="0" skipped="0" timestamp="2019-06-11T10:04:16" time="1.35" tests="2">
+    <testcase classname="CurrentStateStats should correctly load and post-process data from the server" name="CurrentStateStats should correctly load and post-process data from the server" time="0.221">
+    </testcase>
+    <testcase classname="CurrentStateStats should correctly load and post-process data from the server with a zero-count" name="CurrentStateStats should correctly load and post-process data from the server with a zero-count" time="0.211">
+    </testcase>
+  </testsuite>
+</testsuites>

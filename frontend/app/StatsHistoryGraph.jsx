@@ -61,7 +61,9 @@ class StatsHistoryGraph extends React.Component {
                     epoch: moment(entry.scanStart).unix(),
                     noBackupsCount: entry.noBackupsCount,
                     partialBackupsCount: entry.partialBackupsCount,
-                    fullBackupsCount: entry.fullBackupsCount
+                    fullBackupsCount: entry.fullBackupsCount,
+                    unimportedCount: entry.unimportedCount,
+                    unattachedCount: entry.unattachedCount
                 }});
 
                 this.setState({
