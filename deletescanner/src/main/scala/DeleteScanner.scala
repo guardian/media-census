@@ -8,9 +8,6 @@ import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensus
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
-import io.circe.syntax._
-import io.circe.generic.auto._
-import com.softwaremill.sttp._
 import helpers.ZonedDateTimeEncoder
 import vidispine.{VSCommunicator, VSStorage}
 
@@ -18,10 +15,11 @@ import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticError, ElasticProperties, HttpClient}
+import io.circe.generic.auto._
 
 import scala.concurrent.duration._
 
-object DeleteScanner extends ZonedDateTimeEncoder {
+object DeleteScanner extends ZonedDateTimeEncoder  {
   val logger = Logger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
@@ -49,19 +47,21 @@ object DeleteScanner extends ZonedDateTimeEncoder {
     * @return
     */
   def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient) = {
-    val counterSink = Sink.fold[Int, AssetSweeperFile](0)((acc,elem)=>acc+1)
+    val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
+      import com.sksamuel.elastic4s.circe._
 
       val deleteSink = builder.add(indexer.getDeleteSink(esClient))
-      val srcFactory = new AssetSweeperDeletedSource(assetSweeperConfig)
-      val periodicUpdate = builder.add(new PeriodicUpdate[AssetSweeperFile](initialJobRecord, updateEvery = 500))
-      val deletionFilter = builder.add(new DeletionFilter(indexer, esClient))
-      val streamSource = builder.add(srcFactory)
-      val sinkSplitter = builder.add(Broadcast[AssetSweeperFile](2, eagerCancel=false))
+      val srcFactory = indexer.getIndexSource(esClient)
 
-      streamSource.out.log("deleteStream") ~> periodicUpdate ~> deletionFilter ~> sinkSplitter
+      val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery = 500))
+      val deletionFilter = builder.add(new DeletionFilter(assetSweeperConfig, esClient))
+      val streamSource = builder.add(srcFactory)
+      val sinkSplitter = builder.add(Broadcast[MediaCensusEntry](2, eagerCancel=false))
+
+      streamSource.out.log("deleteStream").map(_.to[MediaCensusEntry]) ~> periodicUpdate ~> deletionFilter ~> sinkSplitter
       sinkSplitter ~> deleteSink
       sinkSplitter ~> reduceSink
 

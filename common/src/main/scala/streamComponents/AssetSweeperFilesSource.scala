@@ -60,6 +60,7 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, startAt:Option[Long
                 processingQueue ++= Seq(assetSweeperFile)
             }
           }
+          statement.close()
         } //processingQueue.isEmpty
         processingQueue.headOption match {
           case Some(nextElem)=>
