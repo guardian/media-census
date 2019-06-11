@@ -134,7 +134,7 @@ class NearlineStorages extends React.Component {
 
                                 try {
                                     const result = this.labelForMode(tooltipItem.yLabel);
-                                    yLabel = result[0] + result[1];
+                                    yLabel = result[0] + result[1] ? result[1] : "";
                                     xLabel = data.datasets[tooltipItem.datasetIndex].label;
                                     return xLabel + ": " + yLabel;
                                 } catch(err){
