@@ -40,13 +40,13 @@ class NearlineStorages extends React.Component {
         this.state.storageData.map(storageEntry=>{
             storageEntry.states.map(storageState=>{
                 if(updatedCountPoints.hasOwnProperty(storageState.state)) {
-                    updatedCountPoints[storageState.state].concat(storageState.count);
+                    updatedCountPoints[storageState.state] = updatedCountPoints[storageState.state].concat(storageState.count);
                 } else {
                     updatedCountPoints[storageState.state] = [storageState.count];
                 }
 
                 if(updatedSizePoints.hasOwnProperty(storageState.state)) {
-                    updatedSizePoints[storageState.state].concat(storageState.totalSize);
+                    updatedSizePoints[storageState.state] = updatedSizePoints[storageState.state].concat(storageState.totalSize);
                 } else {
                     updatedSizePoints[storageState.state] = [storageState.totalSize];
                 }
