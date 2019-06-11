@@ -129,8 +129,6 @@ class StatsHistoryGraph extends React.Component {
                     tooltips: {
                         callbacks: {
                             label: (tooltipItem, data)=>{
-                                console.log(tooltipItem);
-                                console.log(data);
                                 let xLabel,yLabel;
 
                                 if(tooltipItem.xLabel){
