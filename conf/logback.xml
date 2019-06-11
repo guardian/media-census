@@ -32,7 +32,7 @@
   <logger name="models.VSFileIndexer" level="INFO"/>
   <logger name="responses.HistogramDataResponse$" level="DEBUG"/>
   <logger name="controllers.StatsController" level="WARN"/>
-  
+
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
   <logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="OFF" />

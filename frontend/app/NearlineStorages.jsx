@@ -4,7 +4,15 @@ import {Bar} from 'react-chartjs-2';
 import RefreshButton from "./common/RefreshButton.jsx";
 import BytesFormatterImplementation from "./common/BytesFormatterImplementation.jsx";
 
+//see https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 class NearlineStorages extends React.Component {
+    static COUNT_MODE=1;
+    static SIZE_MODE=2;
+
     constructor(props){
         super(props);
 
@@ -13,7 +21,8 @@ class NearlineStorages extends React.Component {
             lastError: null,
             storageData: [],
             countPoints: {},
-            sizePoints: {}
+            sizePoints: {},
+            mode: NearlineStorages.SIZE_MODE
         }
     }
 
@@ -65,9 +74,42 @@ class NearlineStorages extends React.Component {
         }))
     }
 
+    dataForMode(stateLabel){
+        switch(this.state.mode){
+            case NearlineStorages.COUNT_MODE:
+                return this.state.countPoints[stateLabel];
+            case NearlineStorages.SIZE_MODE:
+                return this.state.sizePoints[stateLabel];
+            default:
+                console.error("Didn't recognise mode ", this.state.mode);
+                return null;
+        }
+    }
+
+    labelForMode(rawValue){
+        switch(this.state.mode){
+            case NearlineStorages.COUNT_MODE:
+                return numberWithCommas(rawValue);
+            case NearlineStorages.SIZE_MODE:
+                return BytesFormatterImplementation.getValueAndSuffix(rawValue);
+            default:
+                console.error("Didn't recognise mode ", this.state.mode);
+                return null;
+        }
+    }
+
     render(){
         return <div className="container">
-            <span className="controls-banner"><RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()}/></span>
+            <span className="controls-banner">
+                <RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()}/>
+                <select value={this.state.mode} onChange={evt=>{
+                    console.log("New value", parseInt(evt.target.value));
+                    this.setState({mode: parseInt(evt.target.value)})
+                }}>
+                    <option value={NearlineStorages.SIZE_MODE}>View total data size</option>
+                    <option value={NearlineStorages.COUNT_MODE}>View file count</option>
+                </select>
+            </span>
             <Bar
                 data={{
                     labels: this.state.storageData.map(entry=>entry.storage),
@@ -75,7 +117,7 @@ class NearlineStorages extends React.Component {
                         return {
                             label: stateLabel,
                             backgroundColor: NearlineStorages.colourValues[idx],
-                            data: this.state.sizePoints[stateLabel]
+                            data: this.dataForMode(stateLabel)
                         }
                     })
                 }}
@@ -91,7 +133,7 @@ class NearlineStorages extends React.Component {
                                let xLabel, yLabel;
 
                                 try {
-                                    const result = BytesFormatterImplementation.getValueAndSuffix(tooltipItem.yLabel);
+                                    const result = this.labelForMode(tooltipItem.yLabel);
                                     yLabel = result[0] + result[1];
                                     xLabel = data.datasets[tooltipItem.datasetIndex].label;
                                     return xLabel + ": " + yLabel;
@@ -111,7 +153,7 @@ class NearlineStorages extends React.Component {
                             stacked: true,
                             ticks: {
                                callback: (value,index,series)=>{
-                                   const result = BytesFormatterImplementation.getValueAndSuffix(value);
+                                   const result = this.labelForMode(value);
                                    return result[0] + result[1];
                                }
                             }
