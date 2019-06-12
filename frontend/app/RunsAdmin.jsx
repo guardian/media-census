@@ -23,7 +23,7 @@ class RunsAdmin extends React.Component {
     }
 
     refresh(){
-        this.setState({loading: true},()=>axios.get("/api/jobs/forTimespan").then(response=>{
+        this.setState({loading: true},()=>axios.get("/api/jobs/all/forTimespan").then(response=>{
             this.setState({
                 loading: false,
                 lastError: null,

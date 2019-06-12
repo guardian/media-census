@@ -9,7 +9,8 @@ import models.{JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensus
 import play.api.Logger
 import vidispine.{VSCommunicator, VSFile}
 import com.softwaremill.sttp._
-import streamComponents.{VSStorageScanSource,PeriodicUpdate}
+import streamComponents.{PeriodicUpdate, PeriodicUpdateBasic, VSStorageScanSource}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -41,8 +42,10 @@ object NearlineScanner {
 
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus-nearline")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
+
   lazy val indexer = new VSFileIndexer(indexName, batchSize = 200)
-  lazy implicit val mcIndexer = new MediaCensusIndexer(sys.env.getOrElse("CENSUS_INDEXNAME","mediacensus"))
+
+  lazy implicit val indexer = new VSFileIndexer(indexName, batchSize = 200)
 
   def buildStream(initialJobRecord: JobHistory, storageId:String)(implicit esClient:ElasticClient, jobHistoryDAO: JobHistoryDAO,indexer: VSFileIndexer) = {
     val counterSink = Sink.fold[Int, VSFile](0)((acc,_)=>acc+1)
@@ -50,12 +53,12 @@ object NearlineScanner {
     GraphDSL.create(counterSink) { implicit builder=> counter=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
       val src = builder.add(new VSStorageScanSource(Some(storageId), None, vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass,pageSize=100))
-      val updater = builder.add(new PeriodicUpdate[VSFile](initialJobRecord))
 
+      val updater = builder.add(new PeriodicUpdateBasic[VSFile](initialJobRecord))
       val sink = builder.add(indexer.getSink(esClient))
       val splitter = builder.add(new Broadcast[VSFile](2,eagerCancel = true))
 
-      src.out.log("vs-file-indexer-stream") ~> splitter ~> sink
+      src.out.log("vs-file-indexer-stream") ~> updater ~> splitter ~> sink
       splitter.out(1) ~> counter
       ClosedShape
     }
@@ -103,6 +106,7 @@ object NearlineScanner {
         complete_run(1,None,None)(null)
         throw err
       case Success(esClient)=>
+        implicit val esClientImpl = esClient
         lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
         val runInfo = JobHistory.newRun(JobType.NearlineScan)
@@ -115,16 +119,17 @@ object NearlineScanner {
           case Some(storageId)=>
             val resultFuture = jobHistoryDAO.put(runInfo).flatMap(_=>{
               logger.info(s"Saved run info ${runInfo.toString}")
-              RunnableGraph.fromGraph(buildStream(esClient,storageId)).run()
+              RunnableGraph.fromGraph(buildStream(runInfo,storageId)).run()
             })
 
             resultFuture.onComplete({
               case Failure(err)=>
                 logger.error("Could not run stream: ", err)
-                complete_run(1,None,None)
+                complete_run(1,Some(err.toString),Some(runInfo))
               case Success(recordCount)=>
                 logger.info(s"Counted $recordCount records, finishing")
-                complete_run(0,None,None)
+                val updatedRunInfo = runInfo.copy(itemsCounted = recordCount)
+                complete_run(0,None,Some(updatedRunInfo))
             })
         }
 

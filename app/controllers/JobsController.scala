@@ -24,7 +24,7 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
   private val jobsModelDAO = jobsModelDAOinj.dao
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def jobsForTimespan(start:Option[String], finish:Option[String],showRunning:Boolean) = Action.async{
+  def jobsForTimespan(jobType:String, start:Option[String], finish:Option[String],showRunning:Boolean) = Action.async{
     try {
       val maybeStartTime = start.map(startTimeString => ZonedDateTime.parse(startTimeString))
 
@@ -33,7 +33,9 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
         case Some(finishTimeString)=>ZonedDateTime.parse(finishTimeString)
       }
 
-      jobsModelDAO.jobsForTimespan(maybeStartTime, finishTime, showRunning).map({
+      val actualJobType = if(jobType=="all") None else Some(jobType)
+
+      jobsModelDAO.jobsForTimespan(actualJobType, maybeStartTime, finishTime, showRunning).map({
         case Left(err)=>
           logger.error(s"Elasticsearch lookup failed: $err")
           InternalServerError(GenericResponse("db_error", err.toString).asJson)
