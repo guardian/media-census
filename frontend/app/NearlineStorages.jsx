@@ -67,13 +67,11 @@ class NearlineStorages extends React.Component {
     }
 
     refresh(){
-        // this.setState({loading: true}, ()=>axios.get("/api/nearline/currentState").then(response=>{
-        //     this.setState({loading: false, storageData: response.data}, ()=>this.processData());
-        // }).catch(err=>{
-        //     this.setState({loading: false, lastError: err})
-        // }))
-        this.setState({loading: false, storageData: [{"storage":"KP-2","totalHits":894123,"totalSize":1.5242601376072E14,"states":[{"state":"CLOSED","count":889611,"totalSize":1.5222941773273E14},{"state":"MISSING","count":3484,"totalSize":1.577120487E10},{"state":"UNKNOWN","count":828,"totalSize":1.63965719667E11},{"state":"LOST","count":191,"totalSize":2892721.0},{"state":"BEING_READ","count":9,"totalSize":1.6856210732E10}]},{"storage":"KP-3","totalHits":891000,"totalSize":1.50953472572537E14,"states":[{"state":"CLOSED","count":883496,"totalSize":1.50273778233582E14},{"state":"UNKNOWN","count":4197,"totalSize":6.68782347733E11},{"state":"MISSING","count":2060,"totalSize":187906.0},{"state":"TO_APPEAR","count":1057,"totalSize":-1057.0},{"state":"LOST","count":173,"totalSize":2892739.0},{"state":"BEING_READ","count":17,"totalSize":1.0908911634E10}]}]},
-            ()=>this.processData());
+        this.setState({loading: true}, ()=>axios.get("/api/nearline/currentState").then(response=>{
+            this.setState({loading: false, storageData: response.data}, ()=>this.processData());
+        }).catch(err=>{
+            this.setState({loading: false, lastError: err})
+        }));
     }
 
     dataForMode(stateLabel){
