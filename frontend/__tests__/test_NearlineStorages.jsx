@@ -31,6 +31,6 @@ describe("NearlineStorages.processData", ()=>{
 
 describe("numberWithCommas", ()=>{
     it("should convert a long number with thousands separators", ()=>{
-        expect(numberWithCommas(123456)).toEqual("123,456");
+        expect(numberWithCommas(883496)).toEqual("883,496");
     })
 });

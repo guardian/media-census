@@ -67,11 +67,13 @@ class NearlineStorages extends React.Component {
     }
 
     refresh(){
-        this.setState({loading: true}, ()=>axios.get("/api/nearline/currentState").then(response=>{
-            this.setState({loading: false, storageData: response.data}, ()=>this.processData());
-        }).catch(err=>{
-            this.setState({loading: false, lastError: err})
-        }))
+        // this.setState({loading: true}, ()=>axios.get("/api/nearline/currentState").then(response=>{
+        //     this.setState({loading: false, storageData: response.data}, ()=>this.processData());
+        // }).catch(err=>{
+        //     this.setState({loading: false, lastError: err})
+        // }))
+        this.setState({loading: false, storageData: [{"storage":"KP-2","totalHits":894123,"totalSize":1.5242601376072E14,"states":[{"state":"CLOSED","count":889611,"totalSize":1.5222941773273E14},{"state":"MISSING","count":3484,"totalSize":1.577120487E10},{"state":"UNKNOWN","count":828,"totalSize":1.63965719667E11},{"state":"LOST","count":191,"totalSize":2892721.0},{"state":"BEING_READ","count":9,"totalSize":1.6856210732E10}]},{"storage":"KP-3","totalHits":891000,"totalSize":1.50953472572537E14,"states":[{"state":"CLOSED","count":883496,"totalSize":1.50273778233582E14},{"state":"UNKNOWN","count":4197,"totalSize":6.68782347733E11},{"state":"MISSING","count":2060,"totalSize":187906.0},{"state":"TO_APPEAR","count":1057,"totalSize":-1057.0},{"state":"LOST","count":173,"totalSize":2892739.0},{"state":"BEING_READ","count":17,"totalSize":1.0908911634E10}]}]},
+            ()=>this.processData());
     }
 
     dataForMode(stateLabel){
@@ -91,10 +93,9 @@ class NearlineStorages extends React.Component {
     labelForMode(rawValue){
         switch(this.state.mode){
             case NearlineStorages.COUNT_MODE:
-                console.log("labelForMode: countMode raw value is ", rawValue);
-                return numberWithCommas(rawValue);
+                return [numberWithCommas(rawValue), undefined];
             case NearlineStorages.SIZE_MODE:
-                console.log("labelForMode: sizeMode raw value is ", rawValue);
+                //console.log("labelForMode: sizeMode raw value is ", rawValue);
                 return BytesFormatterImplementation.getValueAndSuffix(rawValue);
             default:
                 console.error("Didn't recognise mode ", this.state.mode);
@@ -107,7 +108,7 @@ class NearlineStorages extends React.Component {
             <span className="controls-banner">
                 <RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()}/>
                 <select value={this.state.mode} onChange={evt=>{
-                    console.log("New value", parseInt(evt.target.value));
+                    //console.log("New value", parseInt(evt.target.value));
                     this.setState({mode: parseInt(evt.target.value)})
                 }}>
                     <option value={NearlineStorages.SIZE_MODE}>View total data size</option>
@@ -135,12 +136,9 @@ class NearlineStorages extends React.Component {
                        callbacks: {
                            label: (tooltipItem,data)=>{
                                let xLabel, yLabel;
-                                // console.log(tooltipItem);
-                                // console.log(data);
                                 try {
                                     const result = this.labelForMode(tooltipItem.yLabel);
-                                    //console.log(result);
-                                    yLabel = result[1] ? result[0].toString() + result[1] : "";
+                                    yLabel = result[1] ? result[0] + result[1] : result[0];
                                     xLabel = data.datasets[tooltipItem.datasetIndex].label;
                                     return xLabel + ": " + yLabel;
                                 } catch(err){
@@ -154,13 +152,13 @@ class NearlineStorages extends React.Component {
                         yAxes: [{
                            scaleLabel: {
                                display: true,
-                               labelString: "Size"
+                               labelString: this.state.mode===NearlineStorages.SIZE_MODE ? "Size" : "File count"
                            },
                             stacked: true,
                             ticks: {
                                callback: (value,index,series)=>{
                                    const result = this.labelForMode(value);
-                                   return result[0] + result[1];
+                                   return result[1] ? result[0] + result[1] : result[0];
                                }
                             }
                         }],
