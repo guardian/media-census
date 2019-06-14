@@ -1,14 +1,19 @@
 package models
 
 import akka.actor.ActorRefFactory
-import akka.stream.scaladsl.Sink
+import akka.stream.SourceShape
+import akka.stream.scaladsl.{GraphDSL, Sink, Source}
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.http.ElasticClient
+import com.sksamuel.elastic4s.searches.SearchRequest
 import com.sksamuel.elastic4s.searches.aggs.SumAggregation
+import com.sksamuel.elastic4s.searches.queries.Query
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import helpers.CensusEntryRequestBuilder
 import org.slf4j.LoggerFactory
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -31,6 +36,25 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     Sink.fromSubscriber(client.subscriber[AssetSweeperFile](batchSize, concurrentBatches))
   }
 
+  /**
+    * returns an Akka streams source that emits [[MediaCensusEntry]] objects matching the given query
+    * @param client Elastic4s HttpClient obkect
+    * @param query Elastic4s SearchRequest object. This must contain a "scroll" term.
+    * @param actorRefFactory implicitly provided ActorRefFactory for streams.
+    * @return a partial graph consisting of the Source
+    */
+  def getSearchSource(client:ElasticClient, query:SearchRequest)(implicit actorRefFactory:ActorRefFactory) = {
+    import com.sksamuel.elastic4s.circe._
+
+    val src = Source.fromPublisher(client.publisher(query))
+    src.map(_.to[MediaCensusEntry]).async
+  }
+
+  /**
+    * check if the index exists
+    * @param client ElasticClient object
+    * @return a Future, with a Response object indicating whether the index exists or not.
+    */
   def checkIndex(client:ElasticClient) = {
     client.execute {
       indexExists(indexName)
