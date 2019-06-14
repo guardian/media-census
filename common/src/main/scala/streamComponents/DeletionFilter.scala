@@ -22,24 +22,22 @@ class DeletionFilter(config:DatabaseConfiguration, esClient:ElasticClient) exten
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
     private var connection:Connection = _
+    private lazy val checkStatement = connection.prepareStatement(s"SELECT id FROM deleted_files WHERE filepath=? and filename=?")
 
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
         val elem = grab(in)
 
-        val stmt = connection.createStatement()
-        val stmtSource = s"SELECT id FROM deleted_files WHERE filepath='${elem.originalSource.filepath}' and filename='${elem.originalSource.filename}'"
-        logger.debug(stmtSource)
-        val resultSet = stmt.executeQuery(stmtSource)
+        checkStatement.setString(1, elem.originalSource.filepath)
+        checkStatement.setString(2, elem.originalSource.filename)
+        val resultSet = checkStatement.executeQuery()
 
         if(resultSet.next()){
           //we have rows
           logger.debug(s"Found row for ${elem.originalSource.filepath}/${elem.originalSource.filename}")
           push(out, elem)
-          stmt.close()
         } else {
           logger.debug(s"${elem.originalSource.filepath}/${elem.originalSource.filename} is not in deleted items table")
-          stmt.close()
           pull(in)
         }
       }
@@ -58,6 +56,10 @@ class DeletionFilter(config:DatabaseConfiguration, esClient:ElasticClient) exten
           logger.info("Established connection to asset sweeper db")
           connection = conn
       }
+    }
+
+    override def postStop(): Unit = {
+      checkStatement.close()
     }
   }
 
