@@ -91,8 +91,10 @@ class NearlineStorages extends React.Component {
     labelForMode(rawValue){
         switch(this.state.mode){
             case NearlineStorages.COUNT_MODE:
+                console.log("labelForMode: countMode raw value is ", rawValue);
                 return numberWithCommas(rawValue);
             case NearlineStorages.SIZE_MODE:
+                console.log("labelForMode: sizeMode raw value is ", rawValue);
                 return BytesFormatterImplementation.getValueAndSuffix(rawValue);
             default:
                 console.error("Didn't recognise mode ", this.state.mode);
@@ -178,3 +180,4 @@ class NearlineStorages extends React.Component {
 }
 
 export default NearlineStorages;
+export {numberWithCommas};
