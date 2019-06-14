@@ -75,6 +75,8 @@ class NearlineStorages extends React.Component {
     }
 
     dataForMode(stateLabel){
+        //console.log("dataForMode: mode is ", this.state.mode);
+
         switch(this.state.mode){
             case NearlineStorages.COUNT_MODE:
                 return this.state.countPoints[stateLabel];
@@ -131,10 +133,12 @@ class NearlineStorages extends React.Component {
                        callbacks: {
                            label: (tooltipItem,data)=>{
                                let xLabel, yLabel;
-
+                                // console.log(tooltipItem);
+                                // console.log(data);
                                 try {
                                     const result = this.labelForMode(tooltipItem.yLabel);
-                                    yLabel = result[0] + result[1] ? result[1] : "";
+                                    //console.log(result);
+                                    yLabel = result[1] ? result[0].toString() + result[1] : "";
                                     xLabel = data.datasets[tooltipItem.datasetIndex].label;
                                     return xLabel + ": " + yLabel;
                                 } catch(err){
@@ -167,6 +171,7 @@ class NearlineStorages extends React.Component {
                         position: "bottom"
                     }
                 }}
+                redraw={true}
                 />
         </div>
     }

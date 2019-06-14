@@ -169,6 +169,7 @@ class CurrentStateStats extends React.Component {
                                    position: "bottom"
                                }
                            }}
+                           redraw={true}
 
             />
             </div>
