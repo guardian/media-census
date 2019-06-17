@@ -37,7 +37,7 @@ class ListGeneratorController @Inject() (config:Configuration, cc:ControllerComp
       scroll "5m")
 
     val finalSource:Either[String,src.Repr[String]] = if(json.isDefined && json.get !="false" && json.get != "no"){
-      Right(src.map(_.asJson.toString()+"\n"))
+      Right(src.map(_.asJson.noSpaces +"\n"))
     } else {
       include match {
         case None =>
