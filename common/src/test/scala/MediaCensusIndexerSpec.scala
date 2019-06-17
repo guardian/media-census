@@ -11,6 +11,7 @@ import org.specs2.mutable.Specification
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 
 class MediaCensusIndexerSpec extends Specification with Mockito{
   "Indexer.getReplicaStats" should {
@@ -26,7 +27,7 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
         Future(RequestSuccess[SearchResponse](200,
           None,
           Map(),
-          SearchResponse(1234L,false,false,Map(),mock[Shards],None,fakeAggs,mock[SearchHits])
+          SearchResponse(1234L,isTimedOut = false,isTerminatedEarly = false,Map(),mock[Shards],None,fakeAggs,mock[SearchHits])
         ))
 
       val toTest = new MediaCensusIndexer("test")

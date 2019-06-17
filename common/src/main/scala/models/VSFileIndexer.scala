@@ -21,9 +21,7 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
   private val logger = LoggerFactory.getLogger(getClass)
 
   def getSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
-    implicit val builder:RequestBuilder[VSFile] = new RequestBuilder[VSFile] {
-      override def request(t: VSFile): BulkCompatibleRequest = update(t.vsid) in s"$indexName/vsfile" docAsUpsert t
-    }
+    implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => update(t.vsid) in s"$indexName/vsfile" docAsUpsert t
     Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize=batchSize, concurrentRequests = concurrentBatches))
   }
 

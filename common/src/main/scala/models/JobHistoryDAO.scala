@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+//noinspection SimplifyBooleanMatch
 class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateTimeEncoder with JobTypeEncoder {
   import com.sksamuel.elastic4s.http.ElasticDsl._
   import com.sksamuel.elastic4s.circe._

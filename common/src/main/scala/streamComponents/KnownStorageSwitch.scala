@@ -12,9 +12,9 @@ import vidispine.{VSFile, VSStorage}
   * @param vsPathMap
   */
 class KnownStorageSwitch(vsPathMap:Map[String,VSStorage]) extends GraphStage[UniformFanOutShape[MediaCensusEntry, MediaCensusEntry]]{
-  private final val in:Inlet[MediaCensusEntry] = Inlet.create("HasItemSwitch.in")
-  private final val outYes:Outlet[MediaCensusEntry] = Outlet.create("HasItemSwitch.yes")
-  private final val outNo:Outlet[MediaCensusEntry] = Outlet.create("HasItemSwitch.no")
+  private final val in:Inlet[MediaCensusEntry] = Inlet.create("KnownStorageSwitch.in")
+  private final val outYes:Outlet[MediaCensusEntry] = Outlet.create("KnownStorageSwitch.yes")
+  private final val outNo:Outlet[MediaCensusEntry] = Outlet.create("KnownStorageSwitch.no")
 
   override def shape = new UniformFanOutShape[MediaCensusEntry, MediaCensusEntry](in, Array(outYes, outNo))
 
