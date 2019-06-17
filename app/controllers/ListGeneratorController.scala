@@ -25,7 +25,7 @@ class ListGeneratorController @Inject() (config:Configuration, cc:ControllerComp
     * streams a list of filenames that are currently registered as unimported as a text/csv list
     * @return
     */
-  def unimportedFileList(include:Option[String]) = Action {
+  def unimportedFileList(include:Option[String],json:Option[String]) = Action {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     val src = indexer.getSearchSource(esClient, search(indexName) query
 //      matchAllQuery()
@@ -36,18 +36,27 @@ class ListGeneratorController @Inject() (config:Configuration, cc:ControllerComp
       )
       scroll "5m")
 
-    val finalSource:Either[String,src.Repr[String]] = include match {
-      case None=>
-        Right(src.map(entry=>s"${entry.originalSource.filepath}/${entry.originalSource.filename}\n"))
-      case Some("wide")=>
-        Right(src.map(entry=>s"${entry.originalSource.filepath}, ${entry.originalSource.filename}, ${entry.replicaCount}, ${entry.originalSource.size}, ${entry.originalSource.ctime}, ${entry.originalSource.mtime}, ${entry.originalSource.atime}\n"))
-      case Some(_)=>
-        Left(s"Unrecognised parameter")
+    val finalSource:Either[String,src.Repr[String]] = if(json.isDefined && json.get !="false" && json.get != "no"){
+      Right(src.map(_.asJson.toString()+"\n"))
+    } else {
+      include match {
+        case None =>
+          Right(src.map(entry => s"${entry.originalSource.filepath}/${entry.originalSource.filename}\n"))
+        case Some("wide") =>
+          Right(src.map(entry => s"${entry.originalSource.filepath}, ${entry.originalSource.filename}, ${entry.replicaCount}, ${entry.originalSource.size}, ${entry.originalSource.ctime}, ${entry.originalSource.mtime}, ${entry.originalSource.atime}\n"))
+        case Some(_) =>
+          Left(s"Unrecognised parameter")
+      }
     }
 
     finalSource match {
       case Right(s)=>
-        Ok.chunked(s).as("text/csv")
+        val ct = if(json.isDefined && json.get !="false" && json.get != "no"){
+          "application/x-ndjson"
+        } else {
+          "text/csv"
+        }
+        Ok.chunked(s).as(contentType = ct)
       case Left(errString)=>
         BadRequest(GenericResponse("err",errString).asJson)
     }

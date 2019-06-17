@@ -19,7 +19,7 @@ GET     /api/jobs/:jobType/lastSuccess  @controllers.JobsController.lastSuccessf
 GET     /api/job/:jobId             @controllers.JobsController.jobDetail(jobId)
 DELETE  /api/job/:jobId             @controllers.JobsController.manualDelete(jobId)
 
-GET     /list/unimported            @controllers.ListGeneratorController.unimportedFileList(include:Option[String]?=None)
+GET     /list/unimported            @controllers.ListGeneratorController.unimportedFileList(include:Option[String]?=None,json:Option[String]?=None)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
