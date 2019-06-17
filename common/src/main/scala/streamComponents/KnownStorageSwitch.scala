@@ -22,7 +22,15 @@ class KnownStorageSwitch(vsPathMap:Map[String,VSStorage]) extends GraphStage[Uni
     val logger = LoggerFactory.getLogger(getClass)
 
     setHandler(in, new AbstractInHandler {
-      override def onPush(): Unit = {
+      override def onPush(): Unit = try {
+        onPushBody()
+      } catch {
+        case err:Throwable=>
+          logger.error("Uncaught exception checking known storage: ", err)
+          failStage(err)
+      }
+
+      def onPushBody(): Unit = {
         val elem = grab(in)
 
         //filter out tuples from the map where the element's filepath starts with the map's key

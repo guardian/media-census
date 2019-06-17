@@ -21,7 +21,15 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
     val logger = LoggerFactory.getLogger(getClass)
 
     setHandler(in, new AbstractInHandler {
-      override def onPush(): Unit = {
+      override def onPush(): Unit = try {
+        onPushBody()
+      } catch {
+        case err:Throwable=>
+          logger.error("Uncaught exception checking vs replicas: ", err)
+          failStage(err)
+      }
+
+      def onPushBody(): Unit = {
         val elem = grab(in)
 
         val completionCb = getAsyncCallback[MediaCensusEntry](finalElem=>{
@@ -65,6 +73,10 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
               )
               completionCb.invoke(updatedElem)
             }
+          }).recover({
+            case err:Throwable=>
+              logger.error("Error retrieving VS shapes: ", err)
+              errorCb.invoke(err)
           })
         }
       }

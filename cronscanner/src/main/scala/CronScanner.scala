@@ -69,12 +69,12 @@ object CronScanner extends ZonedDateTimeEncoder {
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
       val indexSink = builder.add(indexer.getIndexSink(esClient))
-      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, maybeStartAt, limit.map(_.toLong))
+      val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, maybeStartAt, limit.map(_.toLong)).async
       val streamSource = builder.add(srcFactory)
       val ignoresFilter = builder.add(new FilterOutIgnores)
 
       val knownStorageSwitch = builder.add(new KnownStorageSwitch(vsPathMap))
-      val vsFileSwitch = builder.add(new VSFileSwitch())  //VSFileSwitch args are implicits
+      val vsFileSwitch = builder.add(new VSFileSwitch().async)  //VSFileSwitch args are implicits
       val vsFindReplicas = builder.add(new VSFindReplicas())
 
       val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery=500))

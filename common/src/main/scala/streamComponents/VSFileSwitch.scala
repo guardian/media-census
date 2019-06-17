@@ -51,7 +51,15 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
     }
 
     setHandler(in, new AbstractInHandler {
-      override def onPush(): Unit = {
+      override def onPush(): Unit = try {
+        onPushBody()
+      } catch {
+        case err:Throwable=>
+          logger.error("Uncaught exception checking vs files: ", err)
+          failStage(err)
+      }
+
+      def onPushBody(): Unit = {
         val completeCb = getAsyncCallback[MediaCensusEntry](finalElem=>{
           if(finalElem.vsFileId.isDefined){
             push(outYes, finalElem)
@@ -96,13 +104,21 @@ class VSFileSwitch (implicit communicator:VSCommunicator, mat:Materializer) exte
 
     setHandler(outYes, new AbstractOutHandler {
       override def onPull(): Unit = {
-        if(!hasBeenPulled(in)) pull(in)
+        if(!hasBeenPulled(in)){
+          pull(in)
+        } else {
+          logger.warn("VSFileSwitch: input already pulled")
+        }
       }
     })
 
     setHandler(outNo, new AbstractOutHandler {
       override def onPull(): Unit = {
-        if(!hasBeenPulled(in)) pull(in)
+        if(!hasBeenPulled(in)){
+          pull(in)
+        } else {
+          logger.warn("VSFileSwitch: input already pulled")
+        }
       }
     })
   }

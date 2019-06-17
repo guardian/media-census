@@ -30,7 +30,15 @@ class AssetSweeperFilesSource (config:DatabaseConfiguration, startAt:Option[Long
     var processingQueue:Seq[AssetSweeperFile] = Seq()
 
     setHandler(out, new AbstractOutHandler {
-      override def onPull(): Unit = {
+      override def onPull:Unit = try {
+        onPullBody()
+      } catch {
+        case err:Throwable=>
+          logger.error("Uncaught exception getting asset sweeper files", err)
+          failStage(err)
+      }
+
+      def onPullBody(): Unit = {
         if(totalLimit.isDefined && lastProcessed>=totalLimit.get){
           logger.info(s"Processed up to limit of ${totalLimit.get}, stopping")
           complete(out)
