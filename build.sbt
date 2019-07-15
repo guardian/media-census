@@ -80,6 +80,35 @@ lazy val `common` = (project in file("common"))
     )
   )
 
+lazy val `fixmissing` = (project in file("vs-fix-missing-files"))
+  .enablePlugins(DockerPlugin, AshScriptPlugin)
+  .dependsOn(common)
+  .settings(commonSettings, libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-http" % "10.1.8",  //force akka-http to agree with akka-parsing, akka-http-core
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "org.postgresql" % "postgresql" % "42.2.5",
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion,
+  ),version := sys.props.getOrElse("build.number","DEV"),
+    dockerPermissionStrategy := DockerPermissionStrategy.Run,
+    daemonUserUid in Docker := None,
+    daemonUser in Docker := "daemon",
+    dockerUsername  := sys.props.get("docker.username"),
+    dockerRepository := Some("guardianmultimedia"),
+    packageName in Docker := "guardianmultimedia/vs-fix-missing-files",
+    packageName := "vs-fix-missing-files",
+    dockerBaseImage := "openjdk:8-jdk-alpine",
+    dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"vs-fix-missing-files",Some(sys.props.getOrElse("build.number","DEV"))),
+    dockerCommands ++= Seq(
+      Cmd("USER","root"),
+      Cmd("RUN", "chmod -R a+x /opt/docker"),
+      Cmd("USER", "daemon")
+    )
+  )
+
 lazy val `cronscanner` = (project in file("cronscanner"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)
     .dependsOn(common)

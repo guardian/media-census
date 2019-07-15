@@ -9,7 +9,7 @@ import models.{JobHistory, JobHistoryDAO, MediaCensusEntry, MediaCensusIndexer, 
 import play.api.Logger
 import vidispine.{VSCommunicator, VSFile}
 import com.softwaremill.sttp._
-import nlstreamcomponents.VSStorageScanSource
+import streamComponents.VSStorageScanSource
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

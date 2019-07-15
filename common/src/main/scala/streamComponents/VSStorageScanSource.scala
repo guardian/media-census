@@ -1,17 +1,16 @@
-package nlstreamcomponents
+package streamComponents
 
 import akka.actor.ActorSystem
-import akka.stream.{Attributes, Materializer, Outlet, SourceShape}
 import akka.stream.stage.{AbstractOutHandler, GraphStage, GraphStageLogic}
+import akka.stream.{Attributes, Materializer, Outlet, SourceShape}
 import com.softwaremill.sttp.Uri
 import org.slf4j.LoggerFactory
 import vidispine.{VSCommunicator, VSFile}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class VSStorageScanSource(storageId:String, vsBaseUri:Uri, user:String, pass:String, pageSize:Int=10, maxRetries:Int=5)(implicit val actorSystem: ActorSystem, mat:Materializer, ec:ExecutionContext) extends GraphStage[SourceShape[VSFile]]{
+class VSStorageScanSource(storageId:Option[String], vsBaseUri:Uri, user:String, pass:String, pageSize:Int=10, maxRetries:Int=5)(implicit val actorSystem: ActorSystem, mat:Materializer, ec:ExecutionContext) extends GraphStage[SourceShape[VSFile]]{
   private final val out:Outlet[VSFile] = Outlet("VSStorageScanSource.out")
 
   override def shape: SourceShape[VSFile] = SourceShape.of(out)
@@ -24,7 +23,11 @@ class VSStorageScanSource(storageId:String, vsBaseUri:Uri, user:String, pass:Str
     private var ctr=0
 
     def getNextPage(retryIdx:Int=0):Future[Either[String,Seq[VSFile]]] = {
-      comm.requestGet(s"/API/storage/$storageId/file;first=$ctr;number=$pageSize;sort=timestamp",Map("Accept"->"application/xml"),queryParams = Map("count"->"false")).flatMap({
+      val baseUrl = storageId match {
+        case Some(actualStorageId)=>s"/API/storage/$actualStorageId/file"
+        case None=>"/API/storage/file"
+      }
+      comm.requestGet(s"$baseUrl;first=$ctr;number=$pageSize;sort=timestamp",Map("Accept"->"application/xml"),queryParams = Map("count"->"false")).flatMap({
         case Left(err)=>
           logger.warn(s"Got HTTP error $err listing storage $storageId. Retrying...")
           Thread.sleep(5000)
