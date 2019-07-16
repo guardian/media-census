@@ -3,31 +3,49 @@ package vidispine
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import scala.util.{Success,Failure, Try}
 import scala.xml.NodeSeq
 
-case class VSMetadataValue(value:String, uuid:UUID, user:String, timestamp:ZonedDateTime, change:String)
-case class VSMetadataEntry(name:String, uuid:UUID, user:String, timestamp:ZonedDateTime, change:String, values:Seq[VSMetadataValue])
+case class VSMetadataValue(value:String, uuid:Option[UUID], user:Option[String], timestamp:Option[ZonedDateTime], change:Option[String])
+case class VSMetadataEntry(name:String, uuid:Option[UUID], user:Option[String], timestamp:Option[ZonedDateTime], change:Option[String], values:Seq[VSMetadataValue])
 
 object VSMetadataEntry {
+  def safeUuidString(str:String,xml:NodeSeq):Option[UUID] = Try {
+    UUID.fromString(str)
+  } match {
+    case Success(uuid)=>Some(uuid)
+    case Failure(err)=>None
+  }
+
+  /**
+    * same as Option(str), which returns None if str is null, but also treats an empty string "" as None
+    * @param str string to test
+    * @return an Option which is None if str is null or empty
+    */
+  def blankAsOption(str:String):Option[String] = Option(str).flatMap(actualStr=>
+    if(actualStr=="") None else Some(actualStr)
+  )
+
   /**
     * create a sequence of VSMetadataEntry objects from the provided parsed XML.
     * @param xml NodeSeq pointing to a "timespan" level of aVidispine MetadataDocument
     * @return a sequence of VSMetadataEntry objects
     */
   def fromXml(xml:NodeSeq):Seq[VSMetadataEntry] = {
+    println(xml.toString())
     (xml \ "field").map(fieldNode=>
       new VSMetadataEntry((fieldNode \ "name").text,
-        UUID.fromString(fieldNode \@ "uuid"),
-        fieldNode \@ "user",
-        ZonedDateTime.parse(fieldNode \@ "timestamp"),
-        fieldNode \@ "change",
+        safeUuidString(fieldNode \@ "uuid",fieldNode),
+        blankAsOption(fieldNode \@ "user"),
+        blankAsOption(fieldNode \@ "timestamp").map(ZonedDateTime.parse),
+        blankAsOption(fieldNode \@ "change"),
         (fieldNode \ "value").map(valueNode=>
           VSMetadataValue(
             valueNode.text,
-            UUID.fromString(valueNode \@ "uuid"),
-            valueNode \@ "user",
-            ZonedDateTime.parse(fieldNode \@ "timestamp"),
-            valueNode \@ "change"
+            safeUuidString(valueNode \@ "uuid", valueNode),
+            blankAsOption(valueNode \@ "user"),
+            blankAsOption(fieldNode \@ "timestamp").map(ZonedDateTime.parse),
+            blankAsOption(valueNode \@ "change")
           )
         )
       )
@@ -42,10 +60,10 @@ object VSMetadataEntry {
     */
   def simple(key:String, value:String) = {
     new VSMetadataEntry(key,
-      UUID.randomUUID(),
-    "system",
-      ZonedDateTime.now(),
-    "",
-      Seq(VSMetadataValue(value,UUID.randomUUID(),"system",ZonedDateTime.now(),"")))
+      Some(UUID.randomUUID()),
+    Some("system"),
+      Some(ZonedDateTime.now()),
+      None,
+      Seq(VSMetadataValue(value,Some(UUID.randomUUID()),Some("system"),Some(ZonedDateTime.now()),None)))
   }
 }
