@@ -6,7 +6,10 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success, Try}
 import scala.xml.XML
+
+case class GetMetadataError(httpError:Option[HttpError], vsError:Option[VSError], xmlError:Option[String])
 
 case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntry]=Map()) {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -19,16 +22,26 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
     * @param mat implicitly provided akka Materializer
     * @return
     */
-  def getMoreMetadata(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materializer):Future[Either[HttpError,VSLazyItem]] = {
-    comm.requestGet(s"/API/item/$itemId/metadata?field=${fieldList.mkString(",")}", Map("Accept"->"application/xml")).map(_.map(returnedXml=>{
-      val parsedData = XML.loadString(returnedXml)
-      val newMetadataSeq = VSMetadataEntry.fromXml(parsedData \ "item" \ "metadata" \ "timespan")
-      logger.debug(s"Got ${newMetadataSeq.length} more metadata keys")
+  def getMoreMetadata(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materializer):Future[Either[GetMetadataError,VSLazyItem]] =
+    comm.requestGet(s"/API/item/$itemId/metadata?field=${fieldList.mkString(",")}", Map("Accept"->"application/xml")).map({
+      case Right(returnedXml) =>
+        val maybeParsedData = Try {
+          XML.loadString(returnedXml)
+        }
+        maybeParsedData match {
+          case Success(parsedData) =>
+            val newMetadataSeq = VSMetadataEntry.fromXml(parsedData \ "item" \ "metadata" \ "timespan")
+            logger.debug(s"Got ${newMetadataSeq.length} more metadata keys")
 
-      val newMetadataMap = newMetadataSeq.map(entry=>entry.name->entry).toMap
-      this.copy(lookedUpMetadata = this.lookedUpMetadata ++ newMetadataMap)
-    }))
-  }
+            val newMetadataMap = newMetadataSeq.map(entry => entry.name -> entry).toMap
+            Right(this.copy(lookedUpMetadata = this.lookedUpMetadata ++ newMetadataMap))
+          case Failure(parseError) =>
+            logger.error(s"Could not parse XML returned from Vidispine: ", parseError)
+            Left(GetMetadataError(None, None, Some(parseError.toString)))
+        }
+      case Left(httpErr) =>
+        Left(GetMetadataError(Some(httpErr), None, None))
+    })
 
   /**
     * get any metadata for the given key

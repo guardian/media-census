@@ -1,6 +1,6 @@
 package mfmodels
 
-import vidispine.VSLazyItem
+import vidispine.{FieldNames, VSLazyItem}
 
 /**
   * ["gnm_external_archive_external_archive_request",
@@ -17,10 +17,10 @@ case class ExternalArchiveData(archiveRequest:Option[String],archiveStatus:Optio
 object ExternalArchiveData extends ((Option[String],Option[String],Option[String],Option[String])=>ExternalArchiveData) {
   def fromLazyItem(item:VSLazyItem):ExternalArchiveData = {
     new ExternalArchiveData(
-      item.get("gnm_external_archive_external_archive_request").flatMap(_.headOption),
-      item.get("gnm_external_archive_external_archive_status").flatMap(_.headOption),
-      item.get("gnm_external_archive_external_archive_device").flatMap(_.headOption),
-      item.get("gnm_external_archive_external_archive_path").flatMap(_.headOption),
+      item.get(FieldNames.EXTERNAL_ARCHIVE_REQUEST).flatMap(_.headOption),
+      item.get(FieldNames.EXTERNAL_ARCHIVE_STATUS).flatMap(_.headOption),
+      item.get(FieldNames.EXTERNAL_ARCHIVE_DEVICE).flatMap(_.headOption),
+      item.get(FieldNames.EXTERNAL_ARCHIVE_PATH).flatMap(_.headOption),
     )
   }
 }

@@ -34,4 +34,18 @@ object VSMetadataEntry {
 
     )
   }
+
+  /**
+    * predominantly for testing, create a simple key->value with current time and a generated UUID
+    * @param key
+    * @param value
+    */
+  def simple(key:String, value:String) = {
+    new VSMetadataEntry(key,
+      UUID.randomUUID(),
+    "system",
+      ZonedDateTime.now(),
+    "",
+      Seq(VSMetadataValue(value,UUID.randomUUID(),"system",ZonedDateTime.now(),"")))
+  }
 }
