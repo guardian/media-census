@@ -11,7 +11,6 @@ import streamComponents.PeriodicUpdate
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-import scala.language.postfixOps
 
 class PeriodicUpdateSpec extends Specification with Mockito{
   sequential

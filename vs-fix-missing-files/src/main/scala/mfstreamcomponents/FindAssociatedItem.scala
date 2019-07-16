@@ -19,6 +19,8 @@ class FindAssociatedItem (implicit comm:VSCommunicator, mat:Materializer) extend
 
   override def shape: FlowShape[VSFile, VSEntry] = FlowShape.of(in,out)
 
+  val interestingFields = Seq("gnm_external_archive_request_external_archive_path","gnm_asset_status","gnm_asset_category","title","gnm_asset_path")
+
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
 
@@ -32,7 +34,7 @@ class FindAssociatedItem (implicit comm:VSCommunicator, mat:Materializer) extend
 
         maybeItem match {
           case Some(vsItem)=>
-            vsItem.getMoreMetadata(Seq("gnm_external_archive_request_external_archive_path","gnm_asset_status","gnm_asset_category","title")).onComplete({
+            vsItem.getMoreMetadata(interestingFields).onComplete({
               case Failure(err)=>
                 logger.error("getMoreMetadata crashed: ", err)
                 errorCb.invoke(err)

@@ -55,6 +55,9 @@ class DeleteFileSink(reallyDelete:Boolean, failFast:Boolean)(implicit comm:VSCom
               logger.info(s"I would delete file ${vsFile.vsid}")
               pull(in)
             }
+          case None=>
+            logger.error(s"Passed element has no file, can't request deletion")
+            failedCb.invoke(new RuntimeException("No file passed"))
         }
       }
     })

@@ -37,9 +37,9 @@ object FixMissingFiles {
       src ~> attachedSwitch
       attachedSwitch.out(1).map(f=>VSEntry(Some(f),None,None)) ~> deleteFileSink     //NO branch
       attachedSwitch.out(0) ~> findAssociatedItem ~> hasArchivePathSwitch //YES branch
-
-      hasArchivePathSwitch.out(1) ~> noPathSink   //NO branch
-      hasArchivePathSwitch.out(0) ~> archiveHunterSwitch  //YES branch
+//
+//      hasArchivePathSwitch.out(1) ~> noPathSink   //NO branch
+//      hasArchivePathSwitch.out(0) ~> archiveHunterSwitch  //YES branch
 
       ClosedShape
     }

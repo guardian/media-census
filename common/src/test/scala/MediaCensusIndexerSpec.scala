@@ -11,7 +11,6 @@ import org.specs2.mutable.Specification
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.language.postfixOps
 
 class MediaCensusIndexerSpec extends Specification with Mockito{
   "Indexer.getReplicaStats" should {
