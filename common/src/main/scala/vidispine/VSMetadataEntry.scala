@@ -32,8 +32,7 @@ object VSMetadataEntry {
     * @return a sequence of VSMetadataEntry objects
     */
   def fromXml(xml:NodeSeq):Seq[VSMetadataEntry] = {
-    println(xml.toString())
-    (xml \ "field").map(fieldNode=>
+    ((xml \ "field") ++ (xml \ "group" \ "field")).map(fieldNode=>
       new VSMetadataEntry((fieldNode \ "name").text,
         safeUuidString(fieldNode \@ "uuid",fieldNode),
         blankAsOption(fieldNode \@ "user"),
@@ -49,7 +48,6 @@ object VSMetadataEntry {
           )
         )
       )
-
     )
   }
 

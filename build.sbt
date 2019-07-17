@@ -215,6 +215,39 @@ lazy val `nearlinescanner` = (project in file("nearlinescanner"))
     )
   )
 
+lazy val `findarchivednearline` = (project in file("findarchivednearline"))
+  .enablePlugins(DockerPlugin, AshScriptPlugin)
+  .dependsOn(common)
+  .settings(commonSettings, libraryDependencies ++= Seq(
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
+    "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion % "test",
+    jdbc
+  ),version := sys.props.getOrElse("build.number","DEV"),
+    dockerPermissionStrategy := DockerPermissionStrategy.Run,
+    daemonUserUid in Docker := None,
+    daemonUser in Docker := "daemon",
+    dockerUsername  := sys.props.get("docker.username"),
+    dockerRepository := Some("guardianmultimedia"),
+    packageName in Docker := "guardianmultimedia/mediacensus-findarchivednearline",
+    packageName := "mediacensus-findarchivednearline",
+    dockerBaseImage := "openjdk:8-jdk-alpine",
+    dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-findarchivednearline",Some(sys.props.getOrElse("build.number","DEV"))),
+    dockerCommands ++= Seq(
+      Cmd("USER","root"),
+      Cmd("RUN", "chmod -R a+x /opt/docker"),
+      Cmd("USER", "daemon")
+    )
+  )
+
 val elastic4sVersion = "6.5.1"
 libraryDependencies ++= Seq (
   "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,

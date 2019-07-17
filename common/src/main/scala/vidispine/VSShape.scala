@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import scala.xml.XML
+import scala.xml.{NodeSeq, XML}
 
 case class VSShape (vsid:String,essenceVersion:Int,tag:String,mimeType:String, files:Seq[VSFile])
 
@@ -56,21 +56,24 @@ object VSShape {
 
   def fromXmlString(xmlString:String):Try[VSShape] = Try {
     val xmlNodes = XML.loadString(xmlString)
+    fromXml(xmlNodes)
+  }
 
+  def fromXml(xmlNodes:NodeSeq):VSShape = {
     //see http://apidoc.vidispine.com/latest/ref/xml-schema.html?highlight=shapedocument#schema-element-ShapeDocument for a list of all the possible components
-    val containerNodesList = (xmlNodes \ "containerComponent" \ "file") ++ (xmlNodes \ "binaryComponent" \ "file") ++ (xmlNodes \ "descriptorComponent" \ "file") ++(xmlNodes \ "audioComponent" \ "file") ++(xmlNodes \ "videoComponent" \ "file") ++ (xmlNodes \ "subtitleComponent" \ "file")
-      new VSShape(
+    val containerNodesList = (xmlNodes \ "containerComponent" \ "file") ++ (xmlNodes \ "binaryComponent" \ "file") ++ (xmlNodes \ "descriptorComponent" \ "file") ++ (xmlNodes \ "audioComponent" \ "file") ++ (xmlNodes \ "videoComponent" \ "file") ++ (xmlNodes \ "subtitleComponent" \ "file")
+    new VSShape(
       (xmlNodes \ "id").text,
       (xmlNodes \ "essenceVersion").text.toInt,
       (xmlNodes \ "tag").text,
       (xmlNodes \ "mimeType").text,
-      containerNodesList.map(fileNode=>VSFile.fromXml(fileNode) match {
-        case Success(Some(vsFile))=>vsFile
-        case Success(None)=>
+      containerNodesList.map(fileNode => VSFile.fromXml(fileNode) match {
+        case Success(Some(vsFile)) => vsFile
+        case Success(None) =>
           logger.error(s"Recceived shape document with empty file nodes, this should not happen")
-          logger.error(xmlString)
+          logger.error(xmlNodes.toString)
           throw new RuntimeException("Recceived shape document with empty file nodes, this should not happen")
-        case Failure(err)=>throw err  //this is picked up immediately by the containing Try and returned as a Failure
+        case Failure(err) => throw err //this is picked up immediately by the containing Try and returned as a Failure
       })
     )
   }

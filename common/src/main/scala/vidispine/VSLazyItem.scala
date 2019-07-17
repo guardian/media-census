@@ -7,11 +7,11 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
-import scala.xml.XML
+import scala.xml.{Node, NodeSeq, XML}
 
 case class GetMetadataError(httpError:Option[HttpError], vsError:Option[VSError], xmlError:Option[String])
 
-case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntry]=Map()) {
+case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntry]=Map(), shapes:Option[Map[String,VSShape]]=None) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   /**
@@ -52,5 +52,29 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
 
   def getSingle(fieldName:String):Option[String] = {
     get(fieldName).flatMap(_.headOption)
+  }
+}
+
+object VSLazyItem extends ((String,Map[String,VSMetadataEntry],Option[Map[String,VSShape]])=>VSLazyItem) {
+  /**
+    * simple constructor for blank item
+    * @param itemId item id to hold
+    * @return VSLazyItem with nothing loaded
+    */
+  def apply(itemId:String) = new VSLazyItem(itemId,Map(),None)
+
+  /**
+    * construct from a single <item> stanza in an ItemListDocument
+    * @param xml parsed xml node pointing to an <item>
+    */
+  def fromXmlSearchStanza(xml:Node) = {
+    val itemId = xml \@ "id"
+
+    val metadataSeq = VSMetadataEntry.fromXml(xml \ "metadata" \ "timespan")
+    val newMetadataMap = metadataSeq.map(entry => entry.name -> entry).toMap
+    val shapes = (xml \ "shape").map(VSShape.fromXml)
+    val shapesMap = shapes.map(entry=>entry.tag->entry).toMap
+
+    new VSLazyItem(itemId,newMetadataMap,if(shapesMap.isEmpty) None else Some(shapesMap))
   }
 }

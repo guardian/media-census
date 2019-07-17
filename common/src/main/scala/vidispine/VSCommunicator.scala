@@ -33,10 +33,11 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     * @param headers
     * @return
     */
-  private def sendPut(uriPath:String, xmlString:String, headers:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
+  private def sendPut(uriPath:String, xmlString:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val bs = ByteString(xmlString,"UTF-8")
 
-    val uri = vsUri.path(uriPath)
+    val uriWithPath = vsUri.path(uriPath)
+    val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
     val source:Source[ByteString, Any] = Source.single(bs)
     val hdr = Map(
       "Accept"->"application/xml",
@@ -118,9 +119,9 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     * @param ec implicitly provided execution context for async operations
     * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
     */
-  def request(uriPath:String,xmlString:String,headers:Map[String,String], attempt:Int=0)
+  def request(uriPath:String,xmlString:String,headers:Map[String,String], queryParams:Map[String,String]=Map(), attempt:Int=0)
              (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendPut(uriPath, xmlString, headers).flatMap({ response=>
+  Future[Either[HttpError,String]] = sendPut(uriPath, xmlString, headers, queryParams).flatMap({ response=>
     response.body match {
       case Right(source)=>
         logger.debug("Send succeeded")
@@ -130,7 +131,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          request(uriPath, xmlString, headers, attempt+1)
+          request(uriPath, xmlString, headers, queryParams, attempt+1)
         } else {
           VSError.fromXml(errorString) match {
             case Left(unparseableError) =>
