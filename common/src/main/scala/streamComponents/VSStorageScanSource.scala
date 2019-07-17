@@ -10,7 +10,7 @@ import vidispine.{VSCommunicator, VSFile}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-class VSStorageScanSource(storageId:Option[String], vsBaseUri:Uri, user:String, pass:String, pageSize:Int=10, maxRetries:Int=5)(implicit val actorSystem: ActorSystem, mat:Materializer, ec:ExecutionContext) extends GraphStage[SourceShape[VSFile]]{
+class VSStorageScanSource(storageId:Option[String], fileState:Option[String], vsBaseUri:Uri, user:String, pass:String, pageSize:Int=10, maxRetries:Int=5)(implicit val actorSystem: ActorSystem, mat:Materializer, ec:ExecutionContext) extends GraphStage[SourceShape[VSFile]]{
   private final val out:Outlet[VSFile] = Outlet("VSStorageScanSource.out")
 
   override def shape: SourceShape[VSFile] = SourceShape.of(out)
@@ -27,7 +27,12 @@ class VSStorageScanSource(storageId:Option[String], vsBaseUri:Uri, user:String, 
         case Some(actualStorageId)=>s"/API/storage/$actualStorageId/file"
         case None=>"/API/storage/file"
       }
-      comm.requestGet(s"$baseUrl;first=$ctr;number=$pageSize;sort=timestamp",Map("Accept"->"application/xml"),queryParams = Map("count"->"false")).flatMap({
+
+      val queryParams = Map("count"->"false")
+
+      val queryParamsWithState = if(fileState.isDefined) queryParams ++ Map("state"->fileState.get) else queryParams
+
+      comm.requestGet(s"$baseUrl;first=$ctr;number=$pageSize;sort=timestamp",Map("Accept"->"application/xml"),queryParams = queryParamsWithState).flatMap({
         case Left(err)=>
           logger.warn(s"Got HTTP error $err listing storage $storageId. Retrying...")
           Thread.sleep(5000)
@@ -48,6 +53,7 @@ class VSStorageScanSource(storageId:Option[String], vsBaseUri:Uri, user:String, 
       override def onPull(): Unit = {
         val completedCb = getAsyncCallback[Option[VSFile]]({
           case Some(vsfile)=>
+            logger.info(vsfile.toString)
             push(out, vsfile)
             listQueue = listQueue.tail
           case None=>

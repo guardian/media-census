@@ -8,6 +8,7 @@ import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, MediaCensusEntry, Me
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import streamComponents.PeriodicUpdate
+import testhelpers.AkkaTestkitSpecs2Support
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._

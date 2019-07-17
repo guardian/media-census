@@ -30,6 +30,7 @@ class FindAssociatedItem (implicit comm:VSCommunicator, mat:Materializer) extend
         val errorCb = createAsyncCallback[Throwable](err=>failStage(err))
 
         val vsFile = grab(in)
+
         val maybeItem = vsFile.membership.map(m=>VSLazyItem(m.itemId))
 
         maybeItem match {
@@ -42,7 +43,7 @@ class FindAssociatedItem (implicit comm:VSCommunicator, mat:Materializer) extend
                 logger.error(s"Could not get metadata from Vidispine: $err")
                 errorCb.invoke(new RuntimeException(err.toString))
               case Success(Right(updatedItem))=>
-                logger.debug(s"Got metadata for ${vsItem.itemId}: $updatedItem")
+                logger.info(s"Got metadata for ${vsItem.itemId}: $updatedItem")
                 completionCb.invoke(VSEntry(Some(vsFile),Some(updatedItem), None))
             })
           case None=>

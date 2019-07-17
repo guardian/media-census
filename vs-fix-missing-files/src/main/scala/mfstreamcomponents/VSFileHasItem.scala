@@ -23,8 +23,10 @@ class VSFileHasItem extends GraphStage[UniformFanOutShape[VSFile, VSFile]]{
         val elem = grab(in)
 
         if(elem.membership.isDefined){
+          logger.info(s"${elem.path} (${elem.state}) is a member of ${elem.membership.get}")
           push(yes, elem)
         } else {
+          logger.info(s"File ${elem.vsid} ${elem.path} on ${elem.storage} (${elem.state}) is not a member of any shapes or items")
           push(no, elem)
         }
       }

@@ -4,6 +4,7 @@ import java.util.UUID
 import akka.stream.{ActorMaterializer, Materializer}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
+import testhelpers.AkkaTestkitSpecs2Support
 import vidispine.{VSCommunicator, VSLazyItem, VSMetadataEntry, VSMetadataValue}
 
 import scala.concurrent.{Await, Future}

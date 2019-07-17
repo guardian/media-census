@@ -1,3 +1,5 @@
+package testhelpers
+
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
 import org.specs2.mutable.After

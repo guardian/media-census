@@ -1,6 +1,7 @@
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{GraphDSL, Merge, Sink}
+import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
+import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
 import config.VSConfig
 import org.slf4j.LoggerFactory
 import com.softwaremill.sttp._
@@ -12,6 +13,7 @@ import vidispine.{VSCommunicator, VSEntry}
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 object FixMissingFiles {
   val logger = LoggerFactory.getLogger(getClass)
@@ -55,7 +57,7 @@ object FixMissingFiles {
     GraphDSL.create(sinkFactory) { implicit builder=> sink=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
-      val src = builder.add(new VSStorageScanSource(None, vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass,pageSize=100).async)
+      val src = builder.add(new VSStorageScanSource(None, Some("LOST"), vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass,pageSize=100).async)
       val attachedSwitch = builder.add(new VSFileHasItem)
       val findAssociatedItem = builder.add(new FindAssociatedItem().async)
       val hasArchivePathSwitch = builder.add(new VSItemHasArchivePath)
@@ -63,7 +65,7 @@ object FixMissingFiles {
       val sinkMerge = builder.add(Merge[ItemReport](4))
 
       //val deleteFileSink = builder.add(new DeleteFileSink(reallyDelete=false,failFast=true))
-      src ~> attachedSwitch
+      src.out.log("fix-missing-files-stream") ~> attachedSwitch
       attachedSwitch.out(1).map(f=>VSEntry(Some(f),None,None)).map(entry=>ItemReport(ItemStatus.FileNotAttached, entry)) ~> sinkMerge    //NO branch
       attachedSwitch.out(0) ~> findAssociatedItem ~> hasArchivePathSwitch //YES branch
 //
@@ -79,6 +81,21 @@ object FixMissingFiles {
   }
 
   def main(args:Array[String]) = {
+    val graph = buildStream()
 
+    RunnableGraph.fromGraph(graph).run().onComplete({
+      case Failure(err)=>
+        logger.error(s"Stream failed: ", err)
+      case Success(reports)=>
+        logger.info(s"Processing completed")
+        val notAttachedReports = reports.filter(_.status==ItemStatus.FileNotAttached)
+        val noPathReports = reports.filter(_.status==ItemStatus.NoArchivePathSet)
+        val notValidReports  = reports.filter(_.status==ItemStatus.ArchivePathNotValid)
+        val properlyArchivedReports = reports.filter(_.status==ItemStatus.FileArchived)
+
+        logger.info(s"Summary status: A total of ${reports.length} files were found that have MISSING files")
+        logger.info(s"Summary status: ${notAttachedReports.length} files were not attached to items, ${noPathReports.length} files had no archive paths, ${notValidReports.length} files had an archive path not found in Archive Hunter and ${properlyArchivedReports.length} were fully archived.")
+        terminate(0)
+    })
   }
 }

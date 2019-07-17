@@ -2,6 +2,7 @@ import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink, Source}
 import mfstreamcomponents.VSItemHasArchivePath
 import org.specs2.mutable.Specification
+import testhelpers.AkkaTestkitSpecs2Support
 import vidispine.{FieldNames, VSEntry, VSLazyItem, VSMetadataEntry}
 
 import scala.concurrent.{Await, Future}

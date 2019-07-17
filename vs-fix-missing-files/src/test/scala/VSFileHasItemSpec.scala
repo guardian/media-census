@@ -5,6 +5,7 @@ import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink, Source}
 import mfstreamcomponents.VSFileHasItem
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
+import testhelpers.AkkaTestkitSpecs2Support
 import vidispine.{VSFile, VSFileItemMembership, VSFileState}
 
 import scala.concurrent.Await

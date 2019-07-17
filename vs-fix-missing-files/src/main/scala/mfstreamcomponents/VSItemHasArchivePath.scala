@@ -24,17 +24,17 @@ class VSItemHasArchivePath extends GraphStage[UniformFanOutShape[VSEntry, VSEntr
 
         data match {
           case Some(externalArchiveData)=>
-            logger.debug(s"Item ${elem.vsItem.get.itemId} has $externalArchiveData")
+            logger.info(s"Item ${elem.vsItem.get.itemId} has $externalArchiveData")
             if(externalArchiveData.archivePath.isDefined && externalArchiveData.archivePath.get !="" &&
             externalArchiveData.archiveDevice.isDefined && externalArchiveData.archiveDevice.get !=""){
-              logger.debug(s"Item ${elem.vsItem.get.itemId} has external archive paths set")
+              logger.info(s"Item ${elem.vsItem.get.itemId} has external archive paths set")
               push(yes, elem)
             } else {
-              logger.debug(s"Item ${elem.vsItem.get.itemId} has no external archive data set")
+              logger.info(s"Item ${elem.vsItem.get.itemId} has no external archive data set")
               push(no, elem)
             }
           case None=>
-            logger.debug(s"Item had no external archive data")
+            logger.info(s"Item had no external archive data")
             push(no, elem)
         }
       }
