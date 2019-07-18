@@ -30,14 +30,14 @@ class GenerateShapesReport (knownOnlineStorages:Seq[String], knownNearlineStorag
         val report = maybeOriginalShape match {
           case None=>
             logger.debug(s"Item ${vsitem.itemId} has no original shape")
-            ItemShapeReport(vsitem, noOriginalShape = true,0,0,0)
+            ItemShapeReport(vsitem, noOriginalShape = true,0,0,0, None)
           case Some(originalShape)=>
             logger.info(s"Item ${vsitem.itemId} has original shape data $originalShape")
             val onlineStorageCount = originalShape.files.count(vsfile=>knownOnlineStorages.contains(vsfile.storage))
             val nearlineStorageCount = originalShape.files.count(vsfile=>knownNearlineStorages.contains(vsfile.storage))
             val otherStorageCount = originalShape.files.length - onlineStorageCount - nearlineStorageCount
 
-            ItemShapeReport(vsitem, noOriginalShape = false, onlineStorageCount, nearlineStorageCount, otherStorageCount)
+            ItemShapeReport(vsitem, noOriginalShape = false, onlineStorageCount, nearlineStorageCount, otherStorageCount, originalShape.files.headOption.map(_.size))
         }
 
         push(out, report)

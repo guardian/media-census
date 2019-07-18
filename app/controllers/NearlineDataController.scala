@@ -30,4 +30,14 @@ class NearlineDataController @Inject() (config:Configuration, cc:ControllerCompo
         Ok(result.asJson)
     })
   }
+
+  def membershipStatsData = Action.async {
+    indexer.aggregateByMembership(esClient).map({
+      case Left(err)=>
+        logger.error(s"Could not get aggregate data: $err")
+        InternalServerError(GenericResponse("error",err.toString).asJson)
+      case Right(result)=>
+        Ok(result.asJson)
+    })
+  }
 }

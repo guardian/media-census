@@ -47,4 +47,26 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
       }
     }
   })
+
+  def aggregateByMembership(esClient:ElasticClient) = esClient.execute {
+    search(indexName) aggregations {
+      missingAgg("no_membership","membership")
+        .subAggregations(
+          sumAgg("totalSize","size"),
+          termsAgg("state","state.keyword").subAggregations(sumAgg("size","size"))
+        )
+    }
+  }.map(result=>{
+    if(result.isError){
+      Left(result.error.toString)
+    } else {
+      logger.debug(s"Got raw aggregation data: ${result.result.aggregationsAsMap}")
+      MembershipAggregationData.fromRawAggregateMap(result.result.aggregationsAsMap("no_membership").asInstanceOf[Map[String,Any]], result.result.totalHits) match {
+        case Success(aggregateData)=>Right(aggregateData)
+        case Failure(err)=>
+          logger.error(s"Could not process aggregate data", err)
+          Left(err.toString)
+      }
+    }
+  })
 }

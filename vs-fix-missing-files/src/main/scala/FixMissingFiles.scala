@@ -80,9 +80,25 @@ object FixMissingFiles {
     }
   }
 
+  /**
+    * gets the file size associated with the original shape of the VSItem in the ItemReport, if one exists
+    * @param item ItemReport to query
+    * @return an Option which contains the file size, if a valid one exists.
+    */
+  def getItemSize(item:ItemReport) = {
+    val maybeVSItem = item.entry.vsItem
+
+    val maybeOriginalShape = maybeVSItem.flatMap(_.shapes.flatMap(_.get("original")))
+    val maybeOriginalShapeFile = maybeOriginalShape.flatMap(_.files.find(_.size>=0))  //skip out invalid file lengths. VS indicates "Couldn't analyze" as -1L.
+    maybeOriginalShapeFile.map(_.size)
+  }
+
+  def sizeForReport(rpt:Seq[ItemReport]) = rpt.foldLeft[Long](0L)((sum,item)=>sum+getItemSize(item).getOrElse(0L))
+
   def main(args:Array[String]) = {
     val graph = buildStream()
 
+    val Gb = 1073741824
     RunnableGraph.fromGraph(graph).run().onComplete({
       case Failure(err)=>
         logger.error(s"Stream failed: ", err)
@@ -93,8 +109,13 @@ object FixMissingFiles {
         val notValidReports  = reports.filter(_.status==ItemStatus.ArchivePathNotValid)
         val properlyArchivedReports = reports.filter(_.status==ItemStatus.FileArchived)
 
+        val notAttachedSize = sizeForReport(notAttachedReports) / Gb
+        val noPathReportsSize = sizeForReport(noPathReports) / Gb
+        val notValidReportsSize = sizeForReport(notValidReports) / Gb
+        val properlyArchivedReportsSize = sizeForReport(properlyArchivedReports) / Gb
+
         logger.info(s"Summary status: A total of ${reports.length} files were found that have MISSING files")
-        logger.info(s"Summary status: ${notAttachedReports.length} files were not attached to items, ${noPathReports.length} files had no archive paths, ${notValidReports.length} files had an archive path not found in Archive Hunter and ${properlyArchivedReports.length} were fully archived.")
+        logger.info(s"Summary status: ${notAttachedReports.length} files ($notAttachedSize Gb) were not attached to items, ${noPathReports.length} ($noPathReportsSize Gb) files had no archive paths, ${notValidReports.length} ($notValidReportsSize Gb) files had an archive path not found in Archive Hunter and ${properlyArchivedReports.length} ($properlyArchivedReportsSize Gb) were fully archived.")
         terminate(0)
     })
   }
