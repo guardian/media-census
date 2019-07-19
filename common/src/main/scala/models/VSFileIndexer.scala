@@ -48,6 +48,21 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     }
   })
 
+  /**
+    * returns the total count of items in the index
+    * @param esClient
+    * @return
+    */
+  def totalCount(esClient:ElasticClient) = esClient.execute {
+    search(indexName) query matchAllQuery() limit(0)
+  }.map(result=>{
+    if(result.isError){
+      Left(result.error.toString)
+    } else {
+      Right(result.result.totalHits)
+    }
+  })
+
   def aggregateByMembership(esClient:ElasticClient) = esClient.execute {
     search(indexName) aggregations {
       missingAgg("no_membership","membership")
