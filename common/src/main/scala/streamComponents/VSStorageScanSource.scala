@@ -24,8 +24,8 @@ class VSStorageScanSource(storageId:Option[String], fileState:Option[String], vs
 
     def getNextPage(retryIdx:Int=0):Future[Either[String,Seq[VSFile]]] = {
       val baseUrl = storageId match {
-        case Some(actualStorageId)=>s"/API/storage/$actualStorageId/file"
-        case None=>"/API/storage/file"
+        case Some(actualStorageId)=>s"/API/storage/$actualStorageId/file;includeItem=true"
+        case None=>"/API/storage/file;includeItem=true"
       }
 
       val queryParams = Map("count"->"false")
