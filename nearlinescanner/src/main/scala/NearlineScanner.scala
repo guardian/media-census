@@ -50,9 +50,9 @@ object NearlineScanner {
 
     GraphDSL.create(counterSink) { implicit builder=> counter=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
-      val src = builder.add(new VSStorageScanSource(Some(storageId), None, vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass,pageSize=100))
-
+      val src = builder.add(new VSStorageScanSource(Some(storageId), None, vsCommunicator,pageSize=100))
       val updater = builder.add(new PeriodicUpdateBasic[VSFile](initialJobRecord))
+
       val sink = builder.add(indexer.getSink(esClient))
       val splitter = builder.add(new Broadcast[VSFile](2,eagerCancel = true))
 

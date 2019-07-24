@@ -57,7 +57,7 @@ object FixMissingFiles {
     GraphDSL.create(sinkFactory) { implicit builder=> sink=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
-      val src = builder.add(new VSStorageScanSource(None, Some("LOST"), vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass,pageSize=100).async)
+      val src = builder.add(new VSStorageScanSource(None, Some("LOST"), vsCommunicator, pageSize=100).async)
       val attachedSwitch = builder.add(new VSFileHasItem)
       val findAssociatedItem = builder.add(new FindAssociatedItem().async)
       val hasArchivePathSwitch = builder.add(new VSItemHasArchivePath)

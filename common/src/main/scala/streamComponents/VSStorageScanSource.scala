@@ -10,7 +10,7 @@ import vidispine.{VSCommunicator, VSFile}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-class VSStorageScanSource(storageId:Option[String], fileState:Option[String], vsBaseUri:Uri, user:String, pass:String, pageSize:Int=10, maxRetries:Int=5)(implicit val actorSystem: ActorSystem, mat:Materializer, ec:ExecutionContext) extends GraphStage[SourceShape[VSFile]]{
+class VSStorageScanSource(storageId:Option[String], fileState:Option[String], comm:VSCommunicator, pageSize:Int=10, maxRetries:Int=5)(implicit val actorSystem: ActorSystem, mat:Materializer, ec:ExecutionContext) extends GraphStage[SourceShape[VSFile]]{
   private final val out:Outlet[VSFile] = Outlet("VSStorageScanSource.out")
 
   override def shape: SourceShape[VSFile] = SourceShape.of(out)
@@ -18,7 +18,6 @@ class VSStorageScanSource(storageId:Option[String], fileState:Option[String], vs
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
 
-    private val comm = new VSCommunicator(vsBaseUri, user, pass)
     private var listQueue:Seq[VSFile] = Seq()
     private var ctr=0
 
