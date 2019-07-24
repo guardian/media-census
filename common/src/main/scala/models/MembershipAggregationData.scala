@@ -1,8 +1,11 @@
 package models
 
-import scala.util.{Failure, Success, Try}
+import java.time.ZonedDateTime
 
-case class MembershipAggregationData (totalCount:Long, noMembership:Double,totalSize:Double,states:Seq[StateAggregationData])
+import scala.util.{Failure, Success, Try}
+case class TimeBreakdownData(date:ZonedDateTime, doc_count:Long)
+
+case class MembershipAggregationData (totalCount:Long, noMembership:Double,totalSize:Double,states:Seq[StateAggregationData], noMembershipTimeBreakdown:Seq[TimeBreakdownData])
 
 object MembershipAggregationData {
   def mapToSubentry(map:Map[String,Any]) = Try {
@@ -21,16 +24,25 @@ object MembershipAggregationData {
     }
   }
 
-  def entryForElement(elem: Map[String, Any],totalCount:Long) =
+  def timeBreakdownData(content: Map[String, Any]):Seq[TimeBreakdownData] = {
+    content("buckets").asInstanceOf[List[Map[String,Any]]].map(bucketEntry=>TimeBreakdownData(
+      ZonedDateTime.parse(bucketEntry("key_as_string").asInstanceOf[String]),
+      bucketEntry("doc_count").asInstanceOf[Int]
+    ))
+  }
+
+  def entryForElement(elem: Map[String, Any], totalCount:Long) =
     subEntriesForElement(elem("state").asInstanceOf[Map[String,Any]]).map(subElems=>MembershipAggregationData(
       totalCount,
       elem("doc_count").asInstanceOf[Int],
       elem("totalSize").asInstanceOf[Map[String,Double]]("value"),
-      subElems)
+      subElems,
+      timeBreakdownData(elem("timestamp").asInstanceOf[Map[String,Any]]),
+      )
     )
 
-  def fromRawAggregateMap(data:Map[String,Any], totalCount:Long):Try[MembershipAggregationData] = Try {
-    entryForElement(data,totalCount) match {
+  def fromRawAggregateMap(itemsData:Map[String,Any], totalCount:Long):Try[MembershipAggregationData] = Try {
+    entryForElement(itemsData,totalCount) match {
       case Right(result)=>result
       case Left(errList)=>throw errList.head
     }

@@ -1,5 +1,7 @@
 package models
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorRefFactory
 import akka.stream.scaladsl.Sink
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
@@ -11,6 +13,7 @@ import com.sksamuel.elastic4s.streams.RequestBuilder
 import io.circe.generic.auto._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:Int=2) extends ZonedDateTimeEncoder with VSFileStateEncoder {
@@ -67,7 +70,8 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
       missingAgg("no_membership","membership.itemId.keyword")
         .subAggregations(
           sumAgg("totalSize","size"),
-          termsAgg("state","state.keyword").subAggregations(sumAgg("size","size"))
+          termsAgg("state","state.keyword").subAggregations(sumAgg("size","size")),
+          dateHistogramAgg("timestamp","timestamp").interval(FiniteDuration(30,TimeUnit.DAYS))
         )
     }
   }.map(result=>{
