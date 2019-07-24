@@ -32,7 +32,6 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
           sumAgg("totalSize","size"),
           termsAgg("state","state.keyword").subAggregations(sumAgg("size","size"))
         )
-
     }
   }.map(result=>{
     if(result.isError){
@@ -65,7 +64,7 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
 
   def aggregateByMembership(esClient:ElasticClient) = esClient.execute {
     search(indexName) aggregations {
-      missingAgg("no_membership","membership")
+      missingAgg("no_membership","membership.itemId.keyword")
         .subAggregations(
           sumAgg("totalSize","size"),
           termsAgg("state","state.keyword").subAggregations(sumAgg("size","size"))
