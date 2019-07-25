@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
 import ErrorViewComponent from "./common/ErrorViewComponent.jsx";
+import BytesFormatter from "./common/BytesFormatter.jsx";
 
 class VSFileSearchView extends React.Component {
     static propTypes = {
@@ -78,8 +79,9 @@ class VSFileSearchView extends React.Component {
                       style={{width: "100%", display: this.props.visible ? "block" : "none"}}>
             <thead>
             <tr className="dashboardheader">
-                <td>Filename</td>
-                <td>Path</td>
+                <td style={{width:"50px"}}>Filename</td>
+                <td style={{width:"150px"}}>Path</td>
+                <td style={{width:"30px"}}>Size</td>
                 <td>Timestamp</td>
                 <td>State</td>
                 <td>Storage</td>
@@ -90,8 +92,9 @@ class VSFileSearchView extends React.Component {
             {this.state.filesList.map(entry => {
                 const splitoutPath = VSFileSearchView.splitFilePath(entry.path);
                 return <tr key={entry.vsid}>
-                    <td>{splitoutPath[1]}</td>
-                    <td>{splitoutPath[0]}</td>
+                    <td style={{width:"50px"}}>{splitoutPath[1]}</td>
+                    <td style={{width:"150px"}}>{splitoutPath[0]}</td>
+                    <td style={{width:"30px"}}><BytesFormatter value={entry.size}/></td>
                     <td>{entry.timestamp}</td>
                     <td>{entry.state}</td>
                     <td>{entry.storage}</td>
@@ -100,8 +103,8 @@ class VSFileSearchView extends React.Component {
             })}
             {
                 this.state.filesList.length < this.state.totalCount ?
-                    <tr><td colSpan={6} style={{textAlign:"center"}}><i>Results limited to {this.state.filesList.length}</i></td></tr> :
-                    <tr><td colSpan={6} style={{textAlign:"center"}}><i>All results shown</i></td></tr>
+                    <tr><td colSpan={7} style={{textAlign:"center"}}><i>Results limited to {this.state.filesList.length}</i></td></tr> :
+                    <tr><td colSpan={7} style={{textAlign:"center"}}><i>All results shown</i></td></tr>
             }
             </tbody>
         </table>
