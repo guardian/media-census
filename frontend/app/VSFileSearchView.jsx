@@ -60,7 +60,7 @@ class VSFileSearchView extends React.Component {
         }
     }
 
-    static pathSplitRegex = RegExp(/^(.*)\/([^/])+$/);
+    static pathSplitRegex = RegExp(/^(.*)\/([^/]+)$/);
 
     splitFilePath(fullpath) {
         const matches = VSFileSearchView.pathSplitRegex.exec(fullpath);
