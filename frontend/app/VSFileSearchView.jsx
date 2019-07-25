@@ -62,7 +62,7 @@ class VSFileSearchView extends React.Component {
 
     static pathSplitRegex = RegExp(/^(.*)\/([^/]+)$/);
 
-    splitFilePath(fullpath) {
+    static splitFilePath(fullpath) {
         const matches = VSFileSearchView.pathSplitRegex.exec(fullpath);
         if (matches) {
             return [matches[1], matches[2]]
@@ -88,14 +88,14 @@ class VSFileSearchView extends React.Component {
             </thead>
             <tbody>
             {this.state.filesList.map(entry => {
-                const splitoutPath = this.splitFilePath(entry.path);
+                const splitoutPath = VSFileSearchView.splitFilePath(entry.path);
                 return <tr key={entry.vsid}>
                     <td>{splitoutPath[1]}</td>
                     <td>{splitoutPath[0]}</td>
                     <td>{entry.timestamp}</td>
                     <td>{entry.state}</td>
                     <td>{entry.storage}</td>
-                    <td>{entry.membership}</td>
+                    <td>{entry.membership ? entry.membership.toString : <i>(none)</i>}</td>
                 </tr>
             })}
             {

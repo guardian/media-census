@@ -90,11 +90,13 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     }
   })
 
-  def getResults(esClient:ElasticClient, startingTime:Option[ZonedDateTime],endingTime:Option[ZonedDateTime], resultsLimit:Option[Int]) = {
+  def getResults(esClient:ElasticClient, startingTime:Option[ZonedDateTime],endingTime:Option[ZonedDateTime], resultsLimit:Option[Int], orphanOnly:Boolean) = {
       val maybeTimeQuery = startingTime.flatMap(actualStartingTime=>endingTime.map(actualEndingTime=>
         rangeQuery("timestamp").gt(ElasticDate(actualStartingTime.toString)).lte(ElasticDate(actualEndingTime.toString))
       ))
-    val queryList = Seq(maybeTimeQuery).collect({case Some(q)=>q})
+    val maybeOrphanQuery = if(orphanOnly) Some(boolQuery().withNot(existsQuery("membership.itemId"))) else None
+
+    val queryList = Seq(maybeTimeQuery, maybeOrphanQuery).collect({case Some(q)=>q})
 
     val actualResultsLimit = resultsLimit.getOrElse(100)
 

@@ -1,8 +1,12 @@
-<testsuites name="jest tests" tests="7" failures="1" time="3.628">
-  <testsuite name="StatsHistoryGraph.objectToQueryString" errors="0" failures="0" skipped="0" timestamp="2019-06-14T17:23:01" time="0.889" tests="3">
-    <testcase classname="StatsHistoryGraph.objectToQueryString should take a set of mappings and make a query string" name="StatsHistoryGraph.objectToQueryString should take a set of mappings and make a query string" time="0.039">
+<testsuites name="jest tests" tests="9" failures="0" time="4.497">
+  <testsuite name="NearlineStorages.processData" errors="0" failures="0" skipped="0" timestamp="2019-07-25T14:41:03" time="1.309" tests="1">
+    <testcase classname="NearlineStorages.processData should break down incoming data from the state" name="NearlineStorages.processData should break down incoming data from the state" time="0.023">
     </testcase>
-    <testcase classname="StatsHistoryGraph.objectToQueryString should return an empty string if there are no keys" name="StatsHistoryGraph.objectToQueryString should return an empty string if there are no keys" time="0.004">
+  </testsuite>
+  <testsuite name="StatsHistoryGraph.objectToQueryString" errors="0" failures="0" skipped="0" timestamp="2019-07-25T14:41:03" time="1.372" tests="3">
+    <testcase classname="StatsHistoryGraph.objectToQueryString should take a set of mappings and make a query string" name="StatsHistoryGraph.objectToQueryString should take a set of mappings and make a query string" time="0.046">
+    </testcase>
+    <testcase classname="StatsHistoryGraph.objectToQueryString should return an empty string if there are no keys" name="StatsHistoryGraph.objectToQueryString should return an empty string if there are no keys" time="0.005">
     </testcase>
     <testcase classname="StatsHistoryGraph.objectToQueryString should return an empty string if passed NULL" name="StatsHistoryGraph.objectToQueryString should return an empty string if passed NULL" time="0.003">
     </testcase>

@@ -57,11 +57,11 @@ class NearlineDataController @Inject() (config:Configuration, cc:ControllerCompo
     })
   }
 
-  def fileSearch(start:Option[String],duration:Option[Int],limit:Option[Int]) = Action.async {
+  def fileSearch(start:Option[String],duration:Option[Int],limit:Option[Int],orphanOnly:Boolean) = Action.async {
     val maybeStartTime = start.map(ZonedDateTime.parse)
     val maybeEndTime = start.map(ZonedDateTime.parse).flatMap(startTime=>duration.map(startTime.plusSeconds(_)))
 
-    indexer.getResults(esClient,maybeStartTime,maybeEndTime,limit).map({
+    indexer.getResults(esClient,maybeStartTime,maybeEndTime,limit,orphanOnly).map({
       case Left(err)=>
         logger.error(err)
         InternalServerError(GenericResponse("error", err.toString).asJson)
