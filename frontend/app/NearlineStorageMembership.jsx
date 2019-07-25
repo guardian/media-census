@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import {Pie,Bar} from "react-chartjs-2";
+import {Pie,Bar,HorizontalBar} from "react-chartjs-2";
 import BytesFormatterImplementation from "./common/BytesFormatterImplementation.jsx";
 import moment from 'moment';
 import RefreshButton from "./common/RefreshButton.jsx";
@@ -24,6 +24,7 @@ class NearlineStorageMembership extends React.Component {
             noMembershipTimeBreakdown: [],
             pieData: null,
             barData: null,
+            summaryData: null,
             chartMode: NearlineStorageMembership.CHART_MODE_COUNT
         }
     }
@@ -57,6 +58,10 @@ class NearlineStorageMembership extends React.Component {
             barData: {
                 datapoints: timeBreakdownDatapoints,
                 labels: timeBreakdownLabels
+            },
+            summaryData: {
+                datapoints: [this.state.totalCount-this.state.noMembership, this.state.noMembership],
+                labels: ["Attached to items","Not attached to items"]
             }
         })
     }
@@ -93,6 +98,38 @@ class NearlineStorageMembership extends React.Component {
                     <option key={NearlineStorageMembership.CHART_MODE_SIZE} value={NearlineStorageMembership.CHART_MODE_SIZE}>View by file size</option>
                 </select>
             </span>
+
+            <div style={{width: "100vw",  overflow:"hidden"}}>
+                <HorizontalBar data={{
+
+                                    datasets: this.state.summaryData ? this.state.summaryData.datapoints.map((datapoint,idx)=>{
+                                        return {data: [datapoint],label:this.state.summaryData.labels[idx], backgroundColor: NearlineStorageMembership.colourValues[idx*2]}
+                                    }) : [],
+                                    labels: ["Summary"]
+                                }}
+                               height={50}
+                                options={{
+                                    scales: {
+                                        yAxes: [{
+                                            labelString: "",
+                                            scaleLabel: {
+                                                display: false,
+                                            },
+                                            stacked: true
+                                        }],
+                                        xAxes: [{
+                                            labelString: "",
+                                            scaleLabel: {
+                                                display: false,
+                                                labelString: "File count",
+                                            },
+                                            stacked: true
+                                        }]
+                                    }
+                                }}
+                />
+            </div>
+
             <div style={{width: "64vw", height:"800px",overflow:"hidden", display:"inline-block"}}>
                 <Bar data={{
                     datasets: [{data:this.state.barData ? this.state.barData.datapoints : [], label: "Files with no membership"}],
