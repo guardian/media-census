@@ -14,6 +14,7 @@ import IndexRedirect from "./IndexRedirect.jsx";
 import BannerMenu from "./BannerMenu.jsx";
 import RunsAdmin from "./RunsAdmin.jsx";
 import NearlineStorages from "./NearlineStorages.jsx";
+import NearlineStorageMembership from "./NearlineStorageMembership.jsx";
 
 library.add(faStroopwafel, faCheckCircle, faCheck, faTimes, faTimesCircle, faRoad,faSearch,faThList,faWrench, faLightbulb, faChevronCircleDown, faChevronCircleRight, faTrashAlt, faFolderPlus, faFolderMinus, faFolder);
 library.add(faFilm, faVolumeUp, faImage, faFile, faClock, faRunning, faExclamationTriangle, faHdd, faBalanceScale, faSyncAlt, faBookReader, faBug, faCompressArrowsAlt, faIndustry, faRedoAlt, faHome, faListOl,);
@@ -28,6 +29,7 @@ class App extends React.Component {
                 <Route path="/current" component={CurrentStateStats}/>
                 <Route path="/history" component={StatsHistoryGraph}/>
                 <Route path="/runs" component={RunsAdmin}/>
+                <Route path="/nearlines/membership" component={NearlineStorageMembership}/>
                 <Route path="/nearlines" component={NearlineStorages}/>
                 <Route path="/" component={IndexRedirect}/>
             </Switch>
