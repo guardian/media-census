@@ -50,6 +50,13 @@ class NearlineStorageMembership extends React.Component {
         const timeBreakdownDatapoints = this.state.noMembershipTimeBreakdown.map(entry=>entry.doc_count);
         const timeBreakdownLabels = this.state.noMembershipTimeBreakdown.map(entry=>entry.date);
 
+        const allStateSizes = this.state.states.reduce((acc, entry)=>acc+entry.totalSize, 0);
+
+        const summaryDataDatapoints = [
+            this.state.chartMode===NearlineStorageMembership.CHART_MODE_COUNT ? this.state.totalCount-this.state.noMembership : this.state.totalSize - allStateSizes,
+            this.state.chartMode===NearlineStorageMembership.CHART_MODE_COUNT ? this.state.noMembership : allStateSizes
+        ];
+
         this.setState({
             pieData: {
                 datapoints: fileStateDatapoints,
@@ -60,7 +67,7 @@ class NearlineStorageMembership extends React.Component {
                 labels: timeBreakdownLabels
             },
             summaryData: {
-                datapoints: [this.state.totalCount-this.state.noMembership, this.state.noMembership],
+                datapoints: summaryDataDatapoints,
                 labels: ["Attached to items","Not attached to items"]
             }
         })
@@ -123,8 +130,43 @@ class NearlineStorageMembership extends React.Component {
                                                 display: false,
                                                 labelString: "File count",
                                             },
+                                            ticks: {
+                                                callback: (value,index,series)=>{
+                                                    if(this.state.chartMode===NearlineStorageMembership.CHART_MODE_SIZE) {
+                                                        const result = BytesFormatterImplementation.getValueAndSuffix(value);
+                                                        return result[0] + result[1];
+                                                    } else {
+                                                        return value;
+                                                    }
+                                                }
+                                            },
                                             stacked: true
                                         }]
+                                    },
+                                    tooltips: {
+                                        callbacks: {
+                                            label: (tooltipItem,data)=>{
+                                                let xLabel=data.labels[tooltipItem.index];
+                                                let yLabel=data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+
+                                                console.log(tooltipItem);
+                                                console.log(data);
+                                                console.log(xLabel, yLabel);
+
+                                                if(this.state.chartMode===NearlineStorageMembership.CHART_MODE_SIZE) {
+                                                    try {
+                                                        const result = BytesFormatterImplementation.getValueAndSuffix(yLabel);
+                                                        yLabel = result[0] + result[1];
+                                                        return xLabel + ": " + yLabel;
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        return xLabel + ": " + yLabel;
+                                                    }
+                                                } else {
+                                                    return xLabel + ": " + yLabel;
+                                                }
+                                            }
+                                        }
                                     }
                                 }}
                 />
@@ -147,7 +189,6 @@ class NearlineStorageMembership extends React.Component {
                                  labelString: "Date",
                                  ticks: {
                                      callback: (value,index,series)=>{
-
                                          return moment(value).format("Do MMM YYYY")
                                      }
                                  },
