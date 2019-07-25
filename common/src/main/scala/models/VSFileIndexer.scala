@@ -1,9 +1,11 @@
 package models
 
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorRefFactory
 import akka.stream.scaladsl.Sink
+import com.sksamuel.elastic4s.ElasticDate
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.http.ElasticClient
 import helpers.ZonedDateTimeEncoder
@@ -87,4 +89,23 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
       }
     }
   })
+
+  def getResults(esClient:ElasticClient, startingTime:Option[ZonedDateTime],endingTime:Option[ZonedDateTime], resultsLimit:Option[Int]) = {
+      val maybeTimeQuery = startingTime.flatMap(actualStartingTime=>endingTime.map(actualEndingTime=>
+        rangeQuery("timestamp").gt(ElasticDate(actualStartingTime.toString)).lte(ElasticDate(actualEndingTime.toString))
+      ))
+    val queryList = Seq(maybeTimeQuery).collect({case Some(q)=>q})
+
+    val actualResultsLimit = resultsLimit.getOrElse(100)
+
+    esClient.execute {
+      search(indexName) query boolQuery().must(queryList) limit actualResultsLimit
+    }.map(result=>{
+      if(result.isError){
+        Left(result.error.toString)
+      } else {
+        Right((result.result.to[VSFile], result.result.totalHits))
+      }
+    })
+  }
 }

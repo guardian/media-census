@@ -5,6 +5,7 @@ import BytesFormatterImplementation from "./common/BytesFormatterImplementation.
 import moment from 'moment';
 import RefreshButton from "./common/RefreshButton.jsx";
 import {Link} from "react-router-dom";
+import VSFileSearchView from "./VSFileSearchView.jsx";
 
 class NearlineStorageMembership extends React.Component {
 
@@ -25,7 +26,9 @@ class NearlineStorageMembership extends React.Component {
             pieData: null,
             barData: null,
             summaryData: null,
-            chartMode: NearlineStorageMembership.CHART_MODE_COUNT
+            chartMode: NearlineStorageMembership.CHART_MODE_COUNT,
+            showFilesList: false,
+            selectedDateSection: null
         }
     }
 
@@ -172,7 +175,7 @@ class NearlineStorageMembership extends React.Component {
                 />
             </div>
 
-            <div style={{width: "64vw", height:"800px",overflow:"hidden", display:"inline-block"}}>
+            <div style={{width: "64vw", overflow:"hidden", display:"inline-block"}}>
                 <Bar data={{
                     datasets: [{data:this.state.barData ? this.state.barData.datapoints : [], label: "Files with no membership"}],
                     labels: this.state.barData ? this.state.barData.labels : []
@@ -199,6 +202,12 @@ class NearlineStorageMembership extends React.Component {
                              display: true,
                              position: "bottom"
                          }
+                     }}
+
+                     onElementsClick={elems=>{
+                         const bar = elems[0];
+                         console.log("You clicked on bar number ", bar._index, this.state.barData.labels[bar._index]);
+                         this.setState({selectedDateSection: this.state.barData.labels[bar._index], showFilesList: true});
                      }}
                      />
             </div>
@@ -242,6 +251,10 @@ class NearlineStorageMembership extends React.Component {
                      }}
 
                 />
+            </div>
+
+            <div>
+                <VSFileSearchView startingTime={this.state.selectedDateSection} durationTime={30*3600*24} visible={this.state.showFilesList}/>
             </div>
         </div>
     }
