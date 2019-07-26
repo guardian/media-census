@@ -2,7 +2,7 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
-import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink}
+import akka.stream.scaladsl.{Balance, GraphDSL, Merge, RunnableGraph, Sink}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
 import config.ESConfig
 import fomStreamComponents.ExistsInS3Switch
@@ -45,6 +45,8 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
       ""  //this is never reached
   }
 
+  lazy val parallelism = sys.env.getOrElse("PARALLELISM","10").toInt
+
   def getEsClient = Try {
     val uri = esConfig.uri match {
       case Some(uri)=>uri
@@ -61,13 +63,19 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
       val src = builder.add(indexer.getOrphansSource(esClient))
-      val existsSwitch = builder.add(new ExistsInS3Switch(s3Bucket))
-      val merge = builder.add(Merge[ExistsReport](2))
+      val existsSwitchFactory = new ExistsInS3Switch(s3Bucket)
+      val splitter = builder.add(Balance[VSFile](parallelism))
+      val merge = builder.add(Merge[ExistsReport](2*parallelism))
 
-      src.out.map(_.to[VSFile]) ~> existsSwitch
+      src.out.map(_.to[VSFile]) ~> splitter
 
-      existsSwitch.out(0).map(vsfile=>ExistsReport(vsfile,true)) ~> merge
-      existsSwitch.out(1).map(vsfile=>ExistsReport(vsfile,false)) ~> merge
+      for (i<-0 until parallelism) {
+        val existsSwitch = builder.add(existsSwitchFactory)
+        splitter.out(i) ~> existsSwitch
+        existsSwitch.out(0).map(vsfile=>ExistsReport(vsfile,true)) ~> merge
+        existsSwitch.out(1).map(vsfile=>ExistsReport(vsfile,false)) ~> merge
+      }
+
       merge ~> sink
       ClosedShape
     }
