@@ -5,7 +5,7 @@ import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Balance, GraphDSL, Merge, RunnableGraph, Sink}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
 import config.ESConfig
-import fomStreamComponents.ExistsInS3Switch
+import fomStreamComponents.{ExistsInS3Switch, NoMembershipFilter}
 import helpers.ZonedDateTimeEncoder
 import models.{ExistsReport, JobHistory, JobHistoryDAO, VSFileIndexer}
 import play.api.Logger
@@ -64,6 +64,7 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
 
       val src = builder.add(indexer.getOrphansSource(esClient))
       val existsSwitchFactory = new ExistsInS3Switch(s3Bucket)
+      val noMembershipSwitchFactory = new NoMembershipFilter()
       val splitter = builder.add(Balance[VSFile](parallelism))
       val merge = builder.add(Merge[ExistsReport](2*parallelism))
 
@@ -71,7 +72,8 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
 
       for (i<-0 until parallelism) {
         val existsSwitch = builder.add(existsSwitchFactory)
-        splitter.out(i) ~> existsSwitch
+        val noMembershipFilter = builder.add(noMembershipSwitchFactory)
+        splitter.out(i) ~> noMembershipFilter ~> existsSwitch
         existsSwitch.out(0).map(vsfile=>ExistsReport(vsfile,true)) ~> merge
         existsSwitch.out(1).map(vsfile=>ExistsReport(vsfile,false)) ~> merge
       }

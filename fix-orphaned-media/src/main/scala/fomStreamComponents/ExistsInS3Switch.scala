@@ -23,21 +23,24 @@ class ExistsInS3Switch(forBucket:String) extends GraphStage[UniformFanOutShape[V
     private val logger = LoggerFactory.getLogger(getClass)
     private val s3Client = AmazonS3ClientBuilder.defaultClient()
 
+    private var ctr:Int=0
+
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
         val elem = grab(in)
 
+        ctr+=1
         val result = Try { s3Client.doesObjectExist(forBucket, elem.path) }
 
         result match {
           case Success(true)=>
-            logger.debug(s"${elem.vsid} (${elem.path}) exists in S3 bucket $forBucket")
+            logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) exists in S3 bucket $forBucket")
             push(yes, elem)
           case Success(false)=>
-            logger.debug(s"${elem.vsid} (${elem.path}) does not exist in S3 bucket $forBucket")
+            logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) does not exist in S3 bucket $forBucket")
             push(no, elem)
           case Failure(err)=>
-            logger.error(s"Could not check ${elem.vsid} (${elem.path}) in S3: ", err)
+            logger.error(s"[$ctr] Could not check ${elem.vsid} (${elem.path}) in S3: ", err)
             failStage(err)
         }
       }

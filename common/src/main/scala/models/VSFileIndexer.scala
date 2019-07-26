@@ -38,7 +38,7 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
 
   def getOrphansSource(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
     val queries = Seq(
-      existsQuery("membership.itemId")
+      boolQuery.not(existsQuery("membership.itemId"))
     )
     getSource(esClient, queries)
   }
