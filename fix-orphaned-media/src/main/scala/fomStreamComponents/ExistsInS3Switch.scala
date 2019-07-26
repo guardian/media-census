@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
   * this implements a graph stage which pushes its input to the "yes" port if it does exist in S3 or to the "no" port if
   * it doesn't.  It assumes that AWS credentials and region are provided in the OS environment
   */
-class ExistsInS3Switch(forBucket:String) extends GraphStage[UniformFanOutShape[VSFile,VSFile]] {
+class ExistsInS3Switch(inBuckets:List[String]) extends GraphStage[UniformFanOutShape[VSFile,VSFile]] {
   private final val in:Inlet[VSFile] = Inlet.create("ExistsInS3Switch.in")
   private final val yes:Outlet[VSFile] = Outlet.create("ExistsInS3Switch.yes")
   private final val no:Outlet[VSFile] = Outlet.create("ExistsInS3Switch.no")
@@ -25,22 +25,40 @@ class ExistsInS3Switch(forBucket:String) extends GraphStage[UniformFanOutShape[V
 
     private var ctr:Int=0
 
+    def checkInBucket(elem:VSFile, forBucket:String, remainingBuckets:List[String]):Try[Boolean] = {
+      val result = Try { s3Client.doesObjectExist(forBucket, elem.path) }
+
+      result match {
+        case Success(true)=>
+          logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) exists in S3 bucket $forBucket")
+          result
+        case Success(false)=>
+          logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) does not exist in S3 bucket $forBucket")
+          if(remainingBuckets.nonEmpty){
+            checkInBucket(elem,remainingBuckets.head, remainingBuckets.tail)
+          } else {
+            //we got to the end of the list, not found anywhere
+            Success(false)
+          }
+        case Failure(err)=>
+          logger.error(s"[$ctr] Could not check ${elem.vsid} (${elem.path}) in S3: ", err)
+          result
+      }
+    }
+
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
         val elem = grab(in)
 
         ctr+=1
-        val result = Try { s3Client.doesObjectExist(forBucket, elem.path) }
+        val result = checkInBucket(elem, inBuckets.head, inBuckets.tail)
 
         result match {
           case Success(true)=>
-            logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) exists in S3 bucket $forBucket")
             push(yes, elem)
           case Success(false)=>
-            logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) does not exist in S3 bucket $forBucket")
             push(no, elem)
           case Failure(err)=>
-            logger.error(s"[$ctr] Could not check ${elem.vsid} (${elem.path}) in S3: ", err)
             failStage(err)
         }
       }

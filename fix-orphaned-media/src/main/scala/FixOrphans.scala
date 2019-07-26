@@ -1,5 +1,3 @@
-import java.time.ZonedDateTime
-
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Balance, GraphDSL, Merge, RunnableGraph, Sink}
@@ -7,7 +5,7 @@ import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
 import config.ESConfig
 import fomStreamComponents.{ExistsInS3Switch, NoMembershipFilter}
 import helpers.ZonedDateTimeEncoder
-import models.{ExistsReport, JobHistory, JobHistoryDAO, VSFileIndexer}
+import models.{ExistsReport, VSFileIndexer}
 import play.api.Logger
 import vidispine.{VSFile, VSFileStateEncoder}
 
@@ -37,12 +35,12 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
 
-  lazy val s3Bucket = sys.env.get("S3_BUCKET_NAME") match {
-    case Some(b)=>b
+  lazy val s3BucketList = sys.env.get("S3_BUCKET_LIST") match {
+    case Some(b)=>b.split("\\s*,\\s*").toList
     case None=>
-      logger.error("You must specify S3_BUCKET_NAME in the environment")
+      logger.error("You must specify S3_BUCKET_LIST in the environment")
       Await.ready(complete_run(1), 60 seconds)
-      ""  //this is never reached
+      List("")  //this is never reached
   }
 
   lazy val parallelism = sys.env.getOrElse("PARALLELISM","10").toInt
@@ -63,7 +61,7 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
       val src = builder.add(indexer.getOrphansSource(esClient))
-      val existsSwitchFactory = new ExistsInS3Switch(s3Bucket)
+      val existsSwitchFactory = new ExistsInS3Switch(s3BucketList).async
       val noMembershipSwitchFactory = new NoMembershipFilter()
       val splitter = builder.add(Balance[VSFile](parallelism))
       val merge = builder.add(Merge[ExistsReport](2*parallelism))
@@ -104,6 +102,7 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
           val didExistCount = reportList.count(_.existsInS3==true)
           val notExistCount = reportList.count(_.existsInS3==false)
           logger.info(s"Run completed.  $didExistCount files existed in S3 and $notExistCount files did not exist.")
+          complete_run(0)
       })
     }
   }
