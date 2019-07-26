@@ -18,9 +18,11 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.12.3"
 )
 
+val awsSdkVersion = "1.11.346"
+
 lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerPlugin, AshScriptPlugin)
   .dependsOn(common)
-  .aggregate(cronscanner, deletescanner, nearlinescanner, findarchivednearline, fixmissing)
+  .aggregate(cronscanner, deletescanner, nearlinescanner, findarchivednearline, fixmissing, fixorphans)
   .settings(version := sys.props.getOrElse("build.number","DEV"),
     dockerPermissionStrategy := DockerPermissionStrategy.Run,
     daemonUserUid in Docker := None,
@@ -241,6 +243,40 @@ lazy val `findarchivednearline` = (project in file("findarchivednearline"))
     packageName := "mediacensus-findarchivednearline",
     dockerBaseImage := "openjdk:8-jdk-alpine",
     dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-findarchivednearline",Some(sys.props.getOrElse("build.number","DEV"))),
+    dockerCommands ++= Seq(
+      Cmd("USER","root"),
+      Cmd("RUN", "chmod -R a+x /opt/docker"),
+      Cmd("USER", "daemon")
+    )
+  )
+
+lazy val `fixorphans` = (project in file("fix-orphaned-media"))
+  .enablePlugins(DockerPlugin, AshScriptPlugin)
+  .dependsOn(common)
+  .settings(commonSettings, libraryDependencies ++= Seq(
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion,
+    "com.amazonaws" % "aws-java-sdk-s3" % awsSdkVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
+    "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion % "test",
+    jdbc
+  ),version := sys.props.getOrElse("build.number","DEV"),
+    dockerPermissionStrategy := DockerPermissionStrategy.Run,
+    daemonUserUid in Docker := None,
+    daemonUser in Docker := "daemon",
+    dockerUsername  := sys.props.get("docker.username"),
+    dockerRepository := Some("guardianmultimedia"),
+    packageName in Docker := "guardianmultimedia/mediacensus-fixorphanedmedia",
+    packageName := "mediacensus-fixorphanedmedia",
+    dockerBaseImage := "openjdk:8-jdk-alpine",
+    dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-fixorphanedmedia",Some(sys.props.getOrElse("build.number","DEV"))),
     dockerCommands ++= Seq(
       Cmd("USER","root"),
       Cmd("RUN", "chmod -R a+x /opt/docker"),

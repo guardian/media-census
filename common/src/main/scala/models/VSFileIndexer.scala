@@ -4,10 +4,12 @@ import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorRefFactory
-import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.{Sink, Source}
 import com.sksamuel.elastic4s.ElasticDate
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.http.ElasticClient
+import com.sksamuel.elastic4s.searches.SearchRequest
+import com.sksamuel.elastic4s.searches.queries.Query
 import helpers.ZonedDateTimeEncoder
 import org.slf4j.LoggerFactory
 import vidispine.{VSFile, VSFileStateEncoder}
@@ -28,6 +30,17 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
   def getSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
     implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => update(t.vsid) in s"$indexName/vsfile" docAsUpsert t
     Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize=batchSize, concurrentRequests = concurrentBatches))
+  }
+
+  def getSource(esClient:ElasticClient, q:Seq[Query])(implicit actorRefFactory: ActorRefFactory) = Source.fromPublisher(
+    esClient.publisher(search(indexName) query boolQuery().withMust(q) scroll FiniteDuration(5, TimeUnit.MINUTES))
+  )
+
+  def getOrphansSource(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+    val queries = Seq(
+      existsQuery("membership.itemId")
+    )
+    getSource(esClient, queries)
   }
 
   def aggregateByStateAndStorage(esClient:ElasticClient) = esClient.execute {
