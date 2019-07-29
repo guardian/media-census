@@ -30,8 +30,21 @@ class ExistsInS3Switch(inBuckets:List[String]) extends GraphStage[UniformFanOutS
 
       result match {
         case Success(true)=>
-          logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) exists in S3 bucket $forBucket")
-          result
+          try {
+            val meta = s3Client.getObjectMetadata(forBucket, elem.path)
+
+            logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) exists in S3 bucket $forBucket with size ${meta.getContentLength}, local size ${elem.size}")
+            if (elem.size != meta.getContentLength) { //if sizes don't match count as not present, we then create another copy anyway
+              logger.warn(s"[$ctr] ${elem.vsid} (${elem.path}) remote copy size does not match")
+              Success(false)
+            } else {
+              result
+            }
+          } catch {
+            case err:Throwable=>
+              logger.error(s"Size check failed: ", err)
+              Failure(err)
+          }
         case Success(false)=>
           logger.debug(s"[$ctr] ${elem.vsid} (${elem.path}) does not exist in S3 bucket $forBucket")
           if(remainingBuckets.nonEmpty){
