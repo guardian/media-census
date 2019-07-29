@@ -11,15 +11,18 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+object JobHistoryDAO {
+  object JobState extends Enumeration {
+    val Running,Completed,Failed = Value
+  }
+}
 //noinspection SimplifyBooleanMatch
 class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateTimeEncoder with JobTypeEncoder {
   import com.sksamuel.elastic4s.http.ElasticDsl._
   import com.sksamuel.elastic4s.circe._
+  import JobHistoryDAO._
   private val logger = LoggerFactory.getLogger(getClass)
 
-  object JobState extends Enumeration {
-    val Running,Completed,Failed = Value
-  }
 
   /**
     * save the provided entry to the index
