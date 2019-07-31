@@ -52,7 +52,7 @@ class StatsHistoryGraph extends React.Component {
             if (this.state.startingTimestamp) urlParams.startAt = this.state.startingTimestamp;
             if (this.state.finishingTimestamp) urlParams.endAt = this.state.finishingTimestamp;
 
-            const url = "/api/jobs/forTimespan" + this.objectToQueryString(urlParams);
+            const url = "/api/jobs/CensusScan/forTimespan" + this.objectToQueryString(urlParams);
 
             this.setState({loading: true, lastError: null}, () => axios.get(url).then(result => {
                 console.log(result.data);

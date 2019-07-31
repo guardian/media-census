@@ -5,7 +5,7 @@ import io.circe.{Decoder, Encoder}
 object JobType extends Enumeration {
   type JobType = Value
 
-  val CensusScan, DeletedScan = Value
+  val CensusScan, DeletedScan, NearlineScan = Value
 }
 
 trait JobTypeEncoder {

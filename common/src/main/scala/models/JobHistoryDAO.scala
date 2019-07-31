@@ -61,8 +61,12 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     * @param endingTime ZonedDateTime representing the ending time for the window. If not set, then defaults to "now"
     * @return a Future, with either an error object or a Tuple of (List of [[JobHistory]], total hit count)
     */
-  def jobsForTimespan(startingTime:Option[ZonedDateTime], endingTime:ZonedDateTime=ZonedDateTime.now(), showRunning:Boolean) = {
+  def jobsForTimespan(jobType:Option[String], startingTime:Option[ZonedDateTime], endingTime:ZonedDateTime=ZonedDateTime.now(), showRunning:Boolean) = {
     val maybeQueryList = Seq(
+      jobType.map({
+        case ""=>boolQuery().not(existsQuery("jobType.keyword"))
+        case actualJobType @ _ =>matchQuery("jobType.keyword", actualJobType)
+      }),
       startingTime.map(actualStartingTime=>
         rangeQuery("scanStart").gte(ElasticDate.fromTimestamp(actualStartingTime.toEpochSecond*1000))
       ),
