@@ -26,14 +26,18 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     Sink.fromSubscriber(client.subscriber[MediaCensusEntry](batchSize, concurrentBatches))
   }
 
+  def getIndexSource(client:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = Source.fromPublisher(
+    client.publisher(search(indexName) sortByFieldAsc "originalSource.ctime" scroll "5m")
+  )
+
   def getDeleteSink(client:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
-    implicit val deleteBuilder = new RequestBuilder[AssetSweeperFile] {
+    implicit val deleteBuilder = new RequestBuilder[MediaCensusEntry] {
       import com.sksamuel.elastic4s.http.ElasticDsl._
 
-      override def request(t: AssetSweeperFile): BulkCompatibleRequest = deleteById(indexName, "censusentry", t.id.toString)
+      override def request(t: MediaCensusEntry): BulkCompatibleRequest = deleteById(indexName, "censusentry", t.originalSource.id.toString)
     }
 
-    Sink.fromSubscriber(client.subscriber[AssetSweeperFile](batchSize, concurrentBatches))
+    Sink.fromSubscriber(client.subscriber[MediaCensusEntry](batchSize, concurrentBatches)(deleteBuilder, actorRefFactory))
   }
 
   /**
