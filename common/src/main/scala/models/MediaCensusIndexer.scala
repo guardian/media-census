@@ -1,13 +1,19 @@
 package models
 
 import akka.actor.ActorRefFactory
-import akka.stream.scaladsl.Sink
+import akka.stream.SourceShape
+import akka.stream.scaladsl.{GraphDSL, Sink, Source}
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.http.ElasticClient
+import com.sksamuel.elastic4s.searches.SearchRequest
+import com.sksamuel.elastic4s.searches.aggs.SumAggregation
+import com.sksamuel.elastic4s.searches.queries.Query
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import helpers.CensusEntryRequestBuilder
 import org.slf4j.LoggerFactory
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -30,6 +36,25 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     Sink.fromSubscriber(client.subscriber[AssetSweeperFile](batchSize, concurrentBatches))
   }
 
+  /**
+    * returns an Akka streams source that emits [[MediaCensusEntry]] objects matching the given query
+    * @param client Elastic4s HttpClient obkect
+    * @param query Elastic4s SearchRequest object. This must contain a "scroll" term.
+    * @param actorRefFactory implicitly provided ActorRefFactory for streams.
+    * @return a partial graph consisting of the Source
+    */
+  def getSearchSource(client:ElasticClient, query:SearchRequest)(implicit actorRefFactory:ActorRefFactory) = {
+    import com.sksamuel.elastic4s.circe._
+
+    val src = Source.fromPublisher(client.publisher(query))
+    src.map(_.to[MediaCensusEntry]).async
+  }
+
+  /**
+    * check if the index exists
+    * @param client ElasticClient object
+    * @return a Future, with a Response object indicating whether the index exists or not.
+    */
   def checkIndex(client:ElasticClient) = {
     client.execute {
       indexExists(indexName)
@@ -59,6 +84,7 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
           .field("replicaCount")
           .interval(1)
           .minDocCount(0)
+          .subAggregations(SumAggregation("totalSize").field("originalSource.size"))
       }
     }.map(result=>{
       if(result.isError){
@@ -68,12 +94,13 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
         logger.debug(s"fromEsData: incoming data is $rawData")
         val keyData = rawData("buckets").asInstanceOf[List[Map[String,Any]]]
 
-        Right((
-          keyData.map(entry=>entry("key").asInstanceOf[Double]),
-          keyData.map(entry=>entry("doc_count").asInstanceOf[Int])
-        ))
+        Right(keyData.map(entry=>StatsEntry(
+          entry("key").asInstanceOf[Double].toString,
+          entry("doc_count").asInstanceOf[Int].toLong,
+          entry("totalSize").asInstanceOf[Map[String,Any]]("value").asInstanceOf[Double].toLong
+        )))
       }
-    }).map(_.map(tuples=>tuples._1.zip(tuples._2).toMap))
+    })
 
   /**
     * get the total count of files that exist in VS but are not attached to items
@@ -106,7 +133,8 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     }
   })
 
-  def removeZeroBuckets(data: Map[Double, Int]) = data.filter(entry=>entry._2!=0)
+  //def removeZeroBuckets(data: Map[Double, Int]) = data.filter(entry=>entry._2!=0)
+  def removeZeroBuckets(data:List[StatsEntry]) = data.filter(_.key!="0")
 
   def calculateStatsRaw(client:ElasticClient, includeZeroes:Boolean=true) =
     Future.sequence(Seq(
@@ -118,7 +146,7 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
       if(errors.nonEmpty){
         Left(errors)
       } else {
-        val replicaStats = resultSeq.head.right.get.asInstanceOf[Map[Double, Int]] //safe because the previous check ensures that there are no Lefts at this point.
+        val replicaStats = resultSeq.head.right.get.asInstanceOf[List[StatsEntry]] //safe because the previous check ensures that there are no Lefts at this point.
         val unattachedCount = resultSeq(1).right.get.asInstanceOf[Long]
         val unimportedCount = resultSeq(2).right.get.asInstanceOf[Long]
         val finalReplicaStats = if(includeZeroes) replicaStats else removeZeroBuckets(replicaStats)
@@ -141,9 +169,9 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
         val unimportedCount = resultTuple._3
 
         val updatedJobHistory = prevJobHistory.copy(
-          noBackupsCount =  replicaStats.getOrElse(1.0, 0),
-          partialBackupsCount = replicaStats.getOrElse(2.0,0),
-          fullBackupsCount = replicaStats.getOrElse(3.0,0),  //FIXME: should be 3 OR MORE.
+          noBackupsCount =  replicaStats.find(_.key=="1").map(_.count.toInt).getOrElse(0),
+          partialBackupsCount = replicaStats.find(_.key=="2").map(_.count.toInt).getOrElse(0),
+          fullBackupsCount = replicaStats.find(_.key=="3").map(_.count.toInt).getOrElse(0),  //FIXME: should be 3 OR MORE.
           unimportedCount = unimportedCount,
           unattachedCount = unattachedCount
         )

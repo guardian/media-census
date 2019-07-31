@@ -5,6 +5,7 @@ import ErrorViewComponent from "./common/ErrorViewComponent.jsx";
 import TimestampDiffComponent from "./common/TimestampDiffComponent.jsx";
 import ClickableIcon from "./common/ClickableIcon.jsx";
 import Cookies from "js-cookie";
+import moment from 'moment';
 
 class RunsAdmin extends React.Component {
     constructor(props) {
@@ -74,8 +75,10 @@ class RunsAdmin extends React.Component {
                         <td><ClickableIcon onClick={()=>this.deletionClicked(entry.jobId)} icon="times-circle"/></td>
                         <td>{entry.jobId}</td>
                         <td>{entry.jobType}</td>
-                        <td>{entry.scanFinish ? "Finished, ran for " : "Still running for "}
-                            {entry.scanFinish ? <TimestampDiffComponent startTime={entry.scanStart} endTime={entry.scanFinish} prefix={false}/> : <TimestampDiffComponent startTime={entry.scanStart} prefix={false}/>}</td>
+                        <td>{moment(entry.scanStart).format("ddd Do MMM")}, started {moment(entry.scanStart).format("HH:mm")}<br/>
+                            {entry.scanFinish ? "Finished, ran for " : "Still running for "}
+                            {entry.scanFinish ? <TimestampDiffComponent startTime={entry.scanStart} endTime={entry.scanFinish} prefix={false}/> : <TimestampDiffComponent startTime={entry.scanStart} prefix={false}/>}
+                        </td>
                         <td>{entry.lastError ? entry.lastError : "none"}</td>
                         <td>{entry.itemsCounted}</td>
                     </tr>)
