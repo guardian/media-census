@@ -16,6 +16,7 @@ object JobHistoryDAO {
     val Running,Completed,Failed = Value
   }
 }
+
 //noinspection SimplifyBooleanMatch
 class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateTimeEncoder with JobTypeEncoder {
   import com.sksamuel.elastic4s.http.ElasticDsl._

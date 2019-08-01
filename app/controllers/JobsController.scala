@@ -12,7 +12,7 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 import responses.{GenericResponse, ObjectGetResponse, ObjectListResponse}
 import io.circe.generic.auto._
 import io.circe.syntax._
-import models.{JobType, JobTypeEncoder}
+import models.{JobHistoryDAO, JobType, JobTypeEncoder}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -70,7 +70,7 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
   }
 
   def runningJobs = Action.async {
-    jobsModelDAO.queryJobs(None,Some(jobsModelDAO.JobState.Running),None).map({
+    jobsModelDAO.queryJobs(None,Some(JobHistoryDAO.JobState.Running),None).map({
       case Left(err)=>
         logger.error(s"Could not list currently running jobs: $err")
         InternalServerError(GenericResponse("db_error", err.toString).asJson)
@@ -82,7 +82,7 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
   def lastSuccessfulJob(jobType:String) = Action.async {
     Try { JobType.withName(jobType) } match {
       case Success(jobTypeValue) =>
-        jobsModelDAO.queryJobs(Some(jobTypeValue),Some(jobsModelDAO.JobState.Completed), Some(1)).map({
+        jobsModelDAO.queryJobs(Some(jobTypeValue),Some(JobHistoryDAO.JobState.Completed), Some(1)).map({
           case Left(err) =>
             logger.error(s"Could not find most recent job: $err")
             InternalServerError(GenericResponse("db_error", err.toString).asJson)
@@ -106,7 +106,7 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
         jobsModelDAO.delete(uuid).map({
           case Left(err)=>
             logger.error(s"Could not delete job from index: $err")
-            InternalServerError(GenericResponse("db_rror", err.toString).asJson)
+            InternalServerError(GenericResponse("db_error", err.toString).asJson)
           case Right(_)=>
             Ok(GenericResponse("ok","job deleted").asJson)
         })
