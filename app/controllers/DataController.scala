@@ -29,7 +29,8 @@ class DataController @Inject() (cc:ControllerComponents, config:Configuration, e
   def toBackUp(forStorage:Option[String], startAt:Int, limit:Int) = Action.async {
     val queryTerms = Seq(
       forStorage.map(strg=>matchQuery("sourceStorage.keyword", strg)),
-      Some(rangeQuery("replicaCount").lt(2))
+      Some(rangeQuery("replicaCount").lt(2)),
+      Some(rangeQuery("replicaCount").gte(1)) //if there are no files there is nothing to back up!
     ).collect({case Some(term)=>term})
 
     esClient.execute {
