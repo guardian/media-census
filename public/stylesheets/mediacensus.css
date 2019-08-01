@@ -139,10 +139,14 @@ li.attribution {
 /*https://stackoverflow.com/questions/4108726/how-to-spread-elements-evenly-horizonatly*/
 .controls-banner {
     display: flex;
-    justify-content: space-between;
+    /*justify-content: space-between;*/
     margin-bottom: 1em;
 }
 
+.controls-banner-spacing {
+    margin-right: 0.6em;
+    margin-left:0.6em;
+}
 div.inprogress-container {
     float: right;
     border: 2px solid darkred;

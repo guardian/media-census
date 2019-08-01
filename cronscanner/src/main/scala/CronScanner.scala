@@ -12,7 +12,7 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import vidispineclient.VSPathMapper
 import com.softwaremill.sttp._
-import helpers.ZonedDateTimeEncoder
+import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
 import vidispine.{VSCommunicator, VSStorage}
 
 import scala.util.{Failure, Success, Try}
@@ -22,7 +22,7 @@ import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties, HttpClient
 
 import scala.concurrent.duration._
 
-object CronScanner extends ZonedDateTimeEncoder {
+object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
   val logger = Logger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
@@ -46,6 +46,8 @@ object CronScanner extends ZonedDateTimeEncoder {
     sys.env.getOrElse("ES_HOST","mediacensus-elasticsearch"),
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
+
+  lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
 
   lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
 
@@ -202,6 +204,7 @@ object CronScanner extends ZonedDateTimeEncoder {
     })
   }
 
+
   def main(args: Array[String]): Unit = {
     val pathMapFuture = getPathMap()
 
@@ -216,6 +219,13 @@ object CronScanner extends ZonedDateTimeEncoder {
     }
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
+
+    cleanoutOldJobs(jobHistoryDAO, JobType.CensusScan,leaveOpenDays).map({
+      case Left(errs)=>
+        logger.error(s"Cleanout of old census jobs failed: $errs")
+      case Right(results)=>
+        logger.info(s"Cleanout of old census jobs succeeded: $results")
+    })
 
     val runInfo = JobHistory.newRun(JobType.CensusScan)
 

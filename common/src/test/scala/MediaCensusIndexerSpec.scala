@@ -4,7 +4,7 @@ import java.util.UUID
 import com.sksamuel.elastic4s.http.search.{SearchHits, SearchResponse}
 import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.searches.SearchRequest
-import models.{JobHistory, MediaCensusIndexer}
+import models.{JobHistory, MediaCensusIndexer, StatsEntry}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
@@ -17,9 +17,9 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
     "convert the returned maps into a map of bucket size -> count" in {
       val mockedClient = mock[ElasticClient]
       val fakeAggs = Map("replicaCount"->Map("buckets"->List(
-        Map("key"->1.0, "doc_count"->123),
-        Map("key"->2.0, "doc_count"->234),
-        Map("key"->3.0, "doc_count"->345)
+        Map("key"->1.0, "doc_count"->123, "totalSize"->Map("value"->702.0)),
+        Map("key"->2.0, "doc_count"->234, "totalSize"->Map("value"->702.0)),
+        Map("key"->3.0, "doc_count"->345, "totalSize"->Map("value"->702.0))
       )))
 
       mockedClient.execute[SearchRequest,SearchResponse,Future](any)(any,any,any,any) returns
@@ -33,7 +33,7 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
 
       val result = Await.result(toTest.getReplicaStats(mockedClient), 30 seconds)
 
-      result must beRight(Map(1.0->123, 2.0->234, 3.0->345))
+      result must beRight(List(StatsEntry("1.0",123,702), StatsEntry("2.0",234,702), StatsEntry("3.0",345,702)))
     }
 
     "return an error as a string in a Left" in {
@@ -59,7 +59,12 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
       val mockedClient = mock[ElasticClient]
 
       val toTest = new MediaCensusIndexer("test") {
-        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, Map[Double, Int]]] = Future(Right(Map(1.0->123, 2.0->234, 3.0->345)))
+        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, List[StatsEntry]]] = Future(Right(List(
+          StatsEntry("1.0",123,702),
+          StatsEntry("2.0",234,702),
+          StatsEntry("3.0",345,702)
+        )))
+          //Future(Right(Map(1.0->123, 2.0->234, 3.0->345)))
 
         override def getUnattachedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(456))
 
@@ -78,7 +83,7 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
       val mockedClient = mock[ElasticClient]
 
       val toTest = new MediaCensusIndexer("test") {
-        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, Map[Double, Int]]] = Future(Left("kaboom"))
+        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, List[StatsEntry]]] = Future(Left("kaboom"))
 
         override def getUnattachedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(456))
 
@@ -99,7 +104,12 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
       val mockedClient = mock[ElasticClient]
 
       val toTest = new MediaCensusIndexer("test") {
-        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, Map[Double, Int]]] = Future(Right(Map(1.0->0,2.0->5,3.0->0)))
+        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, List[StatsEntry]]] = Future(Right(List(
+          StatsEntry("0.0",222,724),
+          StatsEntry("1.0",123,724),
+          StatsEntry("2.0",234,724),
+          StatsEntry("3.0",345,724)
+        )))
 
         override def getUnattachedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(1L))
 
@@ -107,14 +117,19 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
       }
 
       val result = Await.result(toTest.calculateStatsRaw(mockedClient, includeZeroes = false), 2 seconds)
-      result must beRight((Map(2.0->5), 1L, 2L))
+      result must beRight(List(StatsEntry("1.0",123,724), StatsEntry("2.0",234,724), StatsEntry("3.0",345,724)),1L,2L)
     }
 
     "include zero-sized bins if includeZeroes is true" in {
       val mockedClient = mock[ElasticClient]
 
       val toTest = new MediaCensusIndexer("test") {
-        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, Map[Double, Int]]] = Future(Right(Map(1.0->0,2.0->5,3.0->0)))
+        override def getReplicaStats(esClient: ElasticClient): Future[Either[String, List[StatsEntry]]] = Future(Right(List(
+          StatsEntry("0.0",222,724),
+          StatsEntry("1.0",123,724),
+          StatsEntry("2.0",234,724),
+          StatsEntry("3.0",345,724)
+        )))
 
         override def getUnattachedCount(esClient: ElasticClient): Future[Either[String, Long]] = Future(Right(1L))
 
@@ -122,7 +137,7 @@ class MediaCensusIndexerSpec extends Specification with Mockito{
       }
 
       val result = Await.result(toTest.calculateStatsRaw(mockedClient, includeZeroes = true), 2 seconds)
-      result must beRight((Map(1.0->0,2.0->5,3.0->0), 1L, 2L))
+      result must beRight(List(StatsEntry("0.0",222,724), StatsEntry("1.0",123,724), StatsEntry("2.0",234,724), StatsEntry("3.0",345,724)),1L,2L)
     }
   }
 }

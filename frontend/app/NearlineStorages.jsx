@@ -3,6 +3,7 @@ import axios from 'axios';
 import {Bar} from 'react-chartjs-2';
 import RefreshButton from "./common/RefreshButton.jsx";
 import BytesFormatterImplementation from "./common/BytesFormatterImplementation.jsx";
+import {Link} from "react-router-dom";
 
 //see https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
 function numberWithCommas(x) {
@@ -112,6 +113,8 @@ class NearlineStorages extends React.Component {
                     <option value={NearlineStorages.SIZE_MODE}>View total data size</option>
                     <option value={NearlineStorages.COUNT_MODE}>View file count</option>
                 </select>
+                <Link className="controls-banner-spacing" to="/nearlines">Nearline Stats</Link> |
+                <Link className="controls-banner-spacing" to="/nearlines/membership">Nearline files without item membership</Link>
             </span>
             <Bar
                 data={{
