@@ -127,7 +127,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
         logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
-        if(response.code==503){
+        if(response.code==503 || response.code==500){
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
@@ -162,7 +162,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
         logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
-        if(response.code==503){
+        if(response.code==503 || response.code==500){
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
@@ -188,7 +188,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
         logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
-        if(response.code==503){
+        if(response.code==503|| response.code==500){
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)
