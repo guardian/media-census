@@ -1,10 +1,28 @@
 package models
 
+/**
+  * this package provides data models and helper functions to make it easier to deal with item membership stats from ElasticSearch
+  */
+
 import java.time.ZonedDateTime
 
 import scala.util.{Failure, Success, Try}
+
+/**
+  * a single element in a time histogram of documents
+  * @param date time of the datapoint (ZonedDateTime)
+  * @param doc_count count of documents from this time point
+  */
 case class TimeBreakdownData(date:ZonedDateTime, doc_count:Long)
 
+/**
+  * overall aggregation of item membership stats
+  * @param totalCount the total number of documents scanned
+  * @param noMembership the number that had no item/shape membership
+  * @param totalSize sum of the sizes of files that had no item/shape membership
+  * @param states the count of files in each state (OPEN, CLOSED, MISSING, etc.) as a sequence of [[StateAggregationData]]
+  * @param noMembershipTimeBreakdown a sequence of [[TimeBreakdownData]] showing how the items creation times are distributed
+  */
 case class MembershipAggregationData (totalCount:Long, noMembership:Double,totalSize:Double,states:Seq[StateAggregationData], noMembershipTimeBreakdown:Seq[TimeBreakdownData])
 
 object MembershipAggregationData {
@@ -24,6 +42,12 @@ object MembershipAggregationData {
     }
   }
 
+  /**
+    * retrueve time breakdown data from the data map
+    * @param content sub-map of the aggregate data from Elassticsrearch, containing a list of "buckets" which in turn contains items with "key_ast-sstring" giving
+    *                the timestamp and doc_count giving the document count
+    * @return a sequence of [[TimeBreakdownData]]
+    */
   def timeBreakdownData(content: Map[String, Any]):Seq[TimeBreakdownData] = {
     content("buckets").asInstanceOf[List[Map[String,Any]]].map(bucketEntry=>TimeBreakdownData(
       ZonedDateTime.parse(bucketEntry("key_as_string").asInstanceOf[String]),
@@ -31,6 +55,12 @@ object MembershipAggregationData {
     ))
   }
 
+  /**
+    * converts the raw Map[String,Any] into a sequence of MembershipAggregationData, on enetry for each file state.
+    * @param elem
+    * @param totalCount
+    * @return
+    */
   def entryForElement(elem: Map[String, Any], totalCount:Long) =
     subEntriesForElement(elem("state").asInstanceOf[Map[String,Any]]).map(subElems=>MembershipAggregationData(
       totalCount,
@@ -41,6 +71,12 @@ object MembershipAggregationData {
       )
     )
 
+  /**
+    * converts the raw Map[String,Any] from Elasticsearch into our structured data format, [[MembershipAggregationData]]
+    * @param itemsData  aggregate map, from ES response
+    * @param totalCount total count of items, from ES response
+    * @return a Try with either an error or the MembershipAggregationData
+    */
   def fromRawAggregateMap(itemsData:Map[String,Any], totalCount:Long):Try[MembershipAggregationData] = Try {
     entryForElement(itemsData,totalCount) match {
       case Right(result)=>result

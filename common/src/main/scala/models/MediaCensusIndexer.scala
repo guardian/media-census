@@ -17,6 +17,7 @@ import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concurrentBatches:Int=2) extends CensusEntryRequestBuilder {
   import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -138,7 +139,7 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
   })
 
   //def removeZeroBuckets(data: Map[Double, Int]) = data.filter(entry=>entry._2!=0)
-  def removeZeroBuckets(data:List[StatsEntry]) = data.filter(_.key!="0")
+  def removeZeroBuckets(data:List[StatsEntry]) = data.filter(_.key.toDouble!=0.0)
 
   def calculateStatsRaw(client:ElasticClient, includeZeroes:Boolean=true) =
     Future.sequence(Seq(
@@ -160,6 +161,31 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
     })
 
   /**
+    * filters out a list of StatsEntries whose (string) keys have a numeric value greater than or equal to the parameter
+    * `gte`. Entries with keys that don't convert to double are ignored.
+    * @param data data to filter
+    * @param gte return entries whose keys are greater than or equal to this
+    * @return the filtered list of StatsEntry
+    */
+  def filterNumerically(data:List[StatsEntry], gte:Double) = {
+    data.filter(entry=>{
+      Try {
+        entry.key.toDouble
+      } match {
+        case Success(floatVal)=>floatVal
+        case Failure(_)=>0.0
+      }
+    } >= gte)
+  }
+
+  /**
+    * sums the count of the provided list of StatsEntry
+    * @param data list to sum
+    * @return the sum of the "count" field
+    */
+  def sumStats(data:List[StatsEntry]) = data.foldLeft(0)((acc,entry)=>acc+entry.count.toInt)
+
+  /**
     * updates the provided [[JobHistory]] model with current backup stats
     * @param client ElasticSearch client object
     * @param prevJobHistory pre-existing JobHistory object
@@ -173,9 +199,9 @@ class MediaCensusIndexer(override val indexName:String, batchSize:Int=20, concur
         val unimportedCount = resultTuple._3
 
         val updatedJobHistory = prevJobHistory.copy(
-          noBackupsCount =  replicaStats.find(_.key=="1").map(_.count.toInt).getOrElse(0),
-          partialBackupsCount = replicaStats.find(_.key=="2").map(_.count.toInt).getOrElse(0),
-          fullBackupsCount = replicaStats.find(_.key=="3").map(_.count.toInt).getOrElse(0),  //FIXME: should be 3 OR MORE.
+          noBackupsCount =  replicaStats.find(_.key=="1.0").map(_.count.toInt).getOrElse(0),
+          partialBackupsCount = replicaStats.find(_.key=="2.0").map(_.count.toInt).getOrElse(0),
+          fullBackupsCount = sumStats(filterNumerically(replicaStats,3.0)),
           unimportedCount = unimportedCount,
           unattachedCount = unattachedCount
         )

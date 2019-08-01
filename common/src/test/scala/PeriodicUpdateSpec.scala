@@ -44,6 +44,7 @@ class PeriodicUpdateSpec extends Specification with Mockito{
           MediaCensusEntry(mock[AssetSweeperFile],None,None,None,None,None,Seq(),3),
           MediaCensusEntry(mock[AssetSweeperFile],None,None,None,None,None,Seq(),3),
           MediaCensusEntry(mock[AssetSweeperFile],None,None,None,None,None,Seq(),3),
+          MediaCensusEntry(mock[AssetSweeperFile],None,None,None,None,None,Seq(),3),
         ).toIterator))
 
         val toTest = builder.add(new PeriodicUpdate[MediaCensusEntry](mockedJobEntry,updateEvery=3))

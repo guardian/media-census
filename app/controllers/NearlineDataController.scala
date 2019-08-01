@@ -36,13 +36,6 @@ class NearlineDataController @Inject() (config:Configuration, cc:ControllerCompo
   }
 
   def membershipStatsData = Action.async {
-//    indexer.aggregateByMembership(esClient).map({
-//      case Left(err)=>
-//        logger.error(s"Could not get aggregate data: $err")
-//        InternalServerError(GenericResponse("error",err.toString).asJson)
-//      case Right(result)=>
-//        Ok(result.asJson)
-//    })
     Future.sequence(Seq(indexer.aggregateByMembership(esClient),indexer.totalCount(esClient))).map(results=>{
       val failures = results.collect({case Left(err)=>err})
       if(failures.nonEmpty){
