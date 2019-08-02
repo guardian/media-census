@@ -40,9 +40,16 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     * @param actorRefFactory implicitly provided ActorRefFactory, this normally comes from the ActorSystem.
     * @return a stream Source that yields SearchHits. You can map this directly to VSFile objects, as indicated above
     */
-  def getSource(esClient:ElasticClient, q:Seq[Query])(implicit actorRefFactory: ActorRefFactory) = Source.fromPublisher(
-    esClient.publisher(search(indexName) query boolQuery().withMust(q) scroll FiniteDuration(5, TimeUnit.MINUTES))
-  )
+  def getSource(esClient:ElasticClient, q:Seq[Query], limit:Option[Int])(implicit actorRefFactory: ActorRefFactory) = {
+    val params = search(indexName) query boolQuery().withMust(q)
+    val finalParams = limit match {
+      case Some(actualLimit)=> params limit actualLimit
+      case None=>params
+    }
+    Source.fromPublisher(
+      esClient.publisher(finalParams scroll FiniteDuration(5, TimeUnit.MINUTES))
+    )
+  }
 
   /**
     * return an akka streams source that only yields out VSFile hits that are not a member of any item
@@ -50,11 +57,11 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     * @param actorRefFactory
     * @return
     */
-  def getOrphansSource(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+  def getOrphansSource(esClient:ElasticClient,limit:Option[Int])(implicit actorRefFactory: ActorRefFactory) = {
     val queries = Seq(
       boolQuery.not(existsQuery("membership.itemId"))
     )
-    getSource(esClient, queries)
+    getSource(esClient, queries, limit)
   }
 
   /**
