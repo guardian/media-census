@@ -80,7 +80,7 @@ object MatrixStoreHelper {
     */
   def findByFilenameBulk(userInfo:UserInfo, fileName:String)(implicit mat:Materializer, ec:ExecutionContext) = {
     val sinkFactory = Sink.fold[Seq[ObjectMatrixEntry],ObjectMatrixEntry](Seq())((acc,entry)=>acc ++ Seq(entry))
-    val searchTerm = SearchTerm.createSimpleTerm("filename",fileName)
+    val searchTerm = SearchTerm.createSimpleTerm("MXFS_FILENAME",fileName)
 
     val graph = GraphDSL.create(sinkFactory) { implicit builder=> sink=>
       import akka.stream.scaladsl.GraphDSL.Implicits._

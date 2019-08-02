@@ -131,9 +131,9 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
           complete_run(2)
         case Success(reportList)=>
           val didExistCount = reportList.count(_.status==CopyStatus.EXISTS_ALREADY)
-          val didExistSize = reportList.filter(_.status==CopyStatus.EXISTS_ALREADY).foldLeft(0L)((totalSize,elem)=>totalSize+elem.source.size) / 1024^3
+          val didExistSize = reportList.filter(_.status==CopyStatus.EXISTS_ALREADY).foldLeft(0L)((totalSize,elem)=>totalSize+elem.source.size) / scala.math.pow(1024,3)
           val notExistCount = reportList.count(_.status==CopyStatus.SOURCE_NOT_FOUND)
-          val notExistSize = reportList.filter(_.status==CopyStatus.SOURCE_NOT_FOUND).foldLeft(0L)((totalSize,elem)=>totalSize+elem.source.size) / 1024^3
+          val notExistSize = reportList.filter(_.status==CopyStatus.SOURCE_NOT_FOUND).foldLeft(0L)((totalSize,elem)=>totalSize+elem.source.size) / scala.math.pow(1024,3)
           logger.info(s"Run completed.  $didExistCount ($didExistSize Gb) files existed in S3 and $notExistCount ($notExistSize Gb) files not found.")
           complete_run(0)
       })
