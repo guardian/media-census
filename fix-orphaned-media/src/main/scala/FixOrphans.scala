@@ -72,8 +72,8 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
         val existsSwitch = builder.add(existsSwitchFactory)
         val noMembershipFilter = builder.add(noMembershipSwitchFactory)
         splitter.out(i) ~> noMembershipFilter ~> existsSwitch
-        existsSwitch.out(0).map(vsfile=>ExistsReport(vsfile,true)) ~> merge
-        existsSwitch.out(1).map(vsfile=>ExistsReport(vsfile,false)) ~> merge
+        existsSwitch.out(0).map(vsfile=>ExistsReport(vsfile,true)) ~> merge //YES, the file exists in S3
+        existsSwitch.out(1).map(vsfile=>ExistsReport(vsfile,false)) ~> merge  //NO, the file does not exist in S3
       }
 
       merge ~> sink
@@ -100,8 +100,10 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
           complete_run(2)
         case Success(reportList)=>
           val didExistCount = reportList.count(_.existsInS3==true)
+          val didExistSize = reportList.filter(_.existsInS3==true).foldLeft(0L)((totalSize,elem)=>totalSize+elem.vsfile.size) / 1024^3
           val notExistCount = reportList.count(_.existsInS3==false)
-          logger.info(s"Run completed.  $didExistCount files existed in S3 and $notExistCount files did not exist.")
+          val notExistSize = reportList.filter(_.existsInS3==false).foldLeft(0L)((totalSize,elem)=>totalSize+elem.vsfile.size) / 1024^3
+          logger.info(s"Run completed.  $didExistCount ($didExistSize Gb) files existed in S3 and $notExistCount ($notExistSize Gb) files did not exist.")
           complete_run(0)
       })
     }

@@ -42,7 +42,7 @@ class VSItemSearchSource(metadataFields:Seq[String], searchDoc:String, includeSh
 
     val fieldsParam = metadataFields.mkString(",")
 
-    comm.request(uri, searchDoc, Map("Accept"->"application/xml"), Map("content"->contentParam,"field"->fieldsParam)).map(_.map(xmlString=>{
+    comm.request(VSCommunicator.OperationType.PUT, uri, Some(searchDoc), Map("Accept"->"application/xml"), Map("content"->contentParam,"field"->fieldsParam)).map(_.map(xmlString=>{
       val parsedData = XML.loadString(xmlString)
       (parsedData \ "item").map(VSLazyItem.fromXmlSearchStanza)
     }))

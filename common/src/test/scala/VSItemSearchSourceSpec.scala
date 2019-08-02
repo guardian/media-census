@@ -25,7 +25,7 @@ class VSItemSearchSourceSpec extends Specification with Mockito{
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       implicit val mockedComm = mock[VSCommunicator]
-      mockedComm.request(any,any,any,any,any)(any,any) returns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
+      mockedComm.request(any, any,any,any,any,any)(any,any) returns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
 
       val sinkFactory = Sink.fold[Seq[VSLazyItem],VSLazyItem](Seq())((acc,entry)=>acc++Seq(entry))
 
@@ -42,7 +42,7 @@ class VSItemSearchSourceSpec extends Specification with Mockito{
       result.foreach(item=>println(s"\t$item"))
       result.length mustEqual 18
 
-      there were two(mockedComm).request("/API/item;first=1;number=100","mock-search-doc",Map("Accept"->"application/xml"),Map("content"->"metadata","field"->"field1,field2"))
+      there were two(mockedComm).request(VSCommunicator.OperationType.PUT, "/API/item;first=1;number=100",Some("mock-search-doc"),Map("Accept"->"application/xml"),Map("content"->"metadata","field"->"field1,field2"))
 
       result.head.getSingle(FieldNames.EXTERNAL_ARCHIVE_STATUS) must beSome("Archived")
       //there was one(mockedComm).request("/API/item;first=101;number=100","mock-search-doc",Map("Accept"->"application/xml"),Map("content"->"metadata","field"->"field1,field2"))
@@ -52,7 +52,7 @@ class VSItemSearchSourceSpec extends Specification with Mockito{
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       implicit val mockedComm = mock[VSCommunicator]
-      mockedComm.request(any,any,any,any,any)(any,any) returns Future(Left(HttpError("Vidispine is playing up",503))) thenReturns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
+      mockedComm.request(any,any,any,any,any,any)(any,any) returns Future(Left(HttpError("Vidispine is playing up",503))) thenReturns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
 
       val sinkFactory = Sink.fold[Seq[VSLazyItem],VSLazyItem](Seq())((acc,entry)=>acc++Seq(entry))
 
@@ -69,7 +69,7 @@ class VSItemSearchSourceSpec extends Specification with Mockito{
       result.foreach(item=>println(s"\t$item"))
       result.length mustEqual 18
 
-      there were three(mockedComm).request("/API/item;first=1;number=100","mock-search-doc",Map("Accept"->"application/xml"),Map("content"->"metadata","field"->"field1,field2"))
+      there were three(mockedComm).request(VSCommunicator.OperationType.PUT, "/API/item;first=1;number=100",Some("mock-search-doc"),Map("Accept"->"application/xml"),Map("content"->"metadata","field"->"field1,field2"))
 
       result.head.getSingle(FieldNames.EXTERNAL_ARCHIVE_STATUS) must beSome("Archived")
     }
