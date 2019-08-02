@@ -43,7 +43,9 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
   def getSource(esClient:ElasticClient, q:Seq[Query], limit:Option[Int])(implicit actorRefFactory: ActorRefFactory) = {
     val params = search(indexName) query boolQuery().withMust(q)
     val finalParams = limit match {
-      case Some(actualLimit)=> params limit actualLimit
+      case Some(actualLimit)=>
+        logger.debug(s"Setting request limit $actualLimit")
+        params limit actualLimit
       case None=>params
     }
     Source.fromPublisher(
@@ -57,10 +59,11 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     * @param actorRefFactory
     * @return
     */
-  def getOrphansSource(esClient:ElasticClient,limit:Option[Int])(implicit actorRefFactory: ActorRefFactory) = {
+  def getOrphansSource(esClient:ElasticClient,storageId:Option[String], limit:Option[Int])(implicit actorRefFactory: ActorRefFactory) = {
     val queries = Seq(
-      boolQuery.not(existsQuery("membership.itemId"))
-    )
+      Some(boolQuery.not(existsQuery("membership.itemId"))),
+      storageId.map(sid=>matchQuery("storage.keyword",sid))
+    ).collect({case Some(q)=>q})
     getSource(esClient, queries, limit)
   }
 

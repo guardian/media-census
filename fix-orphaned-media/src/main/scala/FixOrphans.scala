@@ -55,7 +55,7 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
   lazy val targetBucket:String = sys.env.get("TARGET_BUCKET") match {
     case Some(str)=>str
     case None=>
-      logger.error("You must specify TARGET_BUCKET to point to a .vault file with login credentials for the target vault")
+      logger.error("You must specify TARGET_BUCKET to point the bucket to upload to")
       Await.ready(complete_run(1), 1 hour)
       throw new RuntimeException("timed out waiting for actor system to exit")
   }
@@ -63,6 +63,14 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
   lazy val parallelism = sys.env.getOrElse("PARALLELISM","10").toInt
 
   lazy val maybeLimit = sys.env.get("LIMIT").map(_.toInt)
+
+  lazy val forStorage = sys.env.get("STORAGE_ID") match {
+    case Some(str)=>str
+    case None=>
+      logger.error("You must specify STORAGE_ID to point to the Vidispine storage corresponding to the objectmatrix vault in VAULT_FILE")
+      Await.ready(complete_run(1), 1 hour)
+      throw new RuntimeException("timed out waiting for actor system to exit")
+  }
 
   def getEsClient = Try {
     val uri = esConfig.uri match {
@@ -74,12 +82,13 @@ object FixOrphans extends ZonedDateTimeEncoder with VSFileStateEncoder {
   }
 
   def buildStream(esClient:ElasticClient, userInfo:UserInfo) = {
+    logger.info(s"Parallelism is $parallelism, limit is $maybeLimit")
     val outputSinkFactory = Sink.fold[Seq[FOMCopyReport],FOMCopyReport](Seq())((acc,item)=>acc++Seq(item))
 
     GraphDSL.create(outputSinkFactory) { implicit builder=> sink=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
-      val src = builder.add(indexer.getOrphansSource(esClient, maybeLimit))
+      val src = builder.add(indexer.getOrphansSource(esClient, Some(forStorage), maybeLimit))
       val existsSwitchFactory = new ExistsInS3Switch(s3BucketList).async
       val noMembershipSwitchFactory = new NoMembershipFilter()
       val copyToS3 = builder.add(new CopyToS3(userInfo, targetBucket))
