@@ -10,13 +10,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class CopyHelper(implicit mat:Materializer){
   /** generates a graph to upload files to S3 from ObjectMatrix */
-  def uploadToS3Graph(userInfo:UserInfo,oid:String, destBucket:String, destName:String) = {
+  def uploadToS3Graph(userInfo:UserInfo,oid:String, destBucket:String, destName:String, bufferSize:Int=128*1024*1024) = {
     val sinkFactory = S3.multipartUpload(destBucket, destName)
 
     GraphDSL.create(sinkFactory) { implicit builder =>sink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
 
-      val src = builder.add(new MatrixStoreFileSource(userInfo, oid).async)
+      val src = builder.add(new MatrixStoreFileSource(userInfo, oid, bufferSize).async)
 
       src ~> sink
       ClosedShape
