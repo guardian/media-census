@@ -118,30 +118,33 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
     */
   def request(operationType: OperationType.Value, uriPath:String,maybeXmlString:Option[String],headers:Map[String,String], queryParams:Map[String,String]=Map(), attempt:Int=0)
-             (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response=>
-    response.body match {
-      case Right(source)=>
-        logger.debug("Send succeeded")
-        consumeSource(source).map(data=>Right(data))
-      case Left(errorString)=>
-        if(response.code==503){
-          val delayTime = if(attempt>6) 60 else 2^attempt
-          logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
-          Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt+1)
-        } else {
-          VSError.fromXml(errorString) match {
-            case Left(unparseableError) =>
-              val errMsg = s"Send failed: ${response.code} - $errorString"
-              logger.warn(errMsg)
-              Future(Left(HttpError(errMsg, response.code)))
-            case Right(vsError) =>
-              logger.warn(vsError.toString)
-              Future(Left(HttpError(vsError.toString, response.code)))
-          }
-        }
-    }})
+             (implicit materializer: akka.stream.Materializer,ec: ExecutionContext): Future[Either[HttpError,String]] =
+    sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response=>
+      response.body match {
+        case Right(source)=>
+          logger.debug("Send succeeded")
+          consumeSource(source).map(data=>Right(data))
+        case Left(errorString)=>
+          consumeSource(response.unsafeBody).flatMap(_=> {  //consuming the source is necessary to do a retry
+            if (response.code == 503 || response.code == 500) {
+              val delayTime = if (attempt > 6) 60 else 2 ^ attempt
+              logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
+              Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
+              request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt + 1)
+            } else {
+              VSError.fromXml(errorString) match {
+                case Left(unparseableError) =>
+                  val errMsg = s"Send failed: ${response.code} - $errorString"
+                  logger.warn(errMsg)
+                  Future(Left(HttpError(errMsg, response.code)))
+                case Right(vsError) =>
+                  logger.warn(vsError.toString)
+                  Future(Left(HttpError(vsError.toString, response.code)))
+              }
+            }
+          })
+      }
+    })
 
   /**
     * request a GET operation to Vidispine

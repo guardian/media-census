@@ -51,6 +51,7 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     if(response.isError){
       Left(response.error)
     } else {
+      logger.debug(s"jobForUuid: server returned $response")
       if(response.result.found)
         Right(Some(response.result.to[JobHistory]))
       else
