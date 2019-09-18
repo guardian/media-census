@@ -33,6 +33,7 @@
   <logger name="responses.HistogramDataResponse$" level="DEBUG"/>
   <logger name="controllers.StatsController" level="WARN"/>
 
+  <logger name="archivehunter.ArchiveHunterRequestor" level="DEBUG"/>
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
   <logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="OFF" />
