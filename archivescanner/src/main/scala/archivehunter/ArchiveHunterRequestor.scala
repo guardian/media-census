@@ -14,8 +14,10 @@ import org.apache.commons.codec.binary.Base64
 import org.slf4j.LoggerFactory
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.GenericHttpCredentials
+import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
 import akka.stream.scaladsl.{Keep, Sink}
 import akka.util.ByteString
+import io.circe.Json
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,16 +30,6 @@ class ArchiveHunterRequestor(baseUri:String, key:String)(implicit val system:Act
   def currentTimeString = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)
 
   def makeAuth(req:HttpRequest) = {
-    /*
-    def get_token(uri, secret):
-    httpdate = formatdate(timeval=mktime(datetime.now().timetuple()),localtime=False,usegmt=True)
-    url_parts = urlparse(uri)
-
-    string_to_sign = "{0}\n{1}".format(httpdate, url_parts.path)
-    print "string_to_sign: " + string_to_sign
-    hm = hmac.new(secret, string_to_sign,hashlib.sha256)
-    return "HMAC {0}".format(base64.b64encode(hm.digest())), httpdate
-     */
     val httpDate = currentTimeString
     logger.debug(s"date string is $httpDate")
     val stringToSign = s"$httpDate\n${req.uri.path.toString()}"
@@ -49,20 +41,37 @@ class ArchiveHunterRequestor(baseUri:String, key:String)(implicit val system:Act
 
     val signature = Base64.encodeBase64String(resultBytes)
     logger.debug(s"signature is $signature")
-    val authHeader = headers.Authorization(GenericHttpCredentials("HMAC", signature))
+    val authHeader = headers.RawHeader("X-Gu-Tools-HMAC-Token", s"HMAC $signature")
     logger.debug(s"authHeader is ${authHeader.toString()}")
-    val dateHeader = headers.RawHeader("Date",httpDate)
+    val dateHeader = headers.RawHeader("X-Gu-Tools-HMAC-Date",httpDate)
     logger.debug(s"dateHeader is ${dateHeader.toString()}")
     req.withHeaders(authHeader, dateHeader)
   }
 
+  def decodeParsedData(parsedData:io.circe.Json) = {
+    val node = parsedData.hcursor.downField("entries").downArray.first
+
+    val maybeCollectionName = node.downField("bucket").as[String]
+    val maybeArchiveHunterId = node.downField("id").as[String]
+    val maybeDeleted = node.downField("beenDeleted").as[Boolean]
+    if(maybeCollectionName.isLeft || maybeArchiveHunterId.isLeft || maybeDeleted.isLeft){
+      val errorDetail = Seq(maybeCollectionName, maybeArchiveHunterId, maybeDeleted).collect({case Left(err)=>err.toString()}).mkString(",")
+      Left(s"Could not decode json from ArchiveHunder: $errorDetail")
+    } else {
+      Right(ArchiveHunterFound(maybeArchiveHunterId.right.get, maybeCollectionName.right.get, maybeDeleted.right.get))
+    }
+  }
+
   def lookupRequest(forPath:String):Future[Either[String,ArchiveHunterLookupResult]] = {
-    val url = s"$baseUri/api/searchpath/${URLEncoder.encode(forPath)}"
+    val url = s"$baseUri/api/searchpath?filePath=${URLEncoder.encode(forPath)}"
 
     logger.debug(s"Going to request $url")
 
     val req = HttpRequest(uri = url)
     val signedRequest = makeAuth(req)
+    def printRequest(req:HttpRequest): Unit = logger.debug(s"${req.method.name} ${req.uri} ${req.headers}")
+    DebuggingDirectives.logRequest(LoggingMagnet(_=>printRequest))
+
     Http().singleRequest(signedRequest).flatMap(response=>{
       response.status match {
         case StatusCodes.NotFound=>
@@ -72,14 +81,13 @@ class ArchiveHunterRequestor(baseUri:String, key:String)(implicit val system:Act
           response.entity.getDataBytes().runWith(Sink.fold(ByteString())((acc,entry)=>acc++entry), mat).map(bytes=>{
             val stringData = bytes.decodeString("UTF-8")
             io.circe.parser.parse(stringData) match {
-              case Right(parsedData)=>
-                Right(ArchiveHunterFound("fixme","fixme"))
+              case Right(parsedData)=>decodeParsedData(parsedData)
               case Left(parseError)=>Left(parseError.toString)
             }
           })
         case _=>
           response.entity.getDataBytes().runWith(Sink.fold(ByteString())((acc,entry)=>acc++entry), mat).map(bytes=>{
-            (Left(s"Unexpected response ${response.status} from server: ${bytes.decodeString("UTF-8")}"))
+            Left(s"Unexpected response ${response.status} from server: ${bytes.decodeString("UTF-8")}")
           })
       }
     })

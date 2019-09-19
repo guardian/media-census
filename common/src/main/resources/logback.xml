@@ -19,7 +19,8 @@
     <logger name="models.VSFileIndexer" level="DEBUG"/>
     <logger name="nlstreamcomponents" level="DEBUG"/>
     <logger name="vidispine.VSCommunicator" level="DEBUG"/>
-    <root level="INFO">
+    <logger name="archivehunter" level="INFO"/>
+    <root level="WARN">
         <appender-ref ref="ASYNCSTDOUT" />
     </root>
 

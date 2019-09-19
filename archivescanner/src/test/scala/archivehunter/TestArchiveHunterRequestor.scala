@@ -20,8 +20,43 @@ class TestArchiveHunterRequestor extends Specification with Mockito {
       val result = rq.makeAuth(initialRequest)
 
       println(result.getHeaders())
-      result.getHeader("Authorization").get().value() mustEqual "HMAC Y/ZHJ0K8Xe6OKsObyljzp6U03lSNm/hS1HDA2+KjYME="
-      result.getHeader("Date").get().value() mustEqual "Fri, 5 Apr 2019 01:02:03 GMT"
+      result.getHeader("X-Gu-Tools-HMAC-Token").get().value() mustEqual "HMAC Y/ZHJ0K8Xe6OKsObyljzp6U03lSNm/hS1HDA2+KjYME="
+      result.getHeader("X-Gu-Tools-HMAC-Date").get().value() mustEqual "Fri, 5 Apr 2019 01:02:03 GMT"
+    }
+  }
+
+  "ArchiveHunterRequestor.decodeParsedData" should {
+    "return a Right with collection and archivehunter ID when present" in {
+      val testDataString = """{"status": "ok", "entryCount": 1, "entityClass": "archiveentry", "entries": [{"mimeType": {"major": "application", "minor": "octet-stream"}, "lightboxEntries": [], "file_extension": "mov", "proxied": false, "last_modified": "2015-08-27T14:39:24Z", "mediaMetadata": null, "path": "ARTE SHOWREEL/ARTE SHOWREEL.mov", "id": "wXstuPciiariu9l7Xow6wZ5ZwIvBu2ufBTAtIr9sJBC6knaaQbZweWMR0tMia0MuXZT+NV1AYHgNaVlrfY", "size": 693940155, "region": "eu-west-1", "bucket": "archive-collection-name", "etag": "0c02976c7326aacd17bb98dbdc467629-133", "storageClass": "GLACIER", "beenDeleted": false}]}""".stripMargin
+      val maybeTestData = io.circe.parser.parse(testDataString)
+      maybeTestData must beRight
+      val testData = maybeTestData.right.get
+
+      val rq = new ArchiveHunterRequestor("https://archivehunter.company.org","secretkey")(mock[ActorSystem],mock[Materializer])
+      val result = rq.decodeParsedData(testData)
+      result must beRight(ArchiveHunterFound("wXstuPciiariu9l7Xow6wZ5ZwIvBu2ufBTAtIr9sJBC6knaaQbZweWMR0tMia0MuXZT+NV1AYHgNaVlrfY","archive-collection-name",false))
+    }
+
+    "return a Left if the data is not present in the incoming json" in {
+      val testDataString = """{}""".stripMargin
+      val maybeTestData = io.circe.parser.parse(testDataString)
+      maybeTestData must beRight
+      val testData = maybeTestData.right.get
+
+      val rq = new ArchiveHunterRequestor("https://archivehunter.company.org","secretkey")(mock[ActorSystem],mock[Materializer])
+      val result = rq.decodeParsedData(testData)
+      result must beLeft
+    }
+
+    "return a Left if one item is missing is not present in the incoming json" in {
+      val testDataString = """{"status": "ok", "entryCount": 1, "entityClass": "archiveentry", "entries": [{"mimeType": {"major": "application", "minor": "octet-stream"}, "lightboxEntries": [], "file_extension": "mov", "proxied": false, "last_modified": "2015-08-27T14:39:24Z", "mediaMetadata": null, "path": "ARTE SHOWREEL/ARTE SHOWREEL.mov", "size": 693940155, "region": "eu-west-1", "bucket": "archive-collection-name", "etag": "0c02976c7326aacd17bb98dbdc467629-133", "storageClass": "GLACIER", "beenDeleted": false}]}""".stripMargin
+      val maybeTestData = io.circe.parser.parse(testDataString)
+      maybeTestData must beRight
+      val testData = maybeTestData.right.get
+
+      val rq = new ArchiveHunterRequestor("https://archivehunter.company.org","secretkey")(mock[ActorSystem],mock[Materializer])
+      val result = rq.decodeParsedData(testData)
+      result must beLeft
     }
   }
 }
