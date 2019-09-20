@@ -34,7 +34,7 @@ class ArchivedDataController @Inject() (config:Configuration, esClientManager: E
             Ok(pieResponse.asJson)
           case Left(err)=>
             logger.error(s"Could not compile data response: $err")
-            InternalServerError(GenericResponse("error", err))
+            InternalServerError(GenericResponse("error", err).asJson)
         }
 
     })

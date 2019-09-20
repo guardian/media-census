@@ -2,7 +2,7 @@ package responses
 
 import com.sksamuel.elastic4s.http.search.Aggregations
 
-case class SimplePieResponseEntry(label: String, value: Double)
+case class SimplePieResponseEntry(label: String, value: Int)
 
 case class SimplePieResponse (status:String, sections: Iterable[SimplePieResponseEntry])
 
@@ -21,9 +21,9 @@ object SimplePieResponse extends ((String, Iterable[SimplePieResponseEntry])=>Si
       case Some(data)=>
         try {
           val aggContent = data.asInstanceOf[Map[String, Any]]
-          val buckets = aggContent("buckets").asInstanceOf[Map[String, Any]]
+          val buckets = aggContent("buckets").asInstanceOf[List[Map[String, Any]]]
 
-          val entries = buckets.map(entry => SimplePieResponseEntry(entry("key"), entry("doc_count")))
+          val entries = buckets.map(bucketContent => SimplePieResponseEntry(bucketContent("key").asInstanceOf[String],bucketContent("doc_count").asInstanceOf[Int]))
 
           Right(new SimplePieResponse(status, entries))
         } catch {
