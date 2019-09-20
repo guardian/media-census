@@ -13,6 +13,7 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * indexer function for ArchiveNearlineEntry
@@ -44,4 +45,33 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
     esClient.publisher(search(indexName) query boolQuery().withMust(q) scroll FiniteDuration(5, TimeUnit.MINUTES))
   )
 
+  def statsByCollection(esClient:ElasticClient) = esClient.execute {
+    search(indexName) aggs {
+      termsAgg("byCollection", "archiveHunterCollection.keyword").subaggs {
+        termsAgg("archiveHunterDeleted", "archiveHunterDeleted")
+        termsAgg("vsStorage", "vsStorage.keyword")
+      }
+    }
+  } map(response=>{
+    if(response.isError){
+      Left(response.error)
+    } else {
+      Right(response.result.aggregations)
+    }
+  })
+
+  def statsByVSStorage(esClient:ElasticClient) = esClient.execute {
+    search(indexName) aggs {
+      termsAgg("vsStorage", "vsStorage").subaggs {
+        termsAgg("archiveHunterDeleted", "archiveHunterDeleted")
+        termsAgg("byCollection","archiveHunterCollection.keyword")
+      }
+    }
+  } map(response=>{
+    if(response.isError){
+      Left(response.error)
+    } else {
+      Right(response.result.aggregations)
+    }
+  })
 }
