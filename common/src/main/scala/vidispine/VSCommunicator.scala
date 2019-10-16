@@ -25,7 +25,7 @@ object VSCommunicator {
   * @param plutoPass password for accessing Vidispine
   * @param actorSystem implicitly provided reference to an ActorSystem, for Akka
   */
-class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val actorSystem:ActorSystem) {
+class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:Int=20)(implicit val actorSystem:ActorSystem) {
   private val logger = LoggerFactory.getLogger(getClass)
   import VSCommunicator._
 
@@ -120,21 +120,26 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     */
   def request(operationType: OperationType.Value, uriPath:String,maybeXmlString:Option[String],headers:Map[String,String], queryParams:Map[String,String]=Map(), attempt:Int=0)
              (implicit materializer: akka.stream.Materializer,ec: ExecutionContext): Future[Either[HttpError,String]] =
-    sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response=>
+    sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response =>
       response.body match {
-        case Right(source)=>
+        case Right(source) =>
           logger.debug("Send succeeded")
-          consumeSource(source).map(data=>Right(data))
-        case Left(errorString)=>
-          consumeSource(response.unsafeBody).flatMap(_=> {  //consuming the source is necessary to do a retry
+          consumeSource(source).map(data => Right(data))
+        case Left(errorString) =>
+          consumeSource(response.unsafeBody).flatMap(_ => { //consuming the source is necessary to do a retry
             if (response.code == 503 || response.code == 500) {
               val delayTime = if (attempt > 6) 60 else 2 ^ attempt
               logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
-              Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
-              request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt + 1)
+              if (attempt > 20) {
+                logger.error("Failed after 20 attempts, giving up.")
+                Future(Left(HttpError("Gave up after 20 attempts", 503)))
+              } else {
+                Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
+                request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt + 1)
+              }
             } else {
               VSError.fromXml(errorString) match {
-                case Left(unparseableError) =>
+                case Left(_) =>
                   val errMsg = s"Send failed: ${response.code} - $errorString"
                   logger.warn(errMsg)
                   Future(Left(HttpError(errMsg, response.code)))
@@ -166,9 +171,14 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       case Left(errorString)=>
         if(response.code==503){
           val delayTime = if(attempt>6) 60 else 2^attempt
-          logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
-          Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          requestGet(uriPath, headers, queryParams, attempt+1)
+          if(attempt>=maxAttempts){
+            logger.error(s"Still receiving timeout, giving up after $maxAttempts retries")
+            Future(Left(HttpError("Timeout", response.code)))
+          } else {
+            logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
+            Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
+            requestGet(uriPath, headers, queryParams, attempt + 1)
+          }
         } else {
           VSError.fromXml(errorString) match {
             case Left(unparseableError) =>
@@ -192,9 +202,14 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       case Left(errorString)=>
         if(response.code==503){
           val delayTime = if(attempt>6) 60 else 2^attempt
-          logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
-          Thread.sleep(delayTime*1000)
-          requestGet(uriPath, headers, queryParams, attempt+1)
+          if(attempt>=maxAttempts){
+            logger.error(s"Still receiving timeout, giving up after $maxAttempts retries")
+            Future(Left(HttpError("Timeout", response.code)))
+          } else {
+            logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
+            Thread.sleep(delayTime * 1000)
+            requestDelete(uriPath, headers, queryParams, attempt + 1)
+          }
         } else {
           VSError.fromXml(errorString) match {
             case Left(unparseableError) =>
