@@ -45,6 +45,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
   private def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val bs = maybeXmlString.map(xmlString=>ByteString(xmlString,"UTF-8"))
 
+
     val uriWithPath = vsUri.path(uriPath)
     val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
     val source:Option[Source[ByteString, Any]] = bs.map(Source.single)
