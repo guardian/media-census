@@ -252,7 +252,7 @@ lazy val `findarchivednearline` = (project in file("findarchivednearline"))
 
 lazy val `fixorphans` = (project in file("fix-orphaned-media"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)
-  .dependsOn(common)
+  .dependsOn(common, mxscopy)
   .settings(commonSettings, libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
@@ -315,6 +315,30 @@ lazy val `archivescanner` = (project in file("archivescanner"))
       Cmd("USER","root"),
       Cmd("RUN", "chmod -R a+x /opt/docker"),
       Cmd("USER", "daemon")
+    )
+  )
+
+lazy val `mxscopy` = (project in file("mxs-copy-components"))
+  .settings(
+    aggregate in Docker := false,
+    publish in Docker := {},
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
+      "com.typesafe.akka" %% "akka-http" % "10.1.7",
+      "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "1.0.2",
+      "io.circe" %% "circe-core" % circeVersion,
+      "io.circe" %% "circe-generic" % circeVersion,
+      "io.circe" %% "circe-parser" % circeVersion,
+      "io.circe" %% "circe-java8" % circeVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "commons-codec" % "commons-codec" % "1.12",
+      "commons-io" % "commons-io" % "2.6",
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
+      "com.github.scopt" %% "scopt" % "3.7.1",
+      "org.specs2" %% "specs2-core" % "4.5.1" % Test,
+      "org.specs2" %% "specs2-mock" % "4.5.1" % Test,
+      "org.mockito" % "mockito-core" % "2.28.2" % Test
     )
   )
 

@@ -12,6 +12,12 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 
+object VSCommunicator {
+  object OperationType extends Enumeration {
+    val GET,PUT,POST,DELETE = Value
+  }
+}
+
 /**
   * this class provides base functionality to communicate with Vidispine via Akka HTTP. As such it is true non-blocking.
   * @param vsUri base URI to access Vidispine (don't include the /API part). Request URIs are concatenated to this.
@@ -21,63 +27,54 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val actorSystem:ActorSystem) {
   private val logger = LoggerFactory.getLogger(getClass)
+  import VSCommunicator._
 
   private def authString:String = Base64.getEncoder.encodeToString(s"$plutoUser:$plutoPass".getBytes)
 
   protected implicit val sttpBackend:SttpBackend[Future,Source[ByteString, Any]] = AkkaHttpBackend.usingActorSystem(actorSystem)
 
   /**
-    * internal method to perform a PUT request
-    * @param uriPath
-    * @param xmlString
-    * @param headers
-    * @return
+    * internal method to perform a request
+    * @param operation which request to perform - VSCommunicator.OperationType enumerates them
+    * @param uriPath URI to perform the operation on
+    * @param maybeXmlString an optional XML body. If this is 'None' then no body is sent on the request
+    * @param headers String->string map of headers
+    * @param queryParams String->string map of query params
+    * @return a Future, with a response containing a stream source to read the body.
     */
-  private def sendPut(uriPath:String, xmlString:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
-    val bs = ByteString(xmlString,"UTF-8")
+  private def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
+    val bs = maybeXmlString.map(xmlString=>ByteString(xmlString,"UTF-8"))
 
     val uriWithPath = vsUri.path(uriPath)
     val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
-    val source:Source[ByteString, Any] = Source.single(bs)
+    val source:Option[Source[ByteString, Any]] = bs.map(Source.single)
+
     val hdr = Map(
       "Accept"->"application/xml",
       "Authorization"->s"Basic $authString",
       "Content-Type"->"application/xml"
     ) ++ headers
 
-    logger.debug(s"Got headers, initiating PUT to $uri")
-    sttp
-      .put(uri)
-      .streamBody(source)
+    logger.debug(s"Got headers, initiating $operation to $uri")
+
+    val op = operation match {
+      case OperationType.PUT=>sttp.put(uri)
+      case OperationType.GET=>sttp.get(uri)
+      case OperationType.DELETE=>sttp.delete(uri)
+      case OperationType.POST=>sttp.post(uri)
+    }
+
+    val opWithBody = source match {
+      case None=>op
+      case Some(byteSource)=>op.streamBody(byteSource)
+    }
+
+    opWithBody
       .headers(hdr)
       .response(asStream[Source[ByteString, Any]])
       .send()
   }
 
-  /**
-    * internal method to perform a GET request
-    * @param uriPath
-    * @param headers
-    * @param queryParams
-    * @return
-    */
-  private def sendGet(uriPath:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
-    val hdr = Map(
-      "Accept"->"application/xml",
-      "Authorization"->s"Basic $authString",
-      "Content-Type"->"application/xml"
-    ) ++ headers
-
-    val uriWithPath = vsUri.path(uriPath)
-    val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
-
-    logger.debug(s"Got headers, initiating GET to $uri")
-    sttp
-      .get(uri)
-      .headers(hdr)
-      .response(asStream[Source[ByteString, Any]])
-      .send()
-  }
 
   private def sendDelete(uriPath:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val hdr = Map(
@@ -111,27 +108,28 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
   }
 
   /**
-    * request a PUT operation to Vidispine
+    * request any operation to Vidispine
+    * @param operationType the operation to perform. VSCOmmunicator.OperationType enumerates the possible values
     * @param uriPath URI to put to. This should include /API, and is concatenated to the `baseUri` contructor parameter
-    * @param xmlString request body
+    * @param maybeXmlString optional request body
     * @param headers Map of headers to send to the server. Authorization is automatcially added.
     * @param materializer implicitly provided stream materializer
     * @param ec implicitly provided execution context for async operations
     * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
     */
-  def request(uriPath:String,xmlString:String,headers:Map[String,String], queryParams:Map[String,String]=Map(), attempt:Int=0)
+  def request(operationType: OperationType.Value, uriPath:String,maybeXmlString:Option[String],headers:Map[String,String], queryParams:Map[String,String]=Map(), attempt:Int=0)
              (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendPut(uriPath, xmlString, headers, queryParams).flatMap({ response=>
+  Future[Either[HttpError,String]] = sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response=>
     response.body match {
       case Right(source)=>
         logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
-        if(response.code==503 || response.code==500){
+        if(response.code==503){
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          request(uriPath, xmlString, headers, queryParams, attempt+1)
+          request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt+1)
         } else {
           VSError.fromXml(errorString) match {
             case Left(unparseableError) =>
@@ -156,13 +154,13 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     */
   def requestGet(uriPath:String, headers:Map[String,String],queryParams:Map[String,String]=Map(),attempt:Int=0)
                 (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendGet(uriPath, headers, queryParams).flatMap({ response=>
+  Future[Either[HttpError,String]] = sendGeneric(OperationType.GET, uriPath, None, headers, queryParams).flatMap({ response=>
     response.body match {
       case Right(source)=>
         logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
-        if(response.code==503 || response.code==500){
+        if(response.code==503){
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
@@ -188,7 +186,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
         logger.debug("Send succeeded")
         consumeSource(source).map(data=>Right(data))
       case Left(errorString)=>
-        if(response.code==503|| response.code==500){
+        if(response.code==503){
           val delayTime = if(attempt>6) 60 else 2^attempt
           logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
           Thread.sleep(delayTime*1000)
