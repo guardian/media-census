@@ -109,9 +109,9 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
           consumeSource(source).map(data => Right(data))
         case Left(errorString) =>
           consumeSource(response.unsafeBody).flatMap(_ => { //consuming the source is necessary to do a retry
-            if (response.code == 503 || response.code == 500) {
+            if (response.code == 502 || response.code == 503 || response.code == 500) {
               val delayTime = if (attempt > 6) 60 else 2 ^ attempt
-              logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
+              logger.warn(s"Received ${response.code} from Vidispine. Retrying in $delayTime seconds.")
               if (attempt > 20) {
                 logger.error("Failed after 20 attempts, giving up.")
                 Future(Left(HttpError("Gave up after 20 attempts", 503)))
