@@ -41,7 +41,7 @@ class CopyToS3 (userInfo:UserInfo, bucketName:String)(implicit mat:Materializer)
               logger.warn(s"Could not get anything in the vault for ${elem.path}")
               push(out, FOMCopyReport(elem, dest,CopyStatus.SOURCE_NOT_FOUND))
             } else {
-              logger.info(s"Copying ${resultSeq.head} to $bucketName:${{elem.path}...")
+              logger.info(s"Copying ${resultSeq.head} to $bucketName:${elem.path}...")
               if(resultSeq.length>1){
                 logger.warn(s"Found ${resultSeq.length} files with name ${elem.path}, expecting only one. Acting on the first.")
                 copyHelper.uploadToS3(userInfo,resultSeq.head.oid,bucketName, elem.path).onComplete({
