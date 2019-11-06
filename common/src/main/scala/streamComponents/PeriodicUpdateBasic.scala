@@ -69,8 +69,9 @@ class PeriodicUpdateBasic[T](initialJobRecord:JobHistory, updateEvery:Int=100, i
           jobHistoryDAO.jobForUuid(initialJobRecord.jobId).flatMap({
             case Left(elasticError)=>Future(Left(Seq(elasticError.toString)))
             case Right(None)=>
-              failedCb.invoke(new RuntimeException(s"Could not find any job to update in the index with the ID ${initialJobRecord.jobId}"))
-              Future(Left(Seq("Could not find any job")))
+              logger.error(s"Could not find any job to update with the ID ${initialJobRecord.jobId}, creating anyway. No updating stats, only updating count")
+              val toWrite = initialJobRecord.copy(itemsCounted = itemsProcessed)
+              writeNewRecord(toWrite, elem, failedCb, completedCb)
             case Right(Some(currentRecord))=>
               if(includeStats) {
                 logger.info(s"Updating current running stats...")
