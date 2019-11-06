@@ -63,8 +63,6 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     * @return
     */
   def buildStream(vsPathMap:Map[String,VSStorage], maybeStartAt:Option[Long], initialJobRecord:JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
-    //val sink = Sink.seq[MediaCensusEntry]
-
     val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>

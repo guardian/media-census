@@ -23,7 +23,7 @@
     <logger name="vidispine.VSCommunicator" level="DEBUG"/>
     <logger name="archivehunter" level="INFO"/>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="ASYNCSTDOUT" />
     </root>
 

@@ -76,24 +76,6 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
       .send()
   }
 
-
-  private def sendDelete(uriPath:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
-    val hdr = Map(
-      "Authorization"->s"Basic $authString",
-      "Content-Type"->"application/xml"
-    ) ++ headers
-
-    val uriWithPath = vsUri.path(uriPath)
-    val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
-
-    logger.debug(s"Got headers, initiating DELETE to $uri")
-    sttp
-      .delete(uri)
-      .headers(hdr)
-      .response(asStream[Source[ByteString, Any]])
-      .send()
-  }
-
   /**
     * internal method to buffer returned data into a String for parsing
     * @param source Akka source that yields ByteString entries
@@ -161,65 +143,13 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
     * @param ec implicitly provided execution context for async operations
     * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
     */
+  @deprecated("Use request(OperationType.GET,...) instead")
   def requestGet(uriPath:String, headers:Map[String,String],queryParams:Map[String,String]=Map(),attempt:Int=0)
                 (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendGeneric(OperationType.GET, uriPath, None, headers, queryParams).flatMap({ response=>
-    response.body match {
-      case Right(source)=>
-        logger.debug("Send succeeded")
-        consumeSource(source).map(data=>Right(data))
-      case Left(errorString)=>
-        if(response.code==503){
-          val delayTime = if(attempt>6) 60 else 2^attempt
-          if(attempt>=maxAttempts){
-            logger.error(s"Still receiving timeout, giving up after $maxAttempts retries")
-            Future(Left(HttpError("Timeout", response.code)))
-          } else {
-            logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
-            Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
-            requestGet(uriPath, headers, queryParams, attempt + 1)
-          }
-        } else {
-          VSError.fromXml(errorString) match {
-            case Left(unparseableError) =>
-              val errMsg = s"Send failed: ${response.code} - $errorString"
-              logger.warn(errMsg)
-              Future(Left(HttpError(errMsg, response.code)))
-            case Right(vsError) =>
-              logger.warn(vsError.toString)
-              Future(Left(HttpError(vsError.toString, response.code)))
-          }
-        }
-    }})
+  Future[Either[HttpError,String]] = request(OperationType.GET, uriPath, None, headers, queryParams)
 
+  @deprecated("Use request(OperationType.DELETE,...) instead")
   def requestDelete(uriPath:String, headers:Map[String,String],queryParams:Map[String,String]=Map(),attempt:Int=0)
                    (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendDelete(uriPath, headers, queryParams).flatMap({ response=>
-    response.body match {
-      case Right(source)=>
-        logger.debug("Send succeeded")
-        consumeSource(source).map(data=>Right(data))
-      case Left(errorString)=>
-        if(response.code==503){
-          val delayTime = if(attempt>6) 60 else 2^attempt
-          if(attempt>=maxAttempts){
-            logger.error(s"Still receiving timeout, giving up after $maxAttempts retries")
-            Future(Left(HttpError("Timeout", response.code)))
-          } else {
-            logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
-            Thread.sleep(delayTime * 1000)
-            requestDelete(uriPath, headers, queryParams, attempt + 1)
-          }
-        } else {
-          VSError.fromXml(errorString) match {
-            case Left(unparseableError) =>
-              val errMsg = s"Send failed: ${response.code} - $errorString"
-              logger.warn(errMsg)
-              Future(Left(HttpError(errMsg, response.code)))
-            case Right(vsError) =>
-              logger.warn(vsError.toString)
-              Future(Left(HttpError(vsError.toString, response.code)))
-          }
-        }
-    }})
+  Future[Either[HttpError,String]] = request(OperationType.DELETE, uriPath, None, headers, queryParams)
 }
