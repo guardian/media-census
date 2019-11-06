@@ -315,6 +315,8 @@ lazy val `archivescanner` = (project in file("archivescanner"))
       Cmd("USER","root"),
       Cmd("RUN", "chmod -R a+x /opt/docker"),
       Cmd("USER", "daemon")
+    )
+  )
 
 lazy val `mxscopy` = (project in file("mxs-copy-components"))
   .settings(
