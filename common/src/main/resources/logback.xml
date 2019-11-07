@@ -16,11 +16,11 @@
     <logger name="streamComponents.PeriodicUpdate" level="INFO"/>
     <logger name="streamComponents.AssetSweeperDeletedSource" level="INFO"/>
     <logger name="streamComponents.VSStorageScanSource" level="INFO"/>
-    <logger name="models.JobHistoryDAO" level="DEBUG"/>
+    <logger name="models.JobHistoryDAO" level="INFO"/>
     <logger name="models.VSFileIndexer" level="DEBUG"/>
 
-    <logger name="nlstreamcomponents" level="DEBUG"/>
-    <logger name="vidispine.VSCommunicator" level="DEBUG"/>
+    <logger name="nlstreamcomponents" level="INFO"/>
+    <logger name="vidispine.VSCommunicator" level="WARN"/>
     <logger name="archivehunter" level="INFO"/>
 
     <root level="WARN">

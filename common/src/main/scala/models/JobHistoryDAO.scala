@@ -1,6 +1,7 @@
 package models
 
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 import com.sksamuel.elastic4s.ElasticDate
@@ -44,18 +45,22 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     * @param entry [[JobHistory]] instance to save
     * @return a Future with either an error object or the new document version as a Long
     */
-  def updateStatusOnly(entry:JobHistory) = esClient.execute {
-    update(entry.jobId.toString).in(s"$indexName/jobHistory").docAsUpsert (
-      "lastError" -> entry.lastError,
-      "scanFinish" -> entry.scanFinish
+  def updateStatusOnly(entry:JobHistory) = {
+    val partialDoc = Map[String,Any](
+      "lastError" -> entry.lastError.orNull,
+      "scanFinish" -> entry.scanFinish.map(_.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)).orNull
     )
-  }.map(response=>{
-    if(response.isError){
-      Left(response.error)
-    } else {
-      Right(response.result.version)
-    }
-  })
+
+    esClient.execute {
+      update(entry.jobId.toString).in(s"$indexName/jobHistory").docAsUpsert(partialDoc)
+    }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.version)
+      }
+    })
+  }
 
   /**
     * get the job information for the provided ID

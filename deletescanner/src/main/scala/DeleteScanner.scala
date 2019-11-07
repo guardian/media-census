@@ -3,14 +3,11 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
-import com.sksamuel.elastic4s.ElasticsearchClientUri
 import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer}
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
-import helpers.ZonedDateTimeEncoder
-import vidispine.{VSCommunicator, VSStorage}
-
+import helpers.{ZonedDateTimeEncoder, CleanoutFunctions}
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -19,7 +16,7 @@ import io.circe.generic.auto._
 
 import scala.concurrent.duration._
 
-object DeleteScanner extends ZonedDateTimeEncoder  {
+object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
   val logger = Logger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
@@ -41,6 +38,7 @@ object DeleteScanner extends ZonedDateTimeEncoder  {
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
   lazy implicit val indexer = new MediaCensusIndexer(indexName)
+  lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
 
   /**
     * builds the main stream for conducting the delete scan
@@ -145,6 +143,13 @@ object DeleteScanner extends ZonedDateTimeEncoder  {
     }
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
+
+    cleanoutOldJobs(jobHistoryDAO, JobType.DeletedScan,leaveOpenDays).map({
+      case Left(errs)=>
+        logger.error(s"Cleanout of old census jobs failed: $errs")
+      case Right(results)=>
+        logger.info(s"Cleanout of old census jobs succeeded: $results")
+    })
 
     val runInfo = JobHistory.newRun(JobType.DeletedScan)
 
