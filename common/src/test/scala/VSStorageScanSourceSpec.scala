@@ -26,7 +26,7 @@ class VSStorageScanSourceSpec extends Specification with Mockito {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       val mockedCommunicator = mock[VSCommunicator]
       val sampleXml = getTestData("filescan.xml")
-      mockedCommunicator.requestGet(any,any,any,any)(any,any) returns Future(Right(sampleXml)) thenReturns Future(Right(getTestData("emptyScan.xml")))
+      mockedCommunicator.request(any, any,any,any,any,any)(any,any) returns Future(Right(sampleXml)) thenReturns Future(Right(getTestData("emptyscan.xml")))
 
       val sinkFac = Sink.fold[Seq[VSFile],VSFile](Seq())((acc,item)=>acc ++ Seq(item))
 

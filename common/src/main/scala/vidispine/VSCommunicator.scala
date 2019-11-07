@@ -42,7 +42,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
     * @param queryParams String->string map of query params
     * @return a Future, with a response containing a stream source to read the body.
     */
-  private def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
+  protected def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val bs = maybeXmlString.map(xmlString=>ByteString(xmlString,"UTF-8"))
 
     val uriWithPath = vsUri.path(uriPath)
@@ -82,7 +82,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
     * @param ec implicitly provided execution context for async operations
     * @return a Future, which contains the String of the returned content.
     */
-  private def consumeSource(source:Source[ByteString,Any])(implicit materializer: akka.stream.Materializer, ec: ExecutionContext):Future[String] = {
+  protected def consumeSource(source:Source[ByteString,Any])(implicit materializer: akka.stream.Materializer, ec: ExecutionContext):Future[String] = {
     logger.debug("Consuming returned body")
     val sink = Sink.reduce((acc:ByteString, unit:ByteString)=>acc.concat(unit))
     val runnable = source.toMat(sink)(Keep.right)
