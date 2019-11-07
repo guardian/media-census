@@ -9,13 +9,14 @@ import models.{JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensus
 import play.api.Logger
 import vidispine.{VSCommunicator, VSFile}
 import com.softwaremill.sttp._
+import helpers.CleanoutFunctions
 import streamComponents.{PeriodicUpdate, PeriodicUpdateBasic, VSStorageScanSource}
-
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
-object NearlineScanner {
+object NearlineScanner extends CleanoutFunctions {
   val logger = Logger(getClass)
 
   private implicit val actorSystem = ActorSystem("NearlineScanner")
@@ -42,6 +43,7 @@ object NearlineScanner {
 
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus-nearline")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
+  lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
 
   lazy implicit val indexer = new VSFileIndexer(indexName, batchSize = 200)
 
@@ -106,6 +108,13 @@ object NearlineScanner {
       case Success(esClient)=>
         implicit val esClientImpl = esClient
         lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
+
+        Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.DeletedScan,leaveOpenDays).map({
+          case Left(errs)=>
+            logger.error(s"Cleanout of old census jobs failed: $errs")
+          case Right(results)=>
+            logger.info(s"Cleanout of old census jobs succeeded: $results")
+        }), 5 minutes)
 
         val runInfo = JobHistory.newRun(JobType.NearlineScan)
 

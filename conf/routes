@@ -15,7 +15,7 @@ GET     /api/nearline/membership    @controllers.NearlineDataController.membersh
 GET     /api/nearline/files         @controllers.NearlineDataController.fileSearch(start:Option[String],duration:Option[Int],limit:Option[Int],orphanOnly:Boolean?=false)
 
 GET     /api/jobs/:jobType/forTimespan  @controllers.JobsController.jobsForTimespan(jobType, startAt:Option[String]?=None,endAt:Option[String]?=None,showRunning:Boolean?=false)
-GET     /api/jobs/running               @controllers.JobsController.runningJobs
+GET     /api/jobs/running               @controllers.JobsController.runningJobs(limit:Option[Int])
 GET     /api/jobs/:jobType/lastSuccess  @controllers.JobsController.lastSuccessfulJob(jobType)
 
 GET     /api/job/:jobId             @controllers.JobsController.jobDetail(jobId)

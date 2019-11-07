@@ -22,7 +22,7 @@ class RunsInProgress extends React.Component {
     }
 
     refresh(){
-        this.setState({loading:true, lastError: null}, ()=>axios.get("/api/jobs/running").then(response=>{
+        this.setState({loading:true, lastError: null}, ()=>axios.get("/api/jobs/running?limit=10").then(response=>{
             this.setState({loading: false, lastError: null, runData: response.data.entries})
         }).catch(err=>{
             console.error(err);

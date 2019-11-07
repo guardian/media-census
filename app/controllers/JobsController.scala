@@ -69,8 +69,8 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
     }
   }
 
-  def runningJobs = Action.async {
-    jobsModelDAO.queryJobs(None,Some(JobHistoryDAO.JobState.Running),None).map({
+  def runningJobs(limit:Option[Int]) = Action.async {
+    jobsModelDAO.queryJobs(None,Some(JobHistoryDAO.JobState.Running),limit).map({
       case Left(err)=>
         logger.error(s"Could not list currently running jobs: $err")
         InternalServerError(GenericResponse("db_error", err.toString).asJson)
