@@ -146,7 +146,7 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
 
     val query = maybeLimit match {
       case Some(suppliedLimit)=>search(indexName) query boolQuery().withMust(queryDefs) sortByFieldDesc "scanStart" limit suppliedLimit
-      case None=>search(indexName) query boolQuery().withMust(queryDefs)
+      case None=>search(indexName) query boolQuery().withMust(queryDefs) limit 1000
     }
     esClient.execute { query }.map(response=>{
       if(response.isError){
