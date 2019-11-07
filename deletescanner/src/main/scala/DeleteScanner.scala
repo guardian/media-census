@@ -56,10 +56,11 @@ object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
 
       val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery = 500))
       val deletionFilter = builder.add(new DeletionFilter(assetSweeperConfig, esClient))
+      val existInFilesFilter = builder.add(new AssetSweeperNotExistFilter(assetSweeperConfig))
       val streamSource = builder.add(srcFactory)
       val sinkSplitter = builder.add(Broadcast[MediaCensusEntry](2, eagerCancel=false))
 
-      streamSource.out.log("deleteStream").map(_.to[MediaCensusEntry]) ~> periodicUpdate ~> deletionFilter ~> sinkSplitter
+      streamSource.out.log("deleteStream").map(_.to[MediaCensusEntry]) ~> periodicUpdate ~> deletionFilter ~> existInFilesFilter ~> sinkSplitter
       sinkSplitter ~> deleteSink
       sinkSplitter ~> reduceSink
 
