@@ -145,12 +145,12 @@ object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
-    cleanoutOldJobs(jobHistoryDAO, JobType.DeletedScan,leaveOpenDays).map({
+    Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.DeletedScan,leaveOpenDays).map({
       case Left(errs)=>
         logger.error(s"Cleanout of old census jobs failed: $errs")
       case Right(results)=>
         logger.info(s"Cleanout of old census jobs succeeded: $results")
-    })
+    }), 5 minutes)
 
     val runInfo = JobHistory.newRun(JobType.DeletedScan)
 

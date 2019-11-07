@@ -18,7 +18,8 @@
     <logger name="streamComponents.VSStorageScanSource" level="INFO"/>
     <logger name="models.JobHistoryDAO" level="INFO"/>
     <logger name="models.VSFileIndexer" level="DEBUG"/>
-
+    <logger name="DeleteScanner" level="INFO"/>
+    <logger name="CronScanner" level="INFO"/>
     <logger name="nlstreamcomponents" level="INFO"/>
     <logger name="vidispine.VSCommunicator" level="WARN"/>
     <logger name="archivehunter" level="INFO"/>
