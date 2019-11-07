@@ -13,6 +13,7 @@ import vidispine.{VSFile, VSFileStateEncoder}
 import io.circe.syntax._
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
+import streamComponents.PeriodicUpdateBasic
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -69,14 +70,14 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
   }
 
 
-  def buildStream(esClient:ElasticClient) = {
+  def buildStream(initialJobRecord: JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO: JobHistoryDAO) = {
     val counterSinkFac = Sink.fold[Int, ArchiveNearlineEntry](0)((acc,_)=>acc+1)
 
     GraphDSL.create(counterSinkFac) { implicit builder=> counterSink=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.http.ElasticDsl._
 
-      val src = builder.add(indexer.getSource(esClient,Seq(prefixQuery("uri","omms"))))
+      val src = builder.add(indexer.getSource(esClient,Seq(prefixQuery("uri","omms")), limit=None))
       val lookupFactory = new ArchiveHunterLookup(ahBaseUri, ahSecret)
 
       val writeSink = builder.add(archiveIndexer.getSink(esClient))
@@ -84,6 +85,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
       val distributor = builder.add(Balance[ArchiveNearlineEntry](parallelism))
       val distMerge = builder.add(Merge[ArchiveNearlineEntry](parallelism))
 
+      val updater = builder.add(new PeriodicUpdateBasic[ArchiveNearlineEntry](initialJobRecord, updateEvery=1000))
       val splitter = builder.add(Broadcast[ArchiveNearlineEntry](2))
 
       src.out.map(_.to[VSFile]).map(ArchiveNearlineEntry.fromVSFileBlankArchivehunter) ~> distributor
@@ -93,7 +95,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
         distributor.out(i) ~> lookup ~> distMerge.in(i)
       }
 
-      distMerge ~> splitter
+      distMerge ~> updater ~> splitter
       splitter.out(0) ~> writeSink
       splitter.out(1) ~> counterSink
 
@@ -124,7 +126,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
 
         val resultFuture = jobHistoryDAO.put(runInfo).flatMap(_=>{
           logger.info(s"Saved run info ${runInfo.toString}")
-          RunnableGraph.fromGraph(buildStream(esClient)).run()
+          RunnableGraph.fromGraph(buildStream(runInfo)).run()
         })
 
         resultFuture.onComplete({

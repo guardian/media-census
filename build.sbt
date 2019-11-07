@@ -286,7 +286,7 @@ lazy val `fixorphans` = (project in file("fix-orphaned-media"))
 
 lazy val `archivescanner` = (project in file("archivescanner"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)
-  .dependsOn(common)
+  .dependsOn(common, mxscopy)
   .settings(commonSettings, libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,

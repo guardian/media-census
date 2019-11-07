@@ -48,6 +48,18 @@ object MatrixStoreHelper {
   }
 
   /**
+    * helper function to initialise a Source that finds all elements on the given vault
+    * @param userInfo [[UserInfo]] instance that indicates the appliance and vault to query
+    * @param mat implicitly provided Materializer
+    * @param ec implicitly provided ExecutionContext
+    * @return a Graph in the form of a Source that can be mixed into another stream
+    */
+  def findAllBulkSource(userInfo:UserInfo)(implicit mat:Materializer, ec:ExecutionContext) = {
+    val terms = SearchTerm.createSimpleTerm("MXS_FILENAME","*")
+    findBulkSource(userInfo, terms)
+  }
+
+  /**
     * helper function to initialise a Source that finds elements matching the given name and looks up their metadata.
     * both of these operations are performed with async barriers
     * @param userInfo MXS UserInfo object that provides cluster, login and vault details
@@ -113,13 +125,12 @@ object MatrixStoreHelper {
     }
   }
 
+  val mimeTypeRegex = "^([^\\/]+)/(.*)$".r
   /**
     * converts mime type into a category integer, as per MatrixStoreAdministrationProgrammingGuidelines.pdf p.9
     * @param mt MIME type as string
     * @return an integer
     */
-  val mimeTypeRegex = "^([^\\/]+)/(.*)$".r
-
   def categoryForMimetype(mt: Option[String]):Int = mt match {
     case None=>
       logger.warn(s"No MIME type provided!")
