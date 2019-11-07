@@ -45,7 +45,6 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
   private def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val bs = maybeXmlString.map(xmlString=>ByteString(xmlString,"UTF-8"))
 
-
     val uriWithPath = vsUri.path(uriPath)
     val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
     val source:Option[Source[ByteString, Any]] = bs.map(Source.single)
@@ -108,29 +107,27 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
           logger.debug("Send succeeded")
           consumeSource(source).map(data => Right(data))
         case Left(errorString) =>
-          consumeSource(response.unsafeBody).flatMap(_ => { //consuming the source is necessary to do a retry
-            if (response.code == 502 || response.code == 503 || response.code == 500) {
-              val delayTime = if (attempt > 6) 60 else 2 ^ attempt
-              logger.warn(s"Received ${response.code} from Vidispine. Retrying in $delayTime seconds.")
-              if (attempt > 20) {
-                logger.error("Failed after 20 attempts, giving up.")
-                Future(Left(HttpError("Gave up after 20 attempts", 503)))
-              } else {
-                Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
-                request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt + 1)
-              }
+          if (response.code == 502 || response.code == 503 || response.code == 500) {
+            val delayTime = if (attempt > 6) 60 else 2 ^ attempt
+            logger.warn(s"Received ${response.code} from Vidispine. Retrying in $delayTime seconds.")
+            if (attempt > 20) {
+              logger.error("Failed after 20 attempts, giving up.")
+              Future(Left(HttpError("Gave up after 20 attempts", 503)))
             } else {
-              VSError.fromXml(errorString) match {
-                case Left(_) =>
-                  val errMsg = s"Send failed: ${response.code} - $errorString"
-                  logger.warn(errMsg)
-                  Future(Left(HttpError(errMsg, response.code)))
-                case Right(vsError) =>
-                  logger.warn(vsError.toString)
-                  Future(Left(HttpError(vsError.toString, response.code)))
-              }
+              Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
+              request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt + 1)
             }
-          })
+          } else {
+            VSError.fromXml(errorString) match {
+              case Left(_) =>
+                val errMsg = s"Send failed: ${response.code} - $errorString"
+                logger.warn(errMsg)
+                Future(Left(HttpError(errMsg, response.code)))
+              case Right(vsError) =>
+                logger.warn(vsError.toString)
+                Future(Left(HttpError(vsError.toString, response.code)))
+            }
+          }
       }
     })
 

@@ -4,6 +4,7 @@ import java.time.ZonedDateTime
 
 import akka.stream.Materializer
 import org.slf4j.LoggerFactory
+import vidispine.VSCommunicator.OperationType
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.{NodeSeq, XML}
@@ -105,7 +106,7 @@ object VSFile {
   }
   def forPathOnStorage(storageId:String, path:String)(implicit communicator: VSCommunicator, mat:Materializer) = {
     val uri = s"/API/storage/$storageId/file;includeItem=true"
-    communicator.requestGet(uri, Map("Accept"->"application/xml"), queryParams = Map("path"->path,"count"->"false")).map({
+    communicator.request(OperationType.GET, uri, None, Map("Accept"->"application/xml"), queryParams = Map("path"->path,"count"->"false")).map({
       case Left(err)=>Left(Seq(err.toString))
       case Right(xmlString)=>VSFile.seqFromXmlString(xmlString) match {
         case Left(errSeq)=>
