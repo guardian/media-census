@@ -1,6 +1,7 @@
 package models
 
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 import com.sksamuel.elastic4s.ElasticDate
@@ -24,7 +25,6 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
   import JobHistoryDAO._
   private val logger = LoggerFactory.getLogger(getClass)
 
-
   /**
     * save the provided entry to the index
     * @param entry [[JobHistory]] entry to save
@@ -41,6 +41,28 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
   })
 
   /**
+    * writes only the job status fields from the given record to the index
+    * @param entry [[JobHistory]] instance to save
+    * @return a Future with either an error object or the new document version as a Long
+    */
+  def updateStatusOnly(entry:JobHistory) = {
+    val partialDoc = Map[String,Any](
+      "lastError" -> entry.lastError.orNull,
+      "scanFinish" -> entry.scanFinish.map(_.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)).orNull
+    )
+
+    esClient.execute {
+      update(entry.jobId.toString).in(s"$indexName/jobHistory").docAsUpsert(partialDoc)
+    }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        Right(response.result.version)
+      }
+    })
+  }
+
+  /**
     * get the job information for the provided ID
     * @param id UUID of the job
     * @return a Future, with either an error object or an Option containing the [[JobHistory]] for the given job if it exists
@@ -51,6 +73,7 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     if(response.isError){
       Left(response.error)
     } else {
+      logger.debug(s"jobForUuid: server returned $response")
       if(response.result.found)
         Right(Some(response.result.to[JobHistory]))
       else
@@ -102,7 +125,7 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
       search(indexName) query boolQuery().must(
         not(existsQuery("scanFinish")),
         existsQuery("scanStart")
-      )
+      ) sortByFieldDesc "scanStart"
     }.map(response=>{
       if(response.isError){
         Left(response.error)
@@ -122,8 +145,8 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     ).collect({case Some(defs)=>defs}).flatten
 
     val query = maybeLimit match {
-      case Some(suppliedLimit)=>search(indexName) query boolQuery().withMust(queryDefs) limit suppliedLimit
-      case None=>search(indexName) query boolQuery().withMust(queryDefs)
+      case Some(suppliedLimit)=>search(indexName) query boolQuery().withMust(queryDefs) sortByFieldDesc "scanStart" limit suppliedLimit
+      case None=>search(indexName) query boolQuery().withMust(queryDefs) limit 1000
     }
     esClient.execute { query }.map(response=>{
       if(response.isError){

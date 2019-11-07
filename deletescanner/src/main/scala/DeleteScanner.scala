@@ -3,14 +3,11 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
-import com.sksamuel.elastic4s.ElasticsearchClientUri
 import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer}
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
-import helpers.ZonedDateTimeEncoder
-import vidispine.{VSCommunicator, VSStorage}
-
+import helpers.{ZonedDateTimeEncoder, CleanoutFunctions}
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -19,7 +16,7 @@ import io.circe.generic.auto._
 
 import scala.concurrent.duration._
 
-object DeleteScanner extends ZonedDateTimeEncoder  {
+object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
   val logger = Logger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
@@ -41,6 +38,7 @@ object DeleteScanner extends ZonedDateTimeEncoder  {
   lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
   lazy implicit val indexer = new MediaCensusIndexer(indexName)
+  lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
 
   /**
     * builds the main stream for conducting the delete scan
@@ -57,11 +55,12 @@ object DeleteScanner extends ZonedDateTimeEncoder  {
       val srcFactory = indexer.getIndexSource(esClient)
 
       val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery = 500))
-      val deletionFilter = builder.add(new DeletionFilter(assetSweeperConfig, esClient))
+      val deletionFilter = builder.add(new DeletionFilter(assetSweeperConfig))
+      val existInFilesFilter = builder.add(new AssetSweeperNotExistFilter(assetSweeperConfig))
       val streamSource = builder.add(srcFactory)
       val sinkSplitter = builder.add(Broadcast[MediaCensusEntry](2, eagerCancel=false))
 
-      streamSource.out.log("deleteStream").map(_.to[MediaCensusEntry]) ~> periodicUpdate ~> deletionFilter ~> sinkSplitter
+      streamSource.out.log("deleteStream").map(_.to[MediaCensusEntry]) ~> periodicUpdate ~> deletionFilter ~> existInFilesFilter ~> sinkSplitter
       sinkSplitter ~> deleteSink
       sinkSplitter ~> reduceSink
 
@@ -119,7 +118,7 @@ object DeleteScanner extends ZonedDateTimeEncoder  {
     val updateFuture = runInfo match {
       case Some(jobHistory)=>
         val updatedJobHistory = jobHistory.copy(scanFinish = Some(ZonedDateTime.now()), lastError = errorMessage)
-        jobHistoryDAO.put(updatedJobHistory).map({
+        jobHistoryDAO.updateStatusOnly(updatedJobHistory).map({
           case Left(err)=>logger.error(s"Could not update job history entry: ${err.toString}")
           case Right(newVersion)=>logger.info(s"Update run ${updatedJobHistory} with new version $newVersion")
         })
@@ -145,6 +144,13 @@ object DeleteScanner extends ZonedDateTimeEncoder  {
     }
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
+
+    Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.DeletedScan,leaveOpenDays).map({
+      case Left(errs)=>
+        logger.error(s"Cleanout of old census jobs failed: $errs")
+      case Right(results)=>
+        logger.info(s"Cleanout of old census jobs succeeded: $results")
+    }), 5 minutes)
 
     val runInfo = JobHistory.newRun(JobType.DeletedScan)
 

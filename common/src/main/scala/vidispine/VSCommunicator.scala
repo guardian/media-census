@@ -25,7 +25,7 @@ object VSCommunicator {
   * @param plutoPass password for accessing Vidispine
   * @param actorSystem implicitly provided reference to an ActorSystem, for Akka
   */
-class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val actorSystem:ActorSystem) {
+class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:Int=20)(implicit val actorSystem:ActorSystem) {
   private val logger = LoggerFactory.getLogger(getClass)
   import VSCommunicator._
 
@@ -42,7 +42,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     * @param queryParams String->string map of query params
     * @return a Future, with a response containing a stream source to read the body.
     */
-  private def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
+  protected def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
     val bs = maybeXmlString.map(xmlString=>ByteString(xmlString,"UTF-8"))
 
     val uriWithPath = vsUri.path(uriPath)
@@ -75,24 +75,6 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
       .send()
   }
 
-
-  private def sendDelete(uriPath:String, headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
-    val hdr = Map(
-      "Authorization"->s"Basic $authString",
-      "Content-Type"->"application/xml"
-    ) ++ headers
-
-    val uriWithPath = vsUri.path(uriPath)
-    val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
-
-    logger.debug(s"Got headers, initiating DELETE to $uri")
-    sttp
-      .delete(uri)
-      .headers(hdr)
-      .response(asStream[Source[ByteString, Any]])
-      .send()
-  }
-
   /**
     * internal method to buffer returned data into a String for parsing
     * @param source Akka source that yields ByteString entries
@@ -100,7 +82,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     * @param ec implicitly provided execution context for async operations
     * @return a Future, which contains the String of the returned content.
     */
-  private def consumeSource(source:Source[ByteString,Any])(implicit materializer: akka.stream.Materializer, ec: ExecutionContext):Future[String] = {
+  protected def consumeSource(source:Source[ByteString,Any])(implicit materializer: akka.stream.Materializer, ec: ExecutionContext):Future[String] = {
     logger.debug("Consuming returned body")
     val sink = Sink.reduce((acc:ByteString, unit:ByteString)=>acc.concat(unit))
     val runnable = source.toMat(sink)(Keep.right)
@@ -118,30 +100,36 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
     */
   def request(operationType: OperationType.Value, uriPath:String,maybeXmlString:Option[String],headers:Map[String,String], queryParams:Map[String,String]=Map(), attempt:Int=0)
-             (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response=>
-    response.body match {
-      case Right(source)=>
-        logger.debug("Send succeeded")
-        consumeSource(source).map(data=>Right(data))
-      case Left(errorString)=>
-        if(response.code==503){
-          val delayTime = if(attempt>6) 60 else 2^attempt
-          logger.warn(s"Received 503 from Vidispine. Retrying in $delayTime seconds.")
-          Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt+1)
-        } else {
-          VSError.fromXml(errorString) match {
-            case Left(unparseableError) =>
-              val errMsg = s"Send failed: ${response.code} - $errorString"
-              logger.warn(errMsg)
-              Future(Left(HttpError(errMsg, response.code)))
-            case Right(vsError) =>
-              logger.warn(vsError.toString)
-              Future(Left(HttpError(vsError.toString, response.code)))
+             (implicit materializer: akka.stream.Materializer,ec: ExecutionContext): Future[Either[HttpError,String]] =
+    sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response =>
+      response.body match {
+        case Right(source) =>
+          logger.debug("Send succeeded")
+          consumeSource(source).map(data => Right(data))
+        case Left(errorString) =>
+          if (response.code == 502 || response.code == 503 || response.code == 500) {
+            val delayTime = if (attempt > 6) 60 else 2 ^ attempt
+            logger.warn(s"Received ${response.code} from Vidispine. Retrying in $delayTime seconds.")
+            if (attempt > 20) {
+              logger.error("Failed after 20 attempts, giving up.")
+              Future(Left(HttpError("Gave up after 20 attempts", 503)))
+            } else {
+              Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
+              request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt + 1)
+            }
+          } else {
+            VSError.fromXml(errorString) match {
+              case Left(_) =>
+                val errMsg = s"Send failed: ${response.code} - $errorString"
+                logger.warn(errMsg)
+                Future(Left(HttpError(errMsg, response.code)))
+              case Right(vsError) =>
+                logger.warn(vsError.toString)
+                Future(Left(HttpError(vsError.toString, response.code)))
+            }
           }
-        }
-    }})
+      }
+    })
 
   /**
     * request a GET operation to Vidispine
@@ -152,55 +140,13 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String)(implicit val
     * @param ec implicitly provided execution context for async operations
     * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
     */
+  @deprecated("Use request(OperationType.GET,...) instead")
   def requestGet(uriPath:String, headers:Map[String,String],queryParams:Map[String,String]=Map(),attempt:Int=0)
                 (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendGeneric(OperationType.GET, uriPath, None, headers, queryParams).flatMap({ response=>
-    response.body match {
-      case Right(source)=>
-        logger.debug("Send succeeded")
-        consumeSource(source).map(data=>Right(data))
-      case Left(errorString)=>
-        if(response.code==503){
-          val delayTime = if(attempt>6) 60 else 2^attempt
-          logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
-          Thread.sleep(delayTime*1000)  //FIXME: should do this in a non-blocking way, if possible.
-          requestGet(uriPath, headers, queryParams, attempt+1)
-        } else {
-          VSError.fromXml(errorString) match {
-            case Left(unparseableError) =>
-              val errMsg = s"Send failed: ${response.code} - $errorString"
-              logger.warn(errMsg)
-              Future(Left(HttpError(errMsg, response.code)))
-            case Right(vsError) =>
-              logger.warn(vsError.toString)
-              Future(Left(HttpError(vsError.toString, response.code)))
-          }
-        }
-    }})
+  Future[Either[HttpError,String]] = request(OperationType.GET, uriPath, None, headers, queryParams)
 
+  @deprecated("Use request(OperationType.DELETE,...) instead")
   def requestDelete(uriPath:String, headers:Map[String,String],queryParams:Map[String,String]=Map(),attempt:Int=0)
                    (implicit materializer: akka.stream.Materializer,ec: ExecutionContext):
-  Future[Either[HttpError,String]] = sendDelete(uriPath, headers, queryParams).flatMap({ response=>
-    response.body match {
-      case Right(source)=>
-        logger.debug("Send succeeded")
-        consumeSource(source).map(data=>Right(data))
-      case Left(errorString)=>
-        if(response.code==503){
-          val delayTime = if(attempt>6) 60 else 2^attempt
-          logger.warn(s"Received 503 from Vidispine on attempt $attempt. Retrying in $delayTime seconds.")
-          Thread.sleep(delayTime*1000)
-          requestGet(uriPath, headers, queryParams, attempt+1)
-        } else {
-          VSError.fromXml(errorString) match {
-            case Left(unparseableError) =>
-              val errMsg = s"Send failed: ${response.code} - $errorString"
-              logger.warn(errMsg)
-              Future(Left(HttpError(errMsg, response.code)))
-            case Right(vsError) =>
-              logger.warn(vsError.toString)
-              Future(Left(HttpError(vsError.toString, response.code)))
-          }
-        }
-    }})
+  Future[Either[HttpError,String]] = request(OperationType.DELETE, uriPath, None, headers, queryParams)
 }

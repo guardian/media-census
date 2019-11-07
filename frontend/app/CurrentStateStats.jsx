@@ -191,7 +191,7 @@ class CurrentStateStats extends React.Component {
                 }
                 {this.state.lastDeleteRunSuccess ?
                     <li>Last successful deletion scan completed <TimestampDiffComponent
-                        endTime={this.state.lastRunSuccess.scanFinish}/>.</li> :
+                        endTime={this.state.lastDeleteRunSuccess.scanFinish}/>.</li> :
                     <li>There have not been any successful deletion scan runs yet!</li>
                 }
             </ul>

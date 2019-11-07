@@ -5,6 +5,7 @@ import akka.stream.stage.{AbstractOutHandler, GraphStage, GraphStageLogic}
 import akka.stream.{Attributes, Materializer, Outlet, SourceShape}
 import com.softwaremill.sttp.Uri
 import org.slf4j.LoggerFactory
+import vidispine.VSCommunicator.OperationType
 import vidispine.{VSCommunicator, VSFile}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,7 +32,7 @@ class VSStorageScanSource(storageId:Option[String], fileState:Option[String], co
 
       val queryParamsWithState = if(fileState.isDefined) queryParams ++ Map("state"->fileState.get) else queryParams
 
-      comm.requestGet(s"$baseUrl;first=$ctr;number=$pageSize;sort=timestamp",Map("Accept"->"application/xml"),queryParams = queryParamsWithState).flatMap({
+      comm.request(OperationType.GET, s"$baseUrl;first=$ctr;number=$pageSize;sort=timestamp",None,Map("Accept"->"application/xml"),queryParams = queryParamsWithState).flatMap({
         case Left(err)=>
           logger.warn(s"Got HTTP error $err listing storage $storageId. Retrying...")
           Thread.sleep(5000)

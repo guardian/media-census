@@ -36,8 +36,8 @@ Each subproject should have its own README within its root directory giving more
 backend and a React.js frontend.
 - `common` - a library of components that are shared between the different subprojects.  This includes data models for the
 ElasticSearch objects, Data Access Objects, client managers, etc.
-- `cronscanner` - the first scanner. This performs regular scans of Vidispine items and updates the index with stats
-about how many replicas they have (i.e. how much is in nearline)
+- `cronscanner` - the first scanner. This performs regular scans of Asset Importer files, cross-references them to Vidispine 
+items and updates the index with stats about how many replicas they have (i.e. how much is in nearline)
 - `deletescanner` - a cleanup scanner.  This checks the "deleted items" table in Asset Sweeper and removes census entries
 for those items that are not present on the SAN.
 - `findarchivednearline` - a scanner built for a one-off purpose, checking whether Vidispine thinks that items which are on

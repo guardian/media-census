@@ -63,8 +63,6 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     * @return
     */
   def buildStream(vsPathMap:Map[String,VSStorage], maybeStartAt:Option[Long], initialJobRecord:JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
-    //val sink = Sink.seq[MediaCensusEntry]
-
     val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
@@ -161,7 +159,7 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     val updateFuture = runInfo match {
       case Some(jobHistory)=>
         val updatedJobHistory = jobHistory.copy(scanFinish = Some(ZonedDateTime.now()), lastError = errorMessage)
-        jobHistoryDAO.put(updatedJobHistory).map({
+        jobHistoryDAO.updateStatusOnly(updatedJobHistory).map({
           case Left(err)=>logger.error(s"Could not update job history entry: ${err.toString}")
           case Right(newVersion)=>logger.info(s"Update run ${updatedJobHistory} with new version $newVersion")
         })
@@ -220,12 +218,12 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
-    cleanoutOldJobs(jobHistoryDAO, JobType.CensusScan,leaveOpenDays).map({
+    Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.CensusScan,leaveOpenDays).map({
       case Left(errs)=>
         logger.error(s"Cleanout of old census jobs failed: $errs")
       case Right(results)=>
         logger.info(s"Cleanout of old census jobs succeeded: $results")
-    })
+    }), 5 minutes)
 
     val runInfo = JobHistory.newRun(JobType.CensusScan)
 
