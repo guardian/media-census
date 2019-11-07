@@ -15,10 +15,9 @@ import scala.util.{Failure, Success}
 
 /**
   * filters out records that do not exist in the deleted_files table in Asset Sweeper
-  * @param config
-  * @param esClient
+  * @param config DatabaseConfiguration instance relating the database to read
   */
-class DeletionFilter(config:DatabaseConfiguration, esClient:ElasticClient) extends GraphStage[FlowShape[MediaCensusEntry,MediaCensusEntry]] {
+class DeletionFilter(config:DatabaseConfiguration) extends GraphStage[FlowShape[MediaCensusEntry,MediaCensusEntry]] {
   private final val in:Inlet[MediaCensusEntry] = Inlet.create("DeletionFilter.in")
   private final val out:Outlet[MediaCensusEntry] = Outlet.create("DeletionFilter.out")
 
