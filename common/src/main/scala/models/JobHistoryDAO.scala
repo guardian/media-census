@@ -24,7 +24,6 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
   import JobHistoryDAO._
   private val logger = LoggerFactory.getLogger(getClass)
 
-
   /**
     * save the provided entry to the index
     * @param entry [[JobHistory]] entry to save
@@ -32,6 +31,24 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
     */
   def put(entry:JobHistory) = esClient.execute {
     update(entry.jobId.toString).in(s"$indexName/jobHistory").docAsUpsert(entry)
+  }.map(response=>{
+    if(response.isError){
+      Left(response.error)
+    } else {
+      Right(response.result.version)
+    }
+  })
+
+  /**
+    * writes only the job status fields from the given record to the index
+    * @param entry [[JobHistory]] instance to save
+    * @return a Future with either an error object or the new document version as a Long
+    */
+  def updateStatusOnly(entry:JobHistory) = esClient.execute {
+    update(entry.jobId.toString).in(s"$indexName/jobHistory").docAsUpsert (
+      "lastError" -> entry.lastError,
+      "scanFinish" -> entry.scanFinish
+    )
   }.map(response=>{
     if(response.isError){
       Left(response.error)
@@ -103,7 +120,7 @@ class JobHistoryDAO(esClient:ElasticClient, indexName:String) extends ZonedDateT
       search(indexName) query boolQuery().must(
         not(existsQuery("scanFinish")),
         existsQuery("scanStart")
-      )
+      ) sortByFieldDesc "scanStart"
     }.map(response=>{
       if(response.isError){
         Left(response.error)

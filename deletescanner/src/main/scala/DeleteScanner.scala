@@ -119,7 +119,7 @@ object DeleteScanner extends ZonedDateTimeEncoder  {
     val updateFuture = runInfo match {
       case Some(jobHistory)=>
         val updatedJobHistory = jobHistory.copy(scanFinish = Some(ZonedDateTime.now()), lastError = errorMessage)
-        jobHistoryDAO.put(updatedJobHistory).map({
+        jobHistoryDAO.updateStatusOnly(updatedJobHistory).map({
           case Left(err)=>logger.error(s"Could not update job history entry: ${err.toString}")
           case Right(newVersion)=>logger.info(s"Update run ${updatedJobHistory} with new version $newVersion")
         })
