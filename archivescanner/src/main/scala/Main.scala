@@ -54,7 +54,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
     val updateFuture = runInfo match {
       case Some(jobHistory)=>
         val updatedJobHistory = jobHistory.copy(scanFinish = Some(ZonedDateTime.now()), lastError = errorMessage)
-        jobHistoryDAO.put(updatedJobHistory).map({
+        jobHistoryDAO.updateStatusOnly(updatedJobHistory).map({
           case Left(err)=>logger.error(s"Could not update job history entry: ${err.toString}")
           case Right(newVersion)=>logger.info(s"Update run $updatedJobHistory with new version $newVersion")
         })
@@ -76,7 +76,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.http.ElasticDsl._
 
-      val src = builder.add(indexer.getSource(esClient,Seq(prefixQuery("uri","omms"))))
+      val src = builder.add(indexer.getSource(esClient,Seq(prefixQuery("uri","omms")), limit=None))
       val lookupFactory = new ArchiveHunterLookup(ahBaseUri, ahSecret)
 
       val writeSink = builder.add(archiveIndexer.getSink(esClient))
