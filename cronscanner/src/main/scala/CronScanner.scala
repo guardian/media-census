@@ -25,7 +25,14 @@ import scala.concurrent.duration._
 object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
   val logger = Logger(getClass)
 
-  private implicit val actorSystem = ActorSystem("CronScanner")
+  //we make a load of parallel request, increase the subscription timeout to prevent errors
+  //https://github.com/akka/akka-http/issues/1836
+  //it looks as if occasionally the timeout kicks in and consumes the response body BEFORE the real code tries to
+  //then the real code fails
+  private implicit val actorSystem = ActorSystem("CronScanner", Configuration.from(Map(
+    "akka.http.host-connection-pool.response-entity-subscription-timeout" -> "30 seconds"
+  )).underlying)
+
   private implicit val mat:Materializer = ActorMaterializer.create(actorSystem)
 
   lazy val assetSweeperConfig = DatabaseConfiguration(
@@ -135,7 +142,8 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
 
   def checkIndex(esClient:ElasticClient):Unit = {
     //we can't continue startup until this is done anyway, so it's fine to block here.
-    val checkResult = Await.result(indexer.checkIndex(esClient), 30 seconds)
+    val checkResult = Await.result(indexer.checkIndex(esClient), 30
+      seconds)
 
     if(checkResult.isError) {
       logger.error(s"Could not check index status: ${checkResult.error}")

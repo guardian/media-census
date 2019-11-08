@@ -109,6 +109,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
         case Left(errorString) =>
           if (response.code == 502 || response.code == 503 || response.code == 500) {
             val delayTime = if (attempt > 6) 60 else 2 ^ attempt
+            logger.warn(s"Request body: $errorString")
             logger.warn(s"Received ${response.code} from Vidispine. Retrying in $delayTime seconds.")
             if (attempt > 20) {
               logger.error("Failed after 20 attempts, giving up.")

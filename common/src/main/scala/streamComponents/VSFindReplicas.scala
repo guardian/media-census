@@ -46,6 +46,7 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
           logger.warn(s"${elem.storageSubpath} is not attached to items and/or shapes")
           push(outNo, elem)
         } else {
+          logger.debug(s"Shape IDs for ${elem.vsItemId}: ${elem.vsShapeIds}")
           val shapeListFuture = Future.sequence(elem.vsShapeIds.get.map(shapeId=>VSShape.forItemWithId(elem.vsItemId.get, shapeId)))
 
           shapeListFuture.map(results=>{
@@ -63,7 +64,7 @@ class VSFindReplicas (implicit vsCommunicator:VSCommunicator, mat:Materializer) 
                 */
               val shapes = results.collect({ case Right(shape) => shape })
               val replicaList = shapes.flatMap(_.files)
-              logger.info(s"Found replicas list $replicaList for ${elem.storageSubpath}")
+              logger.info(s"Found ${replicaList.length} replicas for ${elem.storageSubpath}")
               val replicasOut = replicaList.map(VSFileLocation.fromVsFile).groupBy(elem => elem.storageId + ":" + elem.fileId).map(_._2.head).toSeq
               val updatedElem = elem.copy(
                 //see https://stackoverflow.com/questions/3912753/scala-remove-duplicates-in-list-of-objects

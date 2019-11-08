@@ -5,6 +5,7 @@ import akka.stream.Materializer
 import com.softwaremill.sttp.Uri
 import models.HttpError
 import org.slf4j.LoggerFactory
+import vidispine.VSCommunicator.OperationType
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -18,7 +19,7 @@ object VSShape {
 
   def vsIdForShapeTag(itemId:String, shapeTag:String)(implicit vsCommunicator:VSCommunicator,mat:Materializer) = {
     val uri = s"/API/item/$itemId/shape?tag=$shapeTag"
-    vsCommunicator.requestGet(uri,Map("Accept"->"application/xml"))
+    vsCommunicator.request(OperationType.GET, uri, None, Map("Accept"->"application/xml"))
       .map({
         case Right(stringData)=>UriListDocument.fromXmlString(stringData) match {
           case Success(uriListDocument)=>
@@ -33,15 +34,20 @@ object VSShape {
 
   def forItemWithId(itemId:String, shapeId:String)(implicit vsCommunicator:VSCommunicator,mat:Materializer) = {
     val uri = s"/API/item/$itemId/shape/$shapeId"
-    vsCommunicator.requestGet(uri, Map("Accept" -> "application/xml"))
+    logger.debug(s"VSShape.forItemWithId: URI is $uri")
+    vsCommunicator.request(OperationType.GET, uri,None, headers=Map("Accept" -> "application/xml"))
       .map({
         case Right(stringData) => VSShape.fromXmlString(stringData) match {
           case Success(vsShape) =>
+            logger.debug(s"VSShape.forItemWithID: Converted XML to domain object")
             Right(vsShape)
           case Failure(err) =>
+            logger.warn(s"VSShape.forItemWithID: Could not interpret returned XML: ", err)
             Left(HttpError(err.toString, -1))
         }
-        case Left(err) => Left(err)
+        case Left(err) =>
+          logger.warn(s"VSShape.forItemWithID: Got HTTP error $err")
+          Left(err)
       })
   }
 
