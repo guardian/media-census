@@ -50,8 +50,11 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
       termsAgg("byCollection", "archiveHunterCollection.keyword").subaggs {
         termsAgg("archiveHunterDeleted", "archiveHunterDeleted")
         termsAgg("vsStorage", "vsStorage.keyword")
+        sumAgg("size","size")
       },
-      missingAgg("noCollection", "archiveHunterCollection.keyword")
+      missingAgg("noCollection", "archiveHunterCollection.keyword").subaggs {
+        sumAgg("size","size")
+      }
     )
   } map(response=>{
     logger.debug(s"Got response: ${response.result.aggregations}")
