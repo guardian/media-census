@@ -29,7 +29,7 @@ class ArchivedDataController @Inject() (config:Configuration, esClientManager: E
         InternalServerError(GenericResponse("db_error", err.toString).asJson)
       case Right(results)=>
         logger.info(s"Got stats: ${results.data}")
-        SimplePieResponse.fromAggregations(results, "byCollection", "ok") match {
+        SimplePieResponse.fromAggregations(results, "byCollection", Some("noCollection"), "ok") match {
           case Right(pieResponse)=>
             Ok(pieResponse.asJson)
           case Left(err)=>
@@ -43,7 +43,7 @@ class ArchivedDataController @Inject() (config:Configuration, esClientManager: E
   def statsByVSStorage = Action.async {
     indexer.statsByVSStorage(esClient).map({
       case Left(err)=>
-        logger.error(s"Could not get stats by collection: ${err.toString}")
+        logger.error(s"Could not get stats by VS storage: ${err.toString}")
         InternalServerError(GenericResponse("db_error", err.toString).asJson)
       case Right(results)=>
         logger.info(s"Got stats: ${results.data}")

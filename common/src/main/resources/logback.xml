@@ -19,7 +19,8 @@
     <logger name="streamComponents.AssetSweeperDeletedSource" level="INFO"/>
     <logger name="streamComponents.VSStorageScanSource" level="INFO"/>
     <logger name="models.JobHistoryDAO" level="INFO"/>
-    <logger name="models.VSFileIndexer" level="DEBUG"/>
+    <logger name="models.VSFileIndexer" level="INFO"/>
+    <logger name="models.ArchiveNearlineEntryIndexer" level="DEBUG"/>
     <logger name="DeleteScanner" level="INFO"/>
     <logger name="CronScanner" level="INFO"/>
     <logger name="nlstreamcomponents" level="INFO"/>

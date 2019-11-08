@@ -14,7 +14,7 @@ object SimplePieResponse extends ((String, Iterable[SimplePieResponseEntry])=>Si
     * @param status
     * @return
     */
-  def fromAggregations(aggs:Aggregations, key:String, status:String) = {
+  def fromAggregations(aggs:Aggregations, key:String, emptyBucketAgg:Option[String], status:String) = {
     aggs.data.get(key) match {
       case None=>
         Left(s"No aggregations present for $key")
@@ -25,7 +25,13 @@ object SimplePieResponse extends ((String, Iterable[SimplePieResponseEntry])=>Si
 
           val entries = buckets.map(bucketContent => SimplePieResponseEntry(bucketContent("key").asInstanceOf[String],bucketContent("doc_count").asInstanceOf[Int]))
 
-          Right(new SimplePieResponse(status, entries))
+          emptyBucketAgg match {
+            case None=>Right(new SimplePieResponse(status, entries))
+            case Some(emptyBucketAggName)=>
+              val emptyBucketData = aggs.data(emptyBucketAggName).asInstanceOf[Map[String, Any]]
+              Right(new SimplePieResponse(status, entries :+ SimplePieResponseEntry(emptyBucketAgg.get, emptyBucketData("doc_count").asInstanceOf[Int])))
+          }
+
         } catch {
           case ex: Throwable=>
             Left(ex.toString)
