@@ -3,10 +3,11 @@ package archivehunter
 import java.net.URI
 
 import akka.actor.ActorSystem
-import akka.stream.{Attributes, FlowShape, Inlet, Materializer, Outlet}
+import akka.stream.{Attributes, FanOutShape, FanOutShape2, FlowShape, Inlet, Materializer, Outlet}
 import akka.stream.stage.{AbstractInHandler, AbstractOutHandler, GraphStage, GraphStageLogic}
 import models.{ArchiveNearlineEntry, MediaCensusEntry}
 import org.slf4j.LoggerFactory
+import vidispine.VSFile
 
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,11 +19,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * @param system implicitly provided Actor System
   * @param mat implicitly provided Materializer
   */
-class ArchiveHunterLookup(baseUri:String, key:String)(implicit val system:ActorSystem, implicit val mat:Materializer) extends GraphStage[FlowShape[ArchiveNearlineEntry, ArchiveNearlineEntry ]]{
-  private final val in:Inlet[ArchiveNearlineEntry] = Inlet.create("ArchiveHunterLookup.in")
-  private final val out:Outlet[ArchiveNearlineEntry] = Outlet.create("ArchiveHunterLookup.out")
+class ArchiveHunterLookup(baseUri:String, key:String)(implicit val system:ActorSystem, implicit val mat:Materializer) extends GraphStage[FanOutShape2[VSFile, VSFile, ArchiveNearlineEntry ]]{
+  private final val in:Inlet[VSFile] = Inlet.create("ArchiveHunterLookup.in")
+  private final val vsFileOut:Outlet[VSFile] = Outlet.create("ArchiveHunterLookup.vsFileOut")
+  private final val ahNearlineEntryOut:Outlet[ArchiveNearlineEntry] = Outlet.create("ArchiveHunterLookup.ahNearlineOut")
 
-  override def shape: FlowShape[ArchiveNearlineEntry, ArchiveNearlineEntry] = FlowShape.of(in,out)
+  override def shape: FanOutShape2[VSFile, VSFile, ArchiveNearlineEntry ] = new FanOutShape2[VSFile, VSFile, ArchiveNearlineEntry](in, vsFileOut, ahNearlineEntryOut)
 
   private val requestor = new ArchiveHunterRequestor(baseUri, key)
 
@@ -37,14 +39,18 @@ class ArchiveHunterLookup(baseUri:String, key:String)(implicit val system:ActorS
       override def onPush(): Unit = {
         val elem = grab(in)
 
-        logger.debug(s"ArchiveHunterLookup - checking ${elem.omUri}")
+        logger.debug(s"ArchiveHunterLookup - checking ${elem.uri}")
         val ignoreCb = createAsyncCallback[Unit](_=>pull(in))
-        val completedCb = createAsyncCallback[ArchiveNearlineEntry](entry=>push(out, entry))
+        val completedCb = createAsyncCallback[(VSFile, ArchiveNearlineEntry)](entry=>{
+          push(vsFileOut, entry._1)
+          push(ahNearlineEntryOut, entry._2)
+        })
+
         val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
 
-        Try { new URI(elem.omUri) } match {
+        Try { new URI(elem.uri) } match {
           case Failure(err)=>
-            logger.error(s"Got invalid data from source, could not parse URI ${elem.omUri}: ", err)
+            logger.error(s"Got invalid data from source, could not parse URI ${elem.uri}: ", err)
             pull(in)
           case Success(parsedUri)=>
             val lookup = extractPathPart(parsedUri)
@@ -61,16 +67,21 @@ class ArchiveHunterLookup(baseUri:String, key:String)(implicit val system:ActorS
                 ignoreCb.invoke(())
               case Success(Right(found:ArchiveHunterFound))=>
                 logger.info(s"Item found in archivehunter at ${found.archiveHunterCollection} with ID ${found.archiveHunterId}")
-                val updatedElem = elem.copy(archiveHunterId = Some(found.archiveHunterId), archiveHunterCollection = Some(found.archiveHunterCollection))
-                completedCb.invoke(updatedElem)
+                val archivedIndexEntry = ArchiveNearlineEntry.fromVSFileBlankArchivehunter(elem).copy(archiveHunterId = Some(found.archiveHunterId), archiveHunterCollection = Some(found.archiveHunterCollection))
+                val updatedElem = elem.copy(archiveHunterId = Some(found.archiveHunterId))
+                completedCb.invoke( (updatedElem, archivedIndexEntry) )
             })
         }
 
       }
     })
 
-    setHandler(out, new AbstractOutHandler {
-      override def onPull(): Unit = pull(in)
+    setHandler(vsFileOut, new AbstractOutHandler {
+      override def onPull(): Unit = if(!hasBeenPulled(in)) pull(in)
+    })
+
+    setHandler(ahNearlineEntryOut, new AbstractOutHandler {
+      override def onPull(): Unit = if(!hasBeenPulled(in)) pull(in)
     })
   }
 }
