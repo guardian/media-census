@@ -3,8 +3,7 @@ import axios from 'axios';
 import {Pie,Bar,HorizontalBar} from "react-chartjs-2";
 import BytesFormatterImplementation from "./common/BytesFormatterImplementation.jsx";
 import moment from 'moment';
-import RefreshButton from "./common/RefreshButton.jsx";
-import {Link} from "react-router-dom";
+import NearlineControlsBanner from "./common/NearlineControlsBanner.jsx";
 import VSFileSearchView from "./VSFileSearchView.jsx";
 
 class NearlineStorageMembership extends React.Component {
@@ -29,7 +28,9 @@ class NearlineStorageMembership extends React.Component {
             chartMode: NearlineStorageMembership.CHART_MODE_COUNT,
             showFilesList: false,
             selectedDateSection: null
-        }
+        };
+
+        this.refresh = this.refresh.bind(this);
     }
 
     static makeColourValues(count, offset){
@@ -99,15 +100,11 @@ class NearlineStorageMembership extends React.Component {
 
     render(){
         return <div>
-            <span className="controls-banner">
-                <RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()}/>
-                <Link className="controls-banner-spacing" to="/nearlines">Nearline Stats</Link> |
-                <Link className="controls-banner-spacing" to="/nearlines/membership">Nearline files without item membership</Link> |
-                <select className="controls-banner-spacing" value={this.state.chartMode} onChange={evt=>this.setState({chartMode: parseInt(evt.target.value)},()=>this.refreshChartData())}>
-                    <option key={NearlineStorageMembership.CHART_MODE_COUNT} value={NearlineStorageMembership.CHART_MODE_COUNT}>View by file count</option>
-                    <option key={NearlineStorageMembership.CHART_MODE_SIZE} value={NearlineStorageMembership.CHART_MODE_SIZE}>View by file size</option>
-                </select>
-            </span>
+            <NearlineControlsBanner dataMode={this.state.chartMode}
+                                    dataModeChanged={evt=>this.setState({chartMode: parseInt(evt.target.value)},()=>this.refreshChartData())}
+                                    isRunning={this.state.loading}
+                                    refreshClicked={this.refresh}
+                                    />
 
             <div style={{width: "100vw",  overflow:"hidden"}}>
                 <HorizontalBar data={{
