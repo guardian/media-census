@@ -222,3 +222,10 @@ ul.no-bullets {
 .banner-menu-icon {
     margin-right: 0.2em;
 }
+
+.bullet-point-icon {
+    margin-right: 0.4em;
+    width: 8px;
+    overflow: hidden;
+    align-content: center;
+}

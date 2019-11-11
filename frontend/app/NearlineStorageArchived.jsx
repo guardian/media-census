@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import {Pie,Bar,HorizontalBar} from "react-chartjs-2";
 import NearlineControlsBanner from "./common/NearlineControlsBanner.jsx";
 import BytesFormatterImplementation from "./common/BytesFormatterImplementation.jsx";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import TimestampDiffComponent from "./common/TimestampDiffComponent.jsx";
+import moment from 'moment';
 
 //see https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
 function numberWithCommas(x) {
@@ -22,6 +25,9 @@ class NearlineStorageArchived extends React.Component {
             in_archive_count: 0,
             total_size: 0,
             total_count: 0,
+            scannerCurrentJobStart: null,
+            scannerLastRunFinish: null,
+            scannerLastRunError: null,
             dataMode: NearlineControlsBanner.CHART_MODE_COUNT
         };
 
@@ -45,16 +51,20 @@ class NearlineStorageArchived extends React.Component {
         await this.setStatePromise({loading: true});
 
         try {
-            const response = await fetch("/api/nearline/archivedStats");
-            const returnedJson = await response.json();
+            const responses = await Promise.all([fetch("/api/nearline/archivedStats"), fetch("/api/jobs/ArchiveHunterScan/lastSuccess?includeRunning=true")]);
+            const returnedJsons = await Promise.all(responses.map(rsp=>rsp.json()));
+
             return this.setStatePromise({loading: false,
                 lastError: null,
-                not_archived_totalsize: returnedJson.missing_archive_id_totalsize,
-                in_archive_totalsize: returnedJson.with_archive_id_totalsize,
-                not_archived_count: returnedJson.missing_archive_id_count,
-                in_archive_count: returnedJson.with_archive_id_count,
-                total_count: returnedJson.total_count,
-                total_size: returnedJson.total_size
+                not_archived_totalsize: returnedJsons[0].missing_archive_id_totalsize,
+                in_archive_totalsize: returnedJsons[0].with_archive_id_totalsize,
+                not_archived_count: returnedJsons[0].missing_archive_id_count,
+                in_archive_count: returnedJsons[0].with_archive_id_count,
+                total_count: returnedJsons[0].total_count,
+                total_size: returnedJsons[0].total_size,
+                scannerCurrentJobStart: returnedJsons[1].entry[1] ? returnedJsons[1].entry[1].scanStart : null,
+                scannerLastRunFinish: returnedJsons[1].entry[0] ? returnedJsons[1].entry[0].scanFinish : null,
+                scannerLastRunError: returnedJsons[1].entry[0] ? returnedJsons[1].entry[0].lastError : null
             })
         } catch (except){
             console.error(except);
@@ -110,10 +120,30 @@ class NearlineStorageArchived extends React.Component {
     renderTotalsMetric(){
         switch(this.state.dataMode){
             case NearlineControlsBanner.CHART_MODE_COUNT:
-                return <span>There are currently <b>{numberWithCommas(this.state.total_count)}</b> items on the nearlines</span>;
+                return <span><FontAwesomeIcon icon="info-circle" color="navy" className="bullet-point-icon"/>There are currently <b>{numberWithCommas(this.state.total_count)}</b> items on the nearlines</span>;
             case NearlineControlsBanner.CHART_MODE_SIZE:
                 const bytesValueAndSuffix = BytesFormatterImplementation.getValueAndSuffix(this.state.total_size);
-                return <span>Total size of files on nearlines: <b>{bytesValueAndSuffix[0]} {bytesValueAndSuffix[1]}</b></span>
+                return <span><FontAwesomeIcon icon="info-circle" color="navy" className="bullet-point-icon"/>Total size of files on nearlines: <b>{bytesValueAndSuffix[0]} {bytesValueAndSuffix[1]}</b></span>
+        }
+    }
+
+    renderLastSuccessMessage(){
+        if(this.state.scannerLastRunFinish){
+            if(this.state.scannerLastRunError){
+                return <span><FontAwesomeIcon icon="exclamation-triangle" className="bullet-point-icon" style={{color: "red"}}/>The last scanner run failed at {this.state.scannerLastRunFinish}, results may be incomplete</span>
+            } else {
+                return <span><FontAwesomeIcon icon="check" className="bullet-point-icon" style={{color: "green"}}/>The scanner last completed successfully <TimestampDiffComponent startTime={this.state.scannerLastRunFinish}/> ago</span>
+            }
+        } else {
+            return <span><FontAwesomeIcon icon="exclamation-triangle" className="bullet-point-icon" style={{color: "orange"}}/>The scanner has not yet completed successfully</span>
+        }
+    }
+
+    renderCurrentRunMessage(){
+        if(this.state.scannerCurrentJobStart && moment(this.state.scannerCurrentJobStart).isAfter(moment(this.state.scannerLastRunFinish))){
+            return <span><FontAwesomeIcon icon="exclamation-triangle" className="bullet-point-icon" style={{color: "orange"}}/>The scanner has been running for <TimestampDiffComponent startTime={this.state.scannerCurrentJobStart}/>, the given results may change</span>
+        } else {
+            return <span><FontAwesomeIcon icon="check" className="bullet-point-icon" style={{color: "green"}}/>The scanner is not currently running</span>
         }
     }
 
@@ -125,8 +155,12 @@ class NearlineStorageArchived extends React.Component {
                                     dataModeChanged={this.changeDataMode}
                                     refreshClicked={this.loadData}
                                     dataMode={this.state.dataMode}/>
-            <div style={{display: "block", float:"left", marginTop:"4em", marginBottom:"auto",height:"1em"}}>
-                <span className="large-metric">{this.renderTotalsMetric()}</span>
+            <div style={{display: "block", float:"left", marginBottom:"auto"}}>
+                <ul className="no-bullets" style={{marginLeft:"1em"}}>
+                    <li style={{listStyle: "none"}}>{this.renderLastSuccessMessage()}</li>
+                    <li style={{listStyle: "none"}}>{this.renderCurrentRunMessage()}</li>
+                    <li style={{listStyle: "none"}}>{this.renderTotalsMetric()}</li>
+                </ul>
             </div>
             <div style={{width: "600px", display:"inline-block",overflow:"hidden"}}>
                 <Pie

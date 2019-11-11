@@ -79,17 +79,35 @@ class JobsController @Inject() (config:Configuration, jobsModelDAOinj:Injectable
     })
   }
 
-  def lastSuccessfulJob(jobType:String) = Action.async {
+  def lastSuccessfulJob(jobType:String, includeRunning: Boolean) = Action.async {
     Try { JobType.withName(jobType) } match {
       case Success(jobTypeValue) =>
-        jobsModelDAO.queryJobs(Some(jobTypeValue),Some(JobHistoryDAO.JobState.Completed), Some(1)).map({
-          case Left(err) =>
-            logger.error(s"Could not find most recent job: $err")
-            InternalServerError(GenericResponse("db_error", err.toString).asJson)
-          case Right(resultSeq) =>
-            //works better in the frontend to present as a 200 rather than a 404
-            Ok(ObjectGetResponse("ok", "jobHistory", resultSeq.headOption).asJson)
-        })
+        if(!includeRunning) {
+          jobsModelDAO.queryJobs(Some(jobTypeValue), Some(JobHistoryDAO.JobState.Completed), Some(1)).map({
+            case Left(err) =>
+              logger.error(s"Could not find most recent job: $err")
+              InternalServerError(GenericResponse("db_error", err.toString).asJson)
+            case Right(resultSeq) =>
+              //works better in the frontend to present as a 200 rather than a 404
+              Ok(ObjectGetResponse("ok", "jobHistory", resultSeq.headOption).asJson)
+          })
+        } else {
+          val queryFut = Future.sequence(Seq(
+            jobsModelDAO.queryJobs(Some(jobTypeValue), Some(JobHistoryDAO.JobState.Completed), Some(1)),
+            jobsModelDAO.queryJobs(Some(jobTypeValue), Some(JobHistoryDAO.JobState.Running), Some(1))
+          ))
+
+          queryFut.map(results => {
+            val failures = results.collect({ case Left(err) => err })
+            if (failures.nonEmpty) {
+              logger.error(s"Could not get most recent job: $failures")
+              InternalServerError(GenericResponse("db_error", failures.mkString(",")).asJson)
+            } else {
+              val success = results.collect({ case Right(result) => result.headOption })
+              Ok(ObjectGetResponse("ok", "jobHistory", success).asJson)
+            }
+          })
+        }
       case Failure(exception) =>
         logger.error(s"Could not convert $jobType into a JobType enum value", exception)
         Future(BadRequest(GenericResponse("bad_request", s"$jobType is not a valid job type").asJson))

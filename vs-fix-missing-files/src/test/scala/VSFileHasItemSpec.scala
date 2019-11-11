@@ -17,7 +17,7 @@ class VSFileHasItemSpec extends Specification with Mockito {
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       val testFile = VSFile("VX-1234","/path/to/file","proto://some-uri",Some(VSFileState.CLOSED),1234L,
-        None,ZonedDateTime.now(),0,"VX-2",None,Some(VSFileItemMembership("VX-345",Seq())))
+        None,ZonedDateTime.now(),0,"VX-2",None,Some(VSFileItemMembership("VX-345",Seq())),None)
 
       val sinkFactory = Sink.fold[Seq[String],String](Seq())((acc, entry)=>acc++Seq(entry))
 
@@ -44,7 +44,7 @@ class VSFileHasItemSpec extends Specification with Mockito {
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       val testFile = VSFile("VX-1234","/path/to/file","proto://some-uri",Some(VSFileState.CLOSED),1234L,
-        None,ZonedDateTime.now(),0,"VX-2",None,None)
+        None,ZonedDateTime.now(),0,"VX-2",None,None,None)
 
       val sinkFactory = Sink.fold[Seq[String],String](Seq())((acc, entry)=>acc++Seq(entry))
 
