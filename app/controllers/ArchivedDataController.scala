@@ -29,14 +29,30 @@ class ArchivedDataController @Inject() (config:Configuration, esClientManager: E
         InternalServerError(GenericResponse("db_error", err.toString).asJson)
       case Right(results)=>
         logger.info(s"Got stats: ${results.data}")
-        SimplePieResponse.fromAggregations(results, "byCollection", Some("noCollection"), "ok") match {
+        SimplePieResponse.fromAggregations(results, "byCollection", Some("noCollection"), None, "ok") match {
           case Right(pieResponse)=>
             Ok(pieResponse.asJson)
           case Left(err)=>
             logger.error(s"Could not compile data response: $err")
             InternalServerError(GenericResponse("error", err).asJson)
         }
+    })
+  }
 
+  def sizeStatsByCollection = Action.async {
+    indexer.statsByCollection(esClient).map({
+      case Left(err)=>
+        logger.error(s"Could not get stats by collection: ${err.toString}")
+        InternalServerError(GenericResponse("db_error", err.toString).asJson)
+      case Right(results)=>
+        logger.info(s"Got stats: ${results.data}")
+        SimplePieResponse.fromAggregations(results, "byCollection", Some("noCollection"), Some("size"), "ok") match {
+          case Right(pieResponse)=>
+            Ok(pieResponse.asJson)
+          case Left(err)=>
+            logger.error(s"Could not compile data response: $err")
+            InternalServerError(GenericResponse("error", err).asJson)
+        }
     })
   }
 
