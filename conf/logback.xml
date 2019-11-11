@@ -29,7 +29,7 @@
 
   <logger name="responses.HistogramDataResponse$" level="WARN"/>
 
-  <logger name="models.VSFileIndexer" level="INFO"/>
+  <logger name="models.VSFileIndexer" level="DEBUG"/>
   <logger name="responses.HistogramDataResponse$" level="DEBUG"/>
   <logger name="controllers.StatsController" level="WARN"/>
 

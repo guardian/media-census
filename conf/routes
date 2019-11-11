@@ -13,6 +13,7 @@ GET     /api/stats/unattached       @controllers.StatsController.unattachedStats
 GET     /api/nearline/currentState  @controllers.NearlineDataController.currentStateData
 GET     /api/nearline/membership    @controllers.NearlineDataController.membershipStatsData
 GET     /api/nearline/files         @controllers.NearlineDataController.fileSearch(start:Option[String],duration:Option[Int],limit:Option[Int],orphanOnly:Boolean?=false)
+GET     /api/nearline/archivedStats @controllers.NearlineDataController.archivedStatsData
 
 GET     /api/jobs/:jobType/forTimespan  @controllers.JobsController.jobsForTimespan(jobType, startAt:Option[String]?=None,endAt:Option[String]?=None,showRunning:Boolean?=false)
 GET     /api/jobs/running               @controllers.JobsController.runningJobs(limit:Option[Int])

@@ -166,4 +166,37 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
       }
     })
   }
+
+  /**
+    * obtains statistics for how many items have the "ArchiveHunterId" field set, i.e. are also present in deep archive
+    * returns either an error string or Map containing "total_count" and "missing_archive_id_count" fields boths as Long
+    * @param esClient
+    * @return
+    */
+  def isArchivedStats(esClient:ElasticClient) = esClient.execute {
+    search(indexName) aggs (
+      missingAgg("missingArchiveHunterId", "archiveHunterId.keyword") subaggs {
+        sumAgg("size","size")
+      },
+      sumAgg("total_size","size")
+    )
+  } map(result=>{
+    if(result.isError){
+      Left(result.error.toString)
+    } else {
+      val returnedData = result.result.aggregations.data("missingArchiveHunterId").asInstanceOf[Map[String, Any]]
+      logger.debug(s"isArchivedStats: Got $returnedData")
+      val results = Map(
+        "total_count"->result.result.totalHits,
+        "missing_archive_id_count"->returnedData("doc_count").asInstanceOf[Int].toLong,
+        "missing_archive_id_totalsize"->returnedData("size").asInstanceOf[Map[String,Any]]("value").asInstanceOf[Double].toLong,
+        "total_size"->result.result.aggregations.data("total_size").asInstanceOf[Map[String,Any]]("value").asInstanceOf[Double].toLong
+      )
+      val finalResults = results ++ Map(
+        "with_archive_id_count"-> (results("total_count") - results("missing_archive_id_count")),
+        "with_archive_id_totalsize"-> (results("total_size") - results("missing_archive_id_totalsize"))
+      )
+      Right(finalResults)
+    }
+  })
 }

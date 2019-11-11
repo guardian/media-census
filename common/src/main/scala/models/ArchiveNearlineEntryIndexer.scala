@@ -52,7 +52,7 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
         termsAgg("vsStorage", "vsStorage.keyword")
         sumAgg("size","size")
       },
-      missingAgg("noCollection", "archiveHunterCollection.keyword").subaggs {
+      missingAgg("noCollection", "archiveHunterCollection").subaggs {
         sumAgg("size","size")
       }
     )
@@ -73,6 +73,21 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
       }
     }
   } map(response=>{
+    if(response.isError){
+      Left(response.error)
+    } else {
+      Right(response.result.aggregations)
+    }
+  })
+
+  def statsBinary(esClient:ElasticClient) = esClient.execute {
+    search(indexName) aggs {
+      missingAgg("noCollection", "archiveHuntercollection").subaggs {
+        sumAgg("size", "size")
+      }
+    }
+  } map(response=>{
+    logger.debug(s"Got response: ${response.result.aggregations}")
     if(response.isError){
       Left(response.error)
     } else {
