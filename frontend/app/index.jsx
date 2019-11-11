@@ -3,7 +3,6 @@ import {render} from 'react-dom';
 import {BrowserRouter, Link, Route, Switch, Redirect} from 'react-router-dom';
 import Raven from 'raven-js';
 import StatsHistoryGraph from "./StatsHistoryGraph.jsx";
-import RunsInProgress from "./RunsInProgress.jsx";
 import CurrentStateStats from "./CurrentStateStats.jsx";
 
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -15,6 +14,7 @@ import BannerMenu from "./BannerMenu.jsx";
 import RunsAdmin from "./RunsAdmin.jsx";
 import NearlineStorages from "./NearlineStorages.jsx";
 import NearlineStorageMembership from "./NearlineStorageMembership.jsx";
+import NearlineStorageArchived from "./NearlineStorageArchived.jsx";
 
 library.add(faStroopwafel, faCheckCircle, faCheck, faTimes, faTimesCircle, faRoad,faSearch,faThList,faWrench, faLightbulb, faChevronCircleDown, faChevronCircleRight, faTrashAlt, faFolderPlus, faFolderMinus, faFolder);
 library.add(faFilm, faVolumeUp, faImage, faFile, faClock, faRunning, faExclamationTriangle, faHdd, faBalanceScale, faSyncAlt, faBookReader, faBug, faCompressArrowsAlt, faIndustry, faRedoAlt, faHome, faListOl,);
@@ -29,6 +29,7 @@ class App extends React.Component {
                 <Route path="/current" component={CurrentStateStats}/>
                 <Route path="/history" component={StatsHistoryGraph}/>
                 <Route path="/runs" component={RunsAdmin}/>
+                <Route path="/nearlines/archived" component={NearlineStorageArchived}/>
                 <Route path="/nearlines/membership" component={NearlineStorageMembership}/>
                 <Route path="/nearlines" component={NearlineStorages}/>
                 <Route path="/" component={IndexRedirect}/>

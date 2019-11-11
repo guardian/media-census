@@ -7,10 +7,6 @@ import NearlineControlsBanner from "./common/NearlineControlsBanner.jsx";
 import VSFileSearchView from "./VSFileSearchView.jsx";
 
 class NearlineStorageMembership extends React.Component {
-
-    static CHART_MODE_COUNT=1;
-    static CHART_MODE_SIZE=2;
-
     constructor(props){
         super(props);
 
@@ -25,7 +21,7 @@ class NearlineStorageMembership extends React.Component {
             pieData: null,
             barData: null,
             summaryData: null,
-            chartMode: NearlineStorageMembership.CHART_MODE_COUNT,
+            chartMode: NearlineControlsBanner.CHART_MODE_COUNT,
             showFilesList: false,
             selectedDateSection: null
         };
@@ -48,7 +44,7 @@ class NearlineStorageMembership extends React.Component {
      * updates pieData and barData based on the current chart mode and the data downloaded from the server
      */
     refreshChartData(){
-        const fileStateDatapoints = this.state.states.map(entry=>this.state.chartMode===NearlineStorageMembership.CHART_MODE_COUNT ? entry.count : entry.totalSize);
+        const fileStateDatapoints = this.state.states.map(entry=>this.state.chartMode===NearlineControlsBanner.CHART_MODE_COUNT ? entry.count : entry.totalSize);
         const fileStateLabels = this.state.states.map(entry=>entry.state);
 
         const timeBreakdownDatapoints = this.state.noMembershipTimeBreakdown.map(entry=>entry.doc_count);
@@ -57,8 +53,8 @@ class NearlineStorageMembership extends React.Component {
         const allStateSizes = this.state.states.reduce((acc, entry)=>acc+entry.totalSize, 0);
 
         const summaryDataDatapoints = [
-            this.state.chartMode===NearlineStorageMembership.CHART_MODE_COUNT ? this.state.totalCount-this.state.noMembership : this.state.totalSize - allStateSizes,
-            this.state.chartMode===NearlineStorageMembership.CHART_MODE_COUNT ? this.state.noMembership : allStateSizes
+            this.state.chartMode===NearlineControlsBanner.CHART_MODE_COUNT ? this.state.totalCount-this.state.noMembership : this.state.totalSize - allStateSizes,
+            this.state.chartMode===NearlineControlsBanner.CHART_MODE_COUNT ? this.state.noMembership : allStateSizes
         ];
 
         this.setState({
@@ -132,7 +128,7 @@ class NearlineStorageMembership extends React.Component {
                                             },
                                             ticks: {
                                                 callback: (value,index,series)=>{
-                                                    if(this.state.chartMode===NearlineStorageMembership.CHART_MODE_SIZE) {
+                                                    if(this.state.chartMode===NearlineControlsBanner.CHART_MODE_SIZE) {
                                                         const result = BytesFormatterImplementation.getValueAndSuffix(value);
                                                         return result[0] + result[1];
                                                     } else {
@@ -153,7 +149,7 @@ class NearlineStorageMembership extends React.Component {
                                                 console.log(data);
                                                 console.log(xLabel, yLabel);
 
-                                                if(this.state.chartMode===NearlineStorageMembership.CHART_MODE_SIZE) {
+                                                if(this.state.chartMode===NearlineControlsBanner.CHART_MODE_SIZE) {
                                                     try {
                                                         const result = BytesFormatterImplementation.getValueAndSuffix(yLabel);
                                                         yLabel = result[0] + result[1];
@@ -230,7 +226,7 @@ class NearlineStorageMembership extends React.Component {
                                      console.log(data);
                                      console.log(xLabel, yLabel);
 
-                                     if(this.state.chartMode===NearlineStorageMembership.CHART_MODE_SIZE) {
+                                     if(this.state.chartMode===NearlineControlsBanner.CHART_MODE_SIZE) {
                                          try {
                                              const result = BytesFormatterImplementation.getValueAndSuffix(yLabel);
                                              yLabel = result[0] + result[1];

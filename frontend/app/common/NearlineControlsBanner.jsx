@@ -15,15 +15,12 @@ class NearlineControlsBanner extends React.Component {
         dataMode: PropTypes.number.isRequired
     };
 
-    constructor(props){
-        super(props);
-    }
-
     render() {
         return <span className="controls-banner">
                 <RefreshButton isRunning={this.props.isRunning} clickedCb={this.props.refreshClicked}/>
                 <Link className="controls-banner-spacing" to="/nearlines">Nearline Stats</Link> |
                 <Link className="controls-banner-spacing" to="/nearlines/membership">Nearline files without item membership</Link> |
+                <Link className="controls-banner-spacing" to="/nearlines/archived">Nearline-Archive Crossover</Link> |
                 <select className="controls-banner-spacing" value={this.props.dataMode} onChange={this.props.dataModeChanged}>
                     <option key={NearlineControlsBanner.CHART_MODE_COUNT} value={NearlineControlsBanner.CHART_MODE_COUNT}>View by file count</option>
                     <option key={NearlineControlsBanner.CHART_MODE_SIZE} value={NearlineControlsBanner.CHART_MODE_SIZE}>View by file size</option>
