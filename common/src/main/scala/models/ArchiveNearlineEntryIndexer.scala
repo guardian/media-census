@@ -45,6 +45,12 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
     esClient.publisher(search(indexName) query boolQuery().withMust(q) scroll FiniteDuration(5, TimeUnit.MINUTES))
   )
 
+  /**
+    * returns a breakdown of stats by ArchiveHunter collection, according to whether they have the deleted flag,
+    * which storage they were from and total size.
+    * @param esClient
+    * @return
+    */
   def statsByCollection(esClient:ElasticClient) = esClient.execute {
     search(indexName) aggs (
       termsAgg("byCollection", "archiveHunterCollection.keyword").subaggs {
@@ -65,6 +71,12 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
     }
   })
 
+  /**
+    * returns a breakdown of stats by Vidispine storage, according to which ArchiveHunter collection is set and whether
+    * they have the deleted flag set
+    * @param esClient
+    * @return
+    */
   def statsByVSStorage(esClient:ElasticClient) = esClient.execute {
     search(indexName) aggs {
       termsAgg("vsStorage", "vsStorage.keyword").subaggs {
@@ -80,6 +92,11 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
     }
   })
 
+  /**
+    * simple stats for how many items have no collection set and the total size associated with them
+    * @param esClient
+    * @return
+    */
   def statsBinary(esClient:ElasticClient) = esClient.execute {
     search(indexName) aggs {
       missingAgg("noCollection", "archiveHuntercollection").subaggs {
