@@ -1,9 +1,8 @@
 import React from 'react';
 import axios from 'axios';
 import {Bar} from 'react-chartjs-2';
-import RefreshButton from "./common/RefreshButton.jsx";
 import BytesFormatterImplementation from "./common/BytesFormatterImplementation.jsx";
-import {Link} from "react-router-dom";
+import NearlineControlsBanner from "./common/NearlineControlsBanner.jsx";
 
 //see https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
 function numberWithCommas(x) {
@@ -94,7 +93,6 @@ class NearlineStorages extends React.Component {
             case NearlineStorages.COUNT_MODE:
                 return [numberWithCommas(rawValue), undefined];
             case NearlineStorages.SIZE_MODE:
-                //console.log("labelForMode: sizeMode raw value is ", rawValue);
                 return BytesFormatterImplementation.getValueAndSuffix(rawValue);
             default:
                 console.error("Didn't recognise mode ", this.state.mode);
@@ -104,18 +102,12 @@ class NearlineStorages extends React.Component {
 
     render(){
         return <div className="container">
-            <span className="controls-banner">
-                <RefreshButton isRunning={this.state.loading} clickedCb={()=>this.refresh()}/>
-                <select value={this.state.mode} onChange={evt=>{
-                    //console.log("New value", parseInt(evt.target.value));
-                    this.setState({mode: parseInt(evt.target.value)})
-                }}>
-                    <option value={NearlineStorages.SIZE_MODE}>View total data size</option>
-                    <option value={NearlineStorages.COUNT_MODE}>View file count</option>
-                </select>
-                <Link className="controls-banner-spacing" to="/nearlines">Nearline Stats</Link> |
-                <Link className="controls-banner-spacing" to="/nearlines/membership">Nearline files without item membership</Link>
-            </span>
+            <NearlineControlsBanner dataMode={this.state.chartMode}
+                                    dataModeChanged={evt=>this.setState({chartMode: parseInt(evt.target.value)})}
+                                    isRunning={this.state.loading}
+                                    refreshClicked={this.refresh}
+            />
+
             <Bar
                 data={{
                     labels: this.state.storageData.map(entry=>entry.storage),

@@ -39,7 +39,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
   lazy val parallelism = sys.env.getOrElse("PARALELLISM","3").toInt
 
-  lazy implicit val indexer = new VSFileIndexer(indexName, batchSize = 200)
+  lazy implicit val nearlineEntriesIndexer = new VSFileIndexer(indexName, batchSize = 200)
   lazy implicit val archiveIndexer = new ArchiveNearlineEntryIndexer(archiveIndexName, batchSize = 200)
 
   /**
@@ -54,7 +54,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
     val updateFuture = runInfo match {
       case Some(jobHistory)=>
         val updatedJobHistory = jobHistory.copy(scanFinish = Some(ZonedDateTime.now()), lastError = errorMessage)
-        jobHistoryDAO.put(updatedJobHistory).map({
+        jobHistoryDAO.updateStatusOnly(updatedJobHistory).map({
           case Left(err)=>logger.error(s"Could not update job history entry: ${err.toString}")
           case Right(newVersion)=>logger.info(s"Update run $updatedJobHistory with new version $newVersion")
         })
@@ -76,27 +76,32 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.http.ElasticDsl._
 
-      val src = builder.add(indexer.getSource(esClient,Seq(prefixQuery("uri","omms"))))
+      val src = builder.add(nearlineEntriesIndexer.getSource(esClient,Seq(prefixQuery("uri","omms")), limit=None))
       val lookupFactory = new ArchiveHunterLookup(ahBaseUri, ahSecret)
 
       val writeSink = builder.add(archiveIndexer.getSink(esClient))
+      val nearlineEntryUpdateSink = builder.add(nearlineEntriesIndexer.getSink(esClient))
 
-      val distributor = builder.add(Balance[ArchiveNearlineEntry](parallelism))
-      val distMerge = builder.add(Merge[ArchiveNearlineEntry](parallelism))
+      val distributor = builder.add(Balance[VSFile](parallelism))
+      val archiveEntryMerge = builder.add(Merge[ArchiveNearlineEntry](parallelism))
+      val vsNearlineMerge = builder.add(Merge[VSFile](parallelism))
 
       val splitter = builder.add(Broadcast[ArchiveNearlineEntry](2))
 
-      src.out.map(_.to[VSFile]).map(ArchiveNearlineEntry.fromVSFileBlankArchivehunter) ~> distributor
+      src.out.map(_.to[VSFile]) ~> distributor
 
       for(i <- 0 until parallelism) {
         val lookup = builder.add(lookupFactory)
-        distributor.out(i) ~> lookup ~> distMerge.in(i)
+        distributor.out(i) ~> lookup.in
+        lookup.out0 ~> vsNearlineMerge
+        lookup.out1 ~> archiveEntryMerge
       }
 
-      distMerge ~> splitter
+      archiveEntryMerge ~> splitter
       splitter.out(0) ~> writeSink
       splitter.out(1) ~> counterSink
 
+      vsNearlineMerge ~> nearlineEntryUpdateSink
       ClosedShape
     }
   }

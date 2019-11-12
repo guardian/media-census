@@ -30,7 +30,7 @@
   <logger name="responses.HistogramDataResponse$" level="WARN"/>
 
   <logger name="models.VSFileIndexer" level="INFO"/>
-  <logger name="responses.HistogramDataResponse$" level="DEBUG"/>
+  <logger name="responses.HistogramDataResponse$" level="INFO"/>
   <logger name="controllers.StatsController" level="WARN"/>
 
   <logger name="archivehunter.ArchiveHunterRequestor" level="DEBUG"/>

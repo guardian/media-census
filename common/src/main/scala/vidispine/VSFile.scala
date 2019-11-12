@@ -10,7 +10,9 @@ import scala.util.{Failure, Success, Try}
 import scala.xml.{NodeSeq, XML}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class VSFile(vsid:String, path:String, uri:String, state:Option[VSFileState.Value], size:Long, hash:Option[String], timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]], membership: Option[VSFileItemMembership])
+case class VSFile(vsid:String, path:String, uri:String, state:Option[VSFileState.Value], size:Long, hash:Option[String],
+                  timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]],
+                  membership: Option[VSFileItemMembership], archiveHunterId: Option[String])
 
 object VSFile {
   val logger = LoggerFactory.getLogger(getClass)
@@ -49,8 +51,10 @@ object VSFile {
         (xmlNode \ "item").headOption.map(node => VSFileItemMembership.fromXml(node) match {
           case Success(membership) => membership
           case Failure(err) => throw err
-        })
-      ))
+        }),
+        None
+      ),
+      )
     }
   } match {
     case s @Success(_)=>s

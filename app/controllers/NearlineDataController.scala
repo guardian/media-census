@@ -62,4 +62,14 @@ class NearlineDataController @Inject() (config:Configuration, cc:ControllerCompo
         Ok(ObjectListResponse("ok","VSFile", result, totalCount.toInt).asJson)
     })
   }
+
+  def archivedStatsData = Action.async {
+    indexer.isArchivedStats(esClient).map({
+      case Left(err)=>
+        logger.error(err)
+        InternalServerError(GenericResponse("error", err.toString).asJson)
+      case Right(stats)=>
+        Ok(stats.asJson)
+    })
+  }
 }

@@ -9,7 +9,7 @@ import akka.stream.Materializer
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
-class TestArchiveHunterRequestor extends Specification with Mockito {
+class ArchiveHunterRequestorSpec extends Specification with Mockito {
   "ArchiveHunterRequestor.makeAuth" should {
     "sign a pre-existing Request with current date and signature" in {
       val rq = new ArchiveHunterRequestor("https://archivehunter.company.org","secretkey")(mock[ActorSystem],mock[Materializer]) {

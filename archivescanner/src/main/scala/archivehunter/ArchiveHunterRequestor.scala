@@ -27,7 +27,7 @@ class ArchiveHunterRequestor(baseUri:String, key:String)(implicit val system:Act
 
   private val secretKeySpec = new SecretKeySpec(key.getBytes, "HmacSHA256")
 
-  def currentTimeString = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)
+  def currentTimeString = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("E, dd MMM y HH:mm:ss z"))
 
   def makeAuth(req:HttpRequest) = {
     val httpDate = currentTimeString
