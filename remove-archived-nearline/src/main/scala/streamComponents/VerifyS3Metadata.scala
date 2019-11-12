@@ -5,6 +5,9 @@ import akka.stream.{Attributes, Inlet, Outlet, UniformFanOutShape}
 import models.ArchivedItemRecord
 import org.slf4j.LoggerFactory
 
+/**
+  * checks if the ObjectMetadata in the provided record matches with the VSFile metadata. If so, then mark no conflict and remove
+  */
 class VerifyS3Metadata extends GraphStage[UniformFanOutShape[ArchivedItemRecord,ArchivedItemRecord]] {
   private final val in:Inlet[ArchivedItemRecord] = Inlet.create("VerifyS3Metadata.in")
   private final val yes:Outlet[ArchivedItemRecord] = Outlet.create("VerifyS3Metadata.yes")
@@ -28,10 +31,12 @@ class VerifyS3Metadata extends GraphStage[UniformFanOutShape[ArchivedItemRecord,
 
             if(! sizeMatch || ! checksumMatch) {
               logger.warn(s"Could not verify the file ${elem.nearlineItem.uri} at s3://${elem.s3Bucket}/${elem.s3Path}: size match $sizeMatch checksum match $checksumMatch")
-              push(no, elem)
+              val updated = elem.copy(nearlineItem=elem.nearlineItem.copy(archiveConflict=Some(true)))
+              push(no, updated)
             } else {
               logger.info(s"Verified ${elem.nearlineItem.uri} at s3://${elem.s3Bucket}/${elem.s3Path}")
-              push(yes, elem)
+              val updated = elem.copy(nearlineItem = elem.nearlineItem.copy(archiveConflict = Some(false)))
+              push(yes, updated)
             }
         }
 

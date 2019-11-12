@@ -16,7 +16,8 @@ class DecodeArchiveHunterIdSpec extends Specification {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       val fakeRecord = VSFile("VX-1234","/some/path","file://some/path",None,1234L,None,
         ZonedDateTime.now,1,"VX-23",None,None,
-        Some("Z25tLW11bHRpbWVkaWEtZGVlcGFyY2hpdmU6TXVsdGltZWRpYV9OZXdzL1RvcF90ZW5fdmlyYWxfYW5pbWFsX3ZpZGVvc19vZl8yMDE1L2phbWVzX2J1bGxvY2tfVG9wX3Rlbl92aXJhbF9hbmltYWxfdmlkZW9zX29mXzIwMTUvQWRvYmUgUHJlbWllcmUgUHJvIEF1dG8tU2F2ZS9LUC00OTYwLTUucHJwcm9q"))
+        Some("Z25tLW11bHRpbWVkaWEtZGVlcGFyY2hpdmU6TXVsdGltZWRpYV9OZXdzL1RvcF90ZW5fdmlyYWxfYW5pbWFsX3ZpZGVvc19vZl8yMDE1L2phbWVzX2J1bGxvY2tfVG9wX3Rlbl92aXJhbF9hbmltYWxfdmlkZW9zX29mXzIwMTUvQWRvYmUgUHJlbWllcmUgUHJvIEF1dG8tU2F2ZS9LUC00OTYwLTUucHJwcm9q"),
+        None)
 
       val sinkFactory = Sink.fold[Seq[(VSFile,String,String)],(VSFile,String,String)](Seq())((acc,elem)=>acc:+elem)
 

@@ -53,6 +53,16 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
   def getSingle(fieldName:String):Option[String] = {
     get(fieldName).flatMap(_.headOption)
   }
+
+  def toXmlDoc(rootGroup:Option[String]):Node = {
+    <MetadataDocument xmlns="http://xml.vidispine.com/schema/vidispine">
+      lookedUpMetadata.map(mdTuple=>{
+      <field name="${mdTuple._1}">
+        mdTuple._2.toSimpleXml()
+      </field>
+      }
+    </MetadataDocument>
+  }
 }
 
 object VSLazyItem extends ((String,Map[String,VSMetadataEntry],Option[Map[String,VSShape]])=>VSLazyItem) {

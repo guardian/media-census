@@ -819,13 +819,14 @@ class VSShapeSpec extends Specification with Mockito {
           VSFile("VX-23948","EUBrusselsBrexitDebateRecording.mp4","file:///srv/Proxies2/DevSystem/DAM/Scratch/EUBrusselsBrexitDebateRecording.mp4",
             Some(VSFileState.CLOSED),490896691L,Some("af42e9eb15d4643238e990e7714492fc2fa0f8a7"),
             ZonedDateTime.parse("2019-05-21T12:16:34.970+01:00"),1,"VX-18",Some(Map("created" -> "1558437337823", "mtime" -> "1558437337823")),None
-          ,None),
+          ,None,None),
           VSFile("VX-23948","EUBrusselsBrexitDebateRecording.mp4","file:///srv/Proxies2/DevSystem/DAM/Scratch/EUBrusselsBrexitDebateRecording.mp4",
             Some(VSFileState.CLOSED),490896691,Some("af42e9eb15d4643238e990e7714492fc2fa0f8a7"),
-            ZonedDateTime.parse("2019-05-21T12:16:34.970+01:00"),1,"VX-18",Some(Map("created" -> "1558437337823", "mtime" -> "1558437337823")),None, None),
+            ZonedDateTime.parse("2019-05-21T12:16:34.970+01:00"),1,"VX-18",Some(Map("created" -> "1558437337823", "mtime" -> "1558437337823")),
+            None, None,None),
           VSFile("VX-23948","EUBrusselsBrexitDebateRecording.mp4","file:///srv/Proxies2/DevSystem/DAM/Scratch/EUBrusselsBrexitDebateRecording.mp4",
             Some(VSFileState.CLOSED),490896691,Some("af42e9eb15d4643238e990e7714492fc2fa0f8a7"),
-            ZonedDateTime.parse("2019-05-21T12:16:34.970+01:00"),1,"VX-18",Some(Map("created" -> "1558437337823", "mtime" -> "1558437337823")),None,None)
+            ZonedDateTime.parse("2019-05-21T12:16:34.970+01:00"),1,"VX-18",Some(Map("created" -> "1558437337823", "mtime" -> "1558437337823")),None,None,None)
       )
       ))
     }
