@@ -56,9 +56,14 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
   * @param actorRefFactory implicitly provided ActorRefFactory, if you have an implicit ActorSystem this will work
   * @return Sink that receives VSFile objects from the index and deletes them!
   */
-  def deleteSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+  def deleteSink(esClient:ElasticClient, reallyDelete:Boolean)(implicit actorRefFactory: ActorRefFactory) = {
     implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => delete(t.vsid) from s"$indexName/vsfile"
-    Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize=batchSize, concurrentRequests = concurrentBatches))
+
+    if(reallyDelete) {
+      Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize = batchSize, concurrentRequests = concurrentBatches))
+    } else {
+      Sink.foreach[VSFile](elem=>logger.warn(s"I would delete ${elem.path} from ${elem.storage} if reallyDelete were true"))
+    }
   }
 
   /**

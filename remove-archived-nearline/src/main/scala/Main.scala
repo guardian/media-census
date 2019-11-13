@@ -4,16 +4,17 @@ import akka.stream.scaladsl.{Broadcast, GraphDSL}
 import com.amazonaws.services.s3.AmazonS3
 import com.sksamuel.elastic4s.http.ElasticClient
 import config.ESConfig
+import helpers.ZonedDateTimeEncoder
 import models.{ArchiveNearlineEntryIndexer, ArchivedItemRecord, VSFileIndexer}
 import org.slf4j.LoggerFactory
 import streamComponents.{DecodeArchiveHunterId, FixVidispineMeta, GetArchivalMetadata, LookupS3Metadata, PostLookupMerge, VSGetItem, VerifyS3Metadata}
 import io.circe.syntax._
 import io.circe.generic.auto._
-import vidispine.{ArchivalMetadata, VSCommunicator, VSFile}
+import vidispine.{ArchivalMetadata, VSCommunicator, VSFile, VSFileStateEncoder}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object Main extends {
+object Main extends ZonedDateTimeEncoder with VSFileStateEncoder {
   val logger = LoggerFactory.getLogger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
@@ -38,7 +39,7 @@ object Main extends {
   lazy implicit val archiveIndexer = new ArchiveNearlineEntryIndexer(archiveIndexName, batchSize = 200)
 
 
-  def createGraph(esClient:ElasticClient,s3Client:AmazonS3)(implicit comm:VSCommunicator) = {
+  def createGraph(esClient:ElasticClient,s3Client:AmazonS3,reallyDelete:Boolean)(implicit comm:VSCommunicator) = {
     GraphDSL.create() { implicit builder=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -59,6 +60,9 @@ object Main extends {
 
       val fixVidispineMeta = builder.add(new FixVidispineMeta())
 
+      val deleteFile = builder.add(new VSDeleteFile(reallyDelete))
+      val deleteIndexRecord = nearlineEntriesIndexer.deleteSink(esClient,reallyDelete)
+
       src.out.map(_.to[VSFile]) ~> decoder
       decoder.out.map(tuple=>ArchivedItemRecord(tuple._1,tuple._2,tuple._3,None)) ~> metaLookup ~> metaVerify
       metaVerify.out(1).map(_.nearlineItem) ~> writeUpdateSink  // "NO" branch - metadata did not verify against S3, write updated item back to index
@@ -69,9 +73,11 @@ object Main extends {
       lookupSplitter.out(1) ~> postLookupMerge.in1
 
       postLookupMerge.out ~> fixVidispineMeta
+      fixVidispineMeta.out.map(_.nearlineItem) ~> deleteFile ~> deleteIndexRecord
       ClosedShape
     }
   }
+
   def main(args:Array[String]) = {
 
   }

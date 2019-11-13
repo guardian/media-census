@@ -20,6 +20,9 @@ class GetArchivalMetadata(implicit vsComm:VSCommunicator, mat:Materializer) exte
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
 
+    val successCb = createAsyncCallback[Option[ArchivalMetadata]](meta => push(out, meta))
+    val failureCb = createAsyncCallback[Throwable](err => failStage(err))
+
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
         val item = grab(in)
@@ -27,11 +30,8 @@ class GetArchivalMetadata(implicit vsComm:VSCommunicator, mat:Materializer) exte
         if(item.isEmpty){
           push(out, None)
         } else {
-          val successCb = createAsyncCallback[ArchivalMetadata](meta => push(out, meta))
-          val failureCb = createAsyncCallback[Throwable](err => failStage(err))
-
           ArchivalMetadata.fromLazyItem(item.get, alwaysFetch = false).onComplete({
-            case Success(Right(content)) => successCb.invoke(content)
+            case Success(Right(content)) => successCb.invoke(Some(content))
             case Success(Left(lookupErr)) =>
               logger.error(s"Could not look up metadata for ${item.get.itemId}: $lookupErr")
               failureCb.invoke(new RuntimeException("Vidispine lookup failed"))

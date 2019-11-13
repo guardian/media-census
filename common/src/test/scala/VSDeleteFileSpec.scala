@@ -26,7 +26,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
       val graph = GraphDSL.create(sinkFact) { implicit builder=> sink=>
         import akka.stream.scaladsl.GraphDSL.Implicits._
         val src = Source.single(initialFile)
-        val toTest = builder.add(new VSDeleteFile())
+        val toTest = builder.add(new VSDeleteFile(reallyDelete=true))
 
         src ~> toTest ~> sink
         ClosedShape
@@ -46,7 +46,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
       val graph = GraphDSL.create(sinkFact) { implicit builder=> sink=>
         import akka.stream.scaladsl.GraphDSL.Implicits._
         val src = Source.single(initialFile)
-        val toTest = builder.add(new VSDeleteFile())
+        val toTest = builder.add(new VSDeleteFile(reallyDelete=true))
 
         src ~> toTest ~> sink
         ClosedShape
@@ -66,7 +66,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
       val graph = GraphDSL.create(sinkFact) { implicit builder=> sink=>
         import akka.stream.scaladsl.GraphDSL.Implicits._
         val src = Source.fromIterator(()=>Seq(initialFile,initialFile).toIterator)
-        val toTest = builder.add(new VSDeleteFile())
+        val toTest = builder.add(new VSDeleteFile(reallyDelete=true))
 
         src ~> toTest ~> sink
         ClosedShape
@@ -87,7 +87,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
       val graph = GraphDSL.create(sinkFact) { implicit builder=> sink=>
         import akka.stream.scaladsl.GraphDSL.Implicits._
         val src = Source.fromIterator(()=>Seq(initialFile,initialFile).toIterator)
-        val toTest = builder.add(new VSDeleteFile())
+        val toTest = builder.add(new VSDeleteFile(reallyDelete=true))
 
         src ~> toTest ~> sink
         ClosedShape
@@ -96,6 +96,26 @@ class VSDeleteFileSpec extends Specification with Mockito {
       val result = Try { Await.result(RunnableGraph.fromGraph(graph).run(), 10 seconds) }
       there was one(mockedVSCommunicator).request(OperationType.DELETE,"/API/file/VX-1234",None,Map(),Map())
       result must beFailedTry
+    }
+
+    "NOT send a DELETE request to the relevant URI if reallyDelete is false" in new AkkaTestkitSpecs2Support {
+      implicit val mat:Materializer = ActorMaterializer.create(system)
+      implicit val mockedVSCommunicator = mock[VSCommunicator]
+      mockedVSCommunicator.request(any,any,any,any,any,any)(any,any) returns Future(Right(""))
+
+      val initialFile = VSFile("VX-1234","path/to/file","file://path/to/file",None,1234L,None,ZonedDateTime.now(),0,"VX-1",None,None,None,None)
+      val sinkFact = Sink.seq[VSFile]
+      val graph = GraphDSL.create(sinkFact) { implicit builder=> sink=>
+        import akka.stream.scaladsl.GraphDSL.Implicits._
+        val src = Source.single(initialFile)
+        val toTest = builder.add(new VSDeleteFile(reallyDelete=false))
+
+        src ~> toTest ~> sink
+        ClosedShape
+      }
+
+      val result = Await.result(RunnableGraph.fromGraph(graph).run(), 10 seconds)
+      there was no(mockedVSCommunicator).request(OperationType.DELETE,"/API/file/VX-1234",None,Map(),Map())
     }
   }
 }

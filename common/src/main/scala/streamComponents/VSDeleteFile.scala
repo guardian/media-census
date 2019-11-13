@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 import vidispine.VSCommunicator.OperationType
 import vidispine.{VSCommunicator, VSFile}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
   * @param mat implicitly provided ActorMaterializer
   * @param ec implicitly provided ExecutionContext for async operations
   */
-class VSDeleteFile(implicit comm:VSCommunicator, mat:Materializer, ec:ExecutionContext) extends GraphStage[FlowShape[VSFile,VSFile]] {
+class VSDeleteFile(reallyDelete:Boolean)(implicit comm:VSCommunicator, mat:Materializer, ec:ExecutionContext) extends GraphStage[FlowShape[VSFile,VSFile]] {
   private final val in:Inlet[VSFile] = Inlet.create("VSDeleteFile.in")
   private final val out:Outlet[VSFile] = Outlet.create("VSDeleteFile.out")
 
@@ -33,8 +33,15 @@ class VSDeleteFile(implicit comm:VSCommunicator, mat:Materializer, ec:ExecutionC
         val elem = grab(in)
 
         val url = s"/API/file/${elem.vsid}"
-        logger.info(s"Sending DELETE request to $url...")
-        comm.request(OperationType.DELETE, url, None, Map(), Map()).onComplete({
+        val requestFuture = if(reallyDelete) {
+          logger.info(s"Sending DELETE request to $url...")
+          comm.request(OperationType.DELETE, url, None, Map(), Map())
+        } else {
+          logger.info(s"I would send DELETE request to $url if rellyDelete was on. Ignore 'delete completed' message")
+          Future(Right(""))
+        }
+
+        requestFuture.onComplete({
           case Success(Right(_))=>
             logger.info(s"Delete completed successfully")
             successCb.invoke(elem)
@@ -65,10 +72,10 @@ object VSDeleteFile {
     * @param comm implicitly provided [[VSCommunicator]] object
     * @return a Sink for [[VSFile]] instances
     */
-  def asSink(implicit comm:VSCommunicator, mat:Materializer, ec:ExecutionContext):Sink[VSFile, NotUsed] = {
+  def asSink(reallyDelete:Boolean)(implicit comm:VSCommunicator, mat:Materializer, ec:ExecutionContext):Sink[VSFile, NotUsed] = {
     val partialGraph = GraphDSL.create() { implicit builder=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
-      val deleteFileFlow = builder.add(new VSDeleteFile())
+      val deleteFileFlow = builder.add(new VSDeleteFile(reallyDelete))
       val fakeSink = Sink.ignore
 
       deleteFileFlow ~> fakeSink
