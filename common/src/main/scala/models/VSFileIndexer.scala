@@ -46,7 +46,18 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     * @return the sink
     */
   def getPartialUpdateSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
-    implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => update(t.vsid) in s"$indexName/vsfile" docAsUpsert t.partialMap()
+    implicit val builder: RequestBuilder[VSFile] = (t: VSFile) => update(t.vsid) in s"$indexName/vsfile" docAsUpsert t.partialMap()
+    Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize=batchSize, concurrentRequests = concurrentBatches))
+  }
+
+  /**
+  * return an akka streams Sink that will delete each item coming through. Use with care!!
+  * @param esClient ElasticSearch client object
+  * @param actorRefFactory implicitly provided ActorRefFactory, if you have an implicit ActorSystem this will work
+  * @return Sink that receives VSFile objects from the index and deletes them!
+  */
+  def deleteSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+    implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => delete(t.vsid) from s"$indexName/vsfile"
     Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize=batchSize, concurrentRequests = concurrentBatches))
   }
 
