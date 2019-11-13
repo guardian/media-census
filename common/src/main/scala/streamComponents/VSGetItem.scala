@@ -13,30 +13,38 @@ class VSGetItem(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materia
 
   override def shape = FlowShape.of(in, out)
 
+  /**
+    * create a new VSLazyItem. Included like this to make testing easier.
+    * @param itemId
+    * @return
+    */
+  def makeItem(itemId:String) = VSLazyItem(itemId)
+
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
+
+    val completedCb = createAsyncCallback[(VSFile, Option[VSLazyItem])](itm=>push(out,(itm._1,itm._2)))
+    val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
 
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
         val elem = grab(in)
 
-        val completedCb = createAsyncCallback[Option[VSLazyItem]](itm=>(elem,itm))
-        val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
-
         elem.membership match {
           case Some(fileItemMembership)=>
-            val item = VSLazyItem(fileItemMembership.itemId)
+            val item = makeItem(fileItemMembership.itemId)
+
             item.getMoreMetadata(fieldList).map({
               case Left(metadataError)=>
                 logger.error(s"Could not get metadata for item ${fileItemMembership.itemId}: $metadataError")
                 failedCb.invoke(new RuntimeException("Could not lookup metadata"))
               case Right(updatedItem)=>
                 logger.debug(s"Looked up metadata for item ${updatedItem.itemId}")
-                completedCb.invoke(Some(updatedItem))
+                completedCb.invoke((elem, Some(updatedItem)))
             })
           case None=>
             logger.warn(s"Can't look up item metadata for file ${elem.vsid} as it is not a member of any item")
-            completedCb.invoke(None)
+            completedCb.invoke((elem, None))
         }
       }
     })
