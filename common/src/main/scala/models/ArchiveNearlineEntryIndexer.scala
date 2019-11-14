@@ -33,9 +33,13 @@ class ArchiveNearlineEntryIndexer(val indexName:String, batchSize:Int=20, concur
     Sink.fromSubscriber(esClient.subscriber[ArchiveNearlineEntry](batchSize=batchSize, concurrentRequests = concurrentBatches))
   }
 
-  def deleteSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+  def deleteSink(esClient:ElasticClient, reallyDelete:Boolean)(implicit actorRefFactory: ActorRefFactory) = {
     implicit val builder:RequestBuilder[ArchiveNearlineEntry] = (t: ArchiveNearlineEntry) => delete(t.omUri) from s"$indexName/archivenl"
-    Sink.fromSubscriber(esClient.subscriber[ArchiveNearlineEntry](batchSize=batchSize, concurrentRequests = concurrentBatches))
+    if(reallyDelete) {
+      Sink.fromSubscriber(esClient.subscriber[ArchiveNearlineEntry](batchSize = batchSize, concurrentRequests = concurrentBatches))
+    } else {
+      Sink.foreach[ArchiveNearlineEntry](elem=>logger.warn(s"I would delete ${elem.omUri} from the archive index if reallyDelete were true"))
+    }
   }
 
   /**

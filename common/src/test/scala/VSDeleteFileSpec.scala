@@ -7,7 +7,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import testhelpers.AkkaTestkitSpecs2Support
 import vidispine.VSCommunicator.OperationType
-import vidispine.{GetMetadataError, VSCommunicator, VSFile}
+import vidispine.{VSCommunicator, VSFile}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
