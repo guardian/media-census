@@ -66,6 +66,7 @@ lazy val `common` = (project in file("common"))
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-java8" % circeVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-agent" % akkaVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
@@ -90,6 +91,7 @@ lazy val `fixmissing` = (project in file("vs-fix-missing-files"))
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "org.postgresql" % "postgresql" % "42.2.5",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
@@ -123,6 +125,7 @@ lazy val `cronscanner` = (project in file("cronscanner"))
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.postgresql" % "postgresql" % "42.2.5",
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-agent" % akkaVersion,
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
@@ -157,6 +160,7 @@ lazy val `deletescanner` = (project in file("deletescanner"))
     "org.postgresql" % "postgresql" % "42.2.5",
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
@@ -190,6 +194,7 @@ lazy val `nearlinescanner` = (project in file("nearlinescanner"))
   .settings(commonSettings, libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
@@ -223,6 +228,7 @@ lazy val `findarchivednearline` = (project in file("findarchivednearline"))
   .settings(commonSettings, libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
@@ -256,6 +262,7 @@ lazy val `remove-archived-nearline` = (project in file("remove-archived-nearline
   .settings(commonSettings, libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
@@ -291,6 +298,7 @@ lazy val `fixorphans` = (project in file("fix-orphaned-media"))
   .settings(commonSettings, libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
@@ -325,6 +333,7 @@ lazy val `archivescanner` = (project in file("archivescanner"))
   .settings(commonSettings, libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
@@ -360,7 +369,8 @@ lazy val `mxscopy` = (project in file("mxs-copy-components"))
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
-      "com.typesafe.akka" %% "akka-http" % "10.1.7",
+      "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+        "com.typesafe.akka" %% "akka-http" % "10.1.7",
       "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "1.0.2",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
