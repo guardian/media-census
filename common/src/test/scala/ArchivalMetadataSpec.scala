@@ -39,7 +39,7 @@ class ArchivalMetadataSpec extends Specification with Mockito {
         Some("2019-01-02T03:04:05Z[UTC]"),
         Some("somedevice"),
         Some(ArchivalMetadata.AR_NONE),
-        Some(""),
+        None,
         Some(ArchivalMetadata.AS_FAILED),
         Some("path/to/content"),
         Some("true"),
@@ -50,13 +50,13 @@ class ArchivalMetadataSpec extends Specification with Mockito {
       val result = Await.result(ArchivalMetadata.fromLazyItem(mockedItem,alwaysFetch=true), 1 second)
 
       result must beRight(ArchivalMetadata(
-        ZonedDateTime.of(2019,1,2,3,4,5,0,ZoneId.of("UTC")),
-        "somedevice",
-        ArchivalMetadata.AR_NONE,
-        "",
-        ArchivalMetadata.AS_FAILED,
-        "path/to/content",
-        true,
+        Some(ZonedDateTime.of(2019,1,2,3,4,5,0,ZoneId.of("UTC"))),
+        Some("somedevice"),
+        Some(ArchivalMetadata.AR_NONE),
+        None,
+        Some(ArchivalMetadata.AS_FAILED),
+        Some("path/to/content"),
+        Some(true),
         None
       ))
 
@@ -74,7 +74,7 @@ class ArchivalMetadataSpec extends Specification with Mockito {
         Some("2019-01-02T03:04:05Z[UTC]"),
         Some("somedevice"),
         Some(ArchivalMetadata.AR_NONE),
-        Some(""),
+        None,
         Some(ArchivalMetadata.AS_FAILED),
         Some("path/to/content"),
         Some("true"),
@@ -84,13 +84,13 @@ class ArchivalMetadataSpec extends Specification with Mockito {
       val result = Await.result(ArchivalMetadata.fromLazyItem(mockedItem,alwaysFetch=false), 1 second)
 
       result must beRight(ArchivalMetadata(
-        ZonedDateTime.of(2019,1,2,3,4,5,0,ZoneId.of("UTC")),
-        "somedevice",
-        ArchivalMetadata.AR_NONE,
-        "",
-        ArchivalMetadata.AS_FAILED,
-        "path/to/content",
-        true,
+        Some(ZonedDateTime.of(2019,1,2,3,4,5,0,ZoneId.of("UTC"))),
+        Some("somedevice"),
+        Some(ArchivalMetadata.AR_NONE),
+        None,
+        Some(ArchivalMetadata.AS_FAILED),
+        Some("path/to/content"),
+        Some(true),
         None
       ))
 
@@ -121,6 +121,37 @@ class ArchivalMetadataSpec extends Specification with Mockito {
       result must beLeft(GetMetadataError(None,None,None))
 
       there was one(mockedItem).getMoreMetadata(any)(any,any)
+    }
+  }
+
+  "ArchivalMetadata.makeXML" should {
+    "render out XML with only the set fields in it" in {
+      val toTest = ArchivalMetadata(
+        Some(ZonedDateTime.of(2019,1,2,3,4,5,0,ZoneId.systemDefault())),
+        Some("somedevice"),
+        Some(ArchivalMetadata.AR_REQUESTED),
+        None,
+        Some(ArchivalMetadata.AS_RUNNING),
+        Some("path/to/somefile"),
+        Some(true),
+        None
+      )
+
+      val result = toTest.makeXml
+      println(s"Got $result")
+
+      val fields = result \ "field"
+      val committedNode = fields.head
+      (committedNode \ "name").text mustEqual "gnm_external_archive_committed_to_archive_at"
+      (committedNode \ "value").text mustEqual "2019-01-02T03:04:05+0000"
+
+      val deviceNode = fields(1)
+      (deviceNode \ "name").text mustEqual "gnm_external_archive_external_archive_device"
+      (deviceNode \ "value").text mustEqual "somedevice"
+
+      val requestNode = fields(2)
+      (requestNode \ "name").text mustEqual "gnm_external_archive_external_archive_request"
+      (requestNode \ "value").text mustEqual "Requested Archive"
     }
   }
 }

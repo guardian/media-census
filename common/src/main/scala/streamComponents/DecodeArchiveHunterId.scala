@@ -20,7 +20,7 @@ class DecodeArchiveHunterId extends GraphStage[FlowShape[VSFile,(VSFile, String,
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
         val elem = grab(in)
-
+        logger.info(s"Got incoming element $elem")
         elem.archiveHunterId match {
           case None=>
             logger.error(s"The incoming item ${elem.uri} has no archivehunter id, this probably indicates a bug")
@@ -35,6 +35,7 @@ class DecodeArchiveHunterId extends GraphStage[FlowShape[VSFile,(VSFile, String,
             } else {
               val collectionName = parts.head
               val path = parts.tail.mkString(":")
+              logger.info(s"Got $collectionName and $path")
               push(out, (elem, collectionName, path))
             }
         }
@@ -42,7 +43,10 @@ class DecodeArchiveHunterId extends GraphStage[FlowShape[VSFile,(VSFile, String,
     })
 
     setHandler(out, new AbstractOutHandler {
-      override def onPull(): Unit = pull(in)
+      override def onPull(): Unit = {
+        logger.debug("pull")
+        pull(in)
+      }
     })
   }
 }

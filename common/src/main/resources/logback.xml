@@ -15,7 +15,11 @@
     <logger name="streamComponents.VSFileSwitch" level="INFO"/>
     <logger name="streamComponents.VSFindReplicas" level="INFO"/>
     <logger name="vidispine.VSShape" level="INFO"/>
+    <logger name="streamComponents.FixVidispineMeta" level="DEBUG"/>
     <logger name="streamComponents.PeriodicUpdate" level="INFO"/>
+    <logger name="streamComponents.DecodeArchiveHunterId" level="WARN"/>
+    <logger name="streamComponents.LookupS3Metadata" level="WARN"/>
+    <logger name="streamComponents.VSGetItem" level="WARN"/>
     <logger name="streamComponents.AssetSweeperDeletedSource" level="INFO"/>
     <logger name="streamComponents.VSStorageScanSource" level="INFO"/>
     <logger name="models.JobHistoryDAO" level="INFO"/>
@@ -26,6 +30,7 @@
     <logger name="nlstreamcomponents" level="INFO"/>
     <logger name="vidispine.VSCommunicator" level="WARN"/>
     <logger name="archivehunter" level="INFO"/>
+    <logger name="Main" level="DEBUG"/>
 
     <root level="WARN">
         <appender-ref ref="ASYNCSTDOUT" />

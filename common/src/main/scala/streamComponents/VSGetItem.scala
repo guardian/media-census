@@ -23,12 +23,13 @@ class VSGetItem(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materia
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
 
-    val completedCb = createAsyncCallback[(VSFile, Option[VSLazyItem])](itm=>push(out,(itm._1,itm._2)))
-    val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
-
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
+        val completedCb = createAsyncCallback[(VSFile, Option[VSLazyItem])](itm=>push(out,(itm._1,itm._2)))
+        val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
+
         val elem = grab(in)
+        logger.debug(s"Got incoming item $elem")
 
         elem.membership match {
           case Some(fileItemMembership)=>
@@ -41,6 +42,10 @@ class VSGetItem(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materia
               case Right(updatedItem)=>
                 logger.debug(s"Looked up metadata for item ${updatedItem.itemId}")
                 completedCb.invoke((elem, Some(updatedItem)))
+            }).recover({
+              case err:Throwable=>
+                logger.error(s"Get metadata crashed for item ${fileItemMembership.itemId}")
+                failedCb.invoke(err)
             })
           case None=>
             logger.warn(s"Can't look up item metadata for file ${elem.vsid} as it is not a member of any item")

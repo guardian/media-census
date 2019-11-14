@@ -1,49 +1,47 @@
 package vidispine
 
-import java.time.ZonedDateTime
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
 
 import akka.stream.Materializer
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 import scala.xml.NodeSeq
 
-case class ArchivalMetadata(committedAt:ZonedDateTime, externalArchiveDevice:String, externalArchiveRequest:String,
-                            externalArchiveReport:String,externalArchiveStatus:String,externalArchivePath:String,
-                            externalArchiveDeleteShape:Boolean,externalArchiveProblems:Option[String]) {
+case class ArchivalMetadata(committedAt:Option[ZonedDateTime], externalArchiveDevice:Option[String], externalArchiveRequest:Option[String],
+                            externalArchiveReport:Option[String],externalArchiveStatus:Option[String],externalArchivePath:Option[String],
+                            externalArchiveDeleteShape:Option[Boolean],externalArchiveProblems:Option[String]) {
   import ArchivalMetadata._
+
+  def makeXmlBlock(key:String, value:String) = <field>
+    <name>{key}</name>
+    <value>{value}</value>
+  </field>
+
   /**
     * make an XML document for the given metadata
     * @return
     */
   def makeXml:NodeSeq  = {
     <group name="ExternalArchiveRequest">
-      <field name="gnm_external_archive_committed_to_archive_at">
-        <value>${committedAt.format(ArchivalMetadata.vidispineDateFormat)}</value>
-      </field>
-      <field name="gnm_external_archive_external_archive_device">
-        <value>${externalArchiveDevice}</value>
-      </field>
-      <field name="gnm_external_archive_external_archive_request">
-        <value>${externalArchiveRequest}</value>
-      </field>
-      <field name="gnm_external_archive_external_archive_report">
-        <value>${externalArchiveReport}</value>
-      </field>
-      <field name="gnm_external_archive_external_archive_status">
-        <value>${externalArchiveStatus}</value>
-      </field>
-      <field name="gnm_external_archive_external_archive_path">
-        <value>${externalArchivePath}</value>
-      </field>
-      <field name="gnm_external_archive_delete_shape">
-        <value>${if(externalArchiveDeleteShape) "true" else "false"}</value>
-      </field>
-      ${externalArchiveProblems.map(probsValue=>
-        <field name="gnm_external_archive_problems">
-          <value>${probsValue}</value>
+      {committedAt.map(value=>makeXmlBlock("gnm_external_archive_committed_to_archive_at",value.format(ArchivalMetadata.vidispineDateFormat))).getOrElse(NodeSeq.Empty)}
+      {externalArchiveDevice.map(value=>makeXmlBlock("gnm_external_archive_external_archive_device", value)).getOrElse(NodeSeq.Empty)}
+      {externalArchiveRequest.map(value=>makeXmlBlock("gnm_external_archive_external_archive_request",value)).getOrElse(NodeSeq.Empty)}
+      {externalArchiveReport.map(value=>makeXmlBlock("gnm_external_archive_external_archive_report", value)).getOrElse(NodeSeq.Empty)}
+      {externalArchiveStatus.map(value=>makeXmlBlock("gnm_external_archive_external_archive_status", value)).getOrElse(NodeSeq.Empty)}
+      {externalArchivePath.map(value=>makeXmlBlock("gnm_external_archive_external_archive_path", value)).getOrElse(NodeSeq.Empty)}
+      {externalArchiveDeleteShape.map(deleteValue=>
+        <field name="gnm_external_archive_delete_shape">
+          <value>{if(deleteValue) "true" else "false"}</value>
         </field>
-    )}
+      ).getOrElse(NodeSeq.Empty)}
+      {externalArchiveProblems.map(probsValue=>
+        <field name="gnm_external_archive_problems">
+          <value>{probsValue}</value>
+        </field>
+      ).getOrElse(NodeSeq.Empty)}
     </group>
   }
 
@@ -52,11 +50,11 @@ case class ArchivalMetadata(committedAt:ZonedDateTime, externalArchiveDevice:Str
     * @return a Boolean, true if it's ok
     */
   def validateStatus: Boolean =
-    externalArchiveStatus==AS_NONE || externalArchiveStatus==AS_RUNNING || externalArchiveStatus==AS_FAILED ||
-    externalArchiveStatus==AS_VERIFYING || externalArchiveStatus==AS_ARCHIVED
+    externalArchiveStatus==Some(AS_NONE) || externalArchiveStatus==Some(AS_RUNNING) || externalArchiveStatus==Some(AS_FAILED) ||
+    externalArchiveStatus==Some(AS_VERIFYING) || externalArchiveStatus==Some(AS_ARCHIVED)
 
   def validateRequest:Boolean =
-    externalArchiveRequest==AR_NONE || externalArchiveRequest==AR_REQUESTED || externalArchiveRequest==AR_REQUESTEDRESTORE
+    externalArchiveRequest==Some(AR_NONE) || externalArchiveRequest==Some(AR_REQUESTED) || externalArchiveRequest==Some(AR_REQUESTEDRESTORE)
 
 }
 
@@ -84,7 +82,7 @@ object ArchivalMetadata {
   val AS_VERIFYING = "Awaiting Verification"
   val AS_ARCHIVED = "Archived"
 
-  val vidispineDateFormat = DateTimeFormatter.ISO_DATE_TIME
+  val vidispineDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
 
   private def boolFromString(str: String): Boolean = {
     val toCheck = str.toLowerCase
@@ -101,6 +99,22 @@ object ArchivalMetadata {
   def fetchForItem(initialItem:VSLazyItem)(implicit comm:VSCommunicator, mat:Materializer) =
     initialItem.getMoreMetadata(interestingFields)
 
+  def dateTimeMaybeZoned(timeString: String):ZonedDateTime = {
+    Try {
+      ZonedDateTime.parse(timeString,DateTimeFormatter.ISO_DATE_TIME)
+    } match {
+      case Success(dateTime)=>dateTime
+      case Failure(err:java.time.DateTimeException)=>
+        Try {
+          val localTime = LocalDateTime.parse(timeString, DateTimeFormatter.ISO_DATE_TIME)
+          localTime.atZone(ZoneId.systemDefault())
+        } match {
+          case Success(dateTime)=>dateTime
+          case Failure(err)=>throw err
+        }
+      case Failure(otherError)=>throw otherError
+    }
+  }
   /**
     * returns ArchivalMetadata for the given VSLazyItem. Can optionally ensure that data is fetched beforehand; if you don't care
     * about keeping the updated VSLazyItem around then call this with alwaysFetch=true. Otherwise, call `fetchForItem` first and then
@@ -120,13 +134,13 @@ object ArchivalMetadata {
     }
 
     maybeActualItem.map(_.map(item=>new ArchivalMetadata(
-      ZonedDateTime.parse(item.getSingle("gnm_external_archive_committed_to_archive_at").get),
-      item.getSingle("gnm_external_archive_external_archive_device").get,
-      item.getSingle("gnm_external_archive_external_archive_request").get,
-      item.getSingle("gnm_external_archive_external_archive_report").get,
-      item.getSingle("gnm_external_archive_external_archive_status").get,
-      item.getSingle("gnm_external_archive_external_archive_path").get,
-      boolFromString(item.getSingle("gnm_external_archive_delete_shape").get),
+      item.getSingle("gnm_external_archive_committed_to_archive_at").map(dateTimeMaybeZoned),
+      item.getSingle("gnm_external_archive_external_archive_device"),
+      item.getSingle("gnm_external_archive_external_archive_request"),
+      item.getSingle("gnm_external_archive_external_archive_report"),
+      item.getSingle("gnm_external_archive_external_archive_status"),
+      item.getSingle("gnm_external_archive_external_archive_path"),
+      item.getSingle("gnm_external_archive_delete_shape").map(boolFromString),
       item.getSingle("gnm_external_archive_problems")
     )))
   }

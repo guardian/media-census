@@ -27,14 +27,17 @@ class VerifyS3Metadata extends GraphStage[UniformFanOutShape[ArchivedItemRecord,
             failStage(new RuntimeException("Can't verify metadata on a record that does not have it"))
           case Some(meta)=>
             val sizeMatch = elem.nearlineItem.size==meta.getContentLength
+            logger.info(s"verifyMetadata for ${elem.s3Bucket}/${elem.s3Path}: sizeMatch is $sizeMatch")
+
             val checksumMatch = if(meta.getContentMD5!=null && elem.nearlineItem.hash.isDefined) elem.nearlineItem.hash.get == meta.getContentMD5 else true
+            logger.info(s"verifyMetadata for ${elem.s3Bucket}/${elem.s3Path}: checksumMatch is $sizeMatch")
 
             if(! sizeMatch || ! checksumMatch) {
               logger.warn(s"Could not verify the file ${elem.nearlineItem.uri} at s3://${elem.s3Bucket}/${elem.s3Path}: size match $sizeMatch checksum match $checksumMatch")
               val updated = elem.copy(nearlineItem=elem.nearlineItem.copy(archiveConflict=Some(true)))
               push(no, updated)
             } else {
-              logger.info(s"Verified ${elem.nearlineItem.uri} at s3://${elem.s3Bucket}/${elem.s3Path}")
+              logger.info(s"Verified file ${elem.nearlineItem.vsid} at s3://${elem.s3Bucket}/${elem.s3Path}")
               val updated = elem.copy(nearlineItem = elem.nearlineItem.copy(archiveConflict = Some(false)))
               push(yes, updated)
             }

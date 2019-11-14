@@ -20,11 +20,13 @@ class LookupS3Metadata (client:AmazonS3) extends GraphStage[FlowShape[ArchivedIt
     setHandler(in, new AbstractInHandler {
       override def onPush(): Unit = {
         val elem = grab(in)
+        logger.info(s"Looking up metadata for s3://${elem.s3Bucket}/${elem.s3Path}")
         val maybeMeta = Try { client.getObjectMetadata(elem.s3Bucket, elem.s3Path) }
 
         maybeMeta match {
           case Success(objectMeta)=>
             val result = elem.copy(s3Meta = Some(objectMeta))
+            logger.info(s"Got object metadata for s3://${elem.s3Bucket}/${elem.s3Path}")
             push(out, result)
           case Failure(err)=>
             logger.error(s"Could not look up s3://${elem.s3Bucket}/${elem.s3Path}: ", err)

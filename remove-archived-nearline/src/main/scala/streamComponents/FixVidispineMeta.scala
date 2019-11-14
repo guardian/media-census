@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter
 
 import akka.stream.{Attributes, FlowShape, Inlet, Materializer, Outlet}
 import akka.stream.stage.{AbstractInHandler, AbstractOutHandler, GraphStage, GraphStageLogic}
+import com.sun.org.apache.xpath.internal.axes.NodeSequence
 import models.ArchivedItemRecord
 import org.slf4j.LoggerFactory
 import vidispine.{ArchivalMetadata, VSCommunicator}
@@ -12,6 +13,7 @@ import vidispine.{ArchivalMetadata, VSCommunicator}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import scala.xml.NodeSeq
 
 class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extends GraphStage[FlowShape[ArchivedItemRecord,ArchivedItemRecord]] {
   private val in:Inlet[ArchivedItemRecord] = Inlet.create("FixVidispineMeta.in")
@@ -32,14 +34,18 @@ class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extend
     if(meta.isEmpty){
       (true, true)
     } else {
-      (meta.get.externalArchiveRequest!=ArchivalMetadata.AR_NONE ||
-      meta.get.externalArchiveStatus!=ArchivalMetadata.AS_ARCHIVED ||
-      !meta.get.externalArchiveDeleteShape,
-        meta.get.externalArchiveDevice==s3Bucket ||
-        meta.get.externalArchivePath==s3Path
+      (!meta.get.externalArchiveRequest.contains(ArchivalMetadata.AR_NONE) ||
+      !meta.get.externalArchiveStatus.contains(ArchivalMetadata.AS_ARCHIVED),
+        meta.get.externalArchiveDevice.contains(s3Bucket) ||
+        meta.get.externalArchivePath.contains(s3Path)
         )
     }
   }
+
+  def makeXmlDoc(content:NodeSeq) =
+    <MetadataDocument xmlns="http://xml.vidispine.com/schema/vidispine">
+      {content}
+    </MetadataDocument>
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     private val logger = LoggerFactory.getLogger(getClass)
@@ -57,6 +63,7 @@ class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extend
         } else {
           val archivalMetaIncoming = elem.vsMeta.get
 
+          logger.debug(s"Got existing archival metadata ${elem.vsMeta.map(_.makeXml.toString)}")
           val (shouldWrite,correctPath) = needsFix(elem.vsMeta, elem.s3Bucket, elem.s3Path)
           if(!correctPath){
             logger.error(s"Vidispine item for file ${elem.nearlineItem.vsid} has archived URL of s3://${archivalMetaIncoming.externalArchiveDevice}/${archivalMetaIncoming.externalArchivePath} but expected s3://${elem.s3Bucket}/${elem.s3Path}")
@@ -68,32 +75,34 @@ class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extend
 
             val updatedArchiveReport = archivalMetaIncoming.externalArchiveReport + s"\nFixed by remove-archive-nearline at ${ZonedDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)}\n"
             val updatedMetadataToWrite = ArchivalMetadata(
-              ZonedDateTime.now(),
-              elem.s3Bucket,
-              ArchivalMetadata.AR_NONE,
-              updatedArchiveReport,
-              ArchivalMetadata.AS_ARCHIVED,
-              elem.s3Path,
-              externalArchiveDeleteShape = true,
+              Some(ZonedDateTime.now()),
+              Some(elem.s3Bucket),
+              Some(ArchivalMetadata.AR_NONE),
+              Some(updatedArchiveReport),
+              Some(ArchivalMetadata.AS_ARCHIVED),
+              Some(elem.s3Path),
+              externalArchiveDeleteShape = Some(true),
               None
             )
 
-            val updateXmlDoc = updatedMetadataToWrite.makeXml.toString()
+            val updateXmlDoc = makeXmlDoc(updatedMetadataToWrite.makeXml).toString()
             logger.debug(s"XML content to write: $updateXmlDoc")
             logger.info(s"Writing updated metadata to $uriPath...")
             val headersMap = Map[String,String](
               "Content-Type"->"application/xml",
               "Content-Length"->updateXmlDoc.length.toString
             )
-            vsComm.request(VSCommunicator.OperationType.PUT, uriPath, Some(updateXmlDoc),headersMap).map({
-              case Left(err)=>
-                logger.error(s"Vidispine returned an error updating metadata: ${err.toString}")
-                throw new RuntimeException("Vidispine error, consult logs for details")
-              case Right(_)=>
-                logger.info(s"Item updated")
-                Some(updatedMetadataToWrite)
-            })
+//            vsComm.request(VSCommunicator.OperationType.PUT, uriPath, Some(updateXmlDoc),headersMap).map({
+//              case Left(err)=>
+//                logger.error(s"Vidispine returned an error updating metadata: ${err.toString}")
+//                throw new RuntimeException("Vidispine error, consult logs for details")
+//              case Right(_)=>
+//                logger.info(s"Item updated")
+//                Some(updatedMetadataToWrite)
+//            })
+            Future(elem.vsMeta)
           } else {
+            logger.info(s"Item ${elem.nearlineItem.membership.get.itemId} did not need metadata update")
             Future(elem.vsMeta)
           }
 

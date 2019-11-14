@@ -28,7 +28,7 @@ class VSLazyItemSpec extends Specification with Mockito {
       val initialItem = VSLazyItem("VX-1234",Map())
 
       implicit val comm:VSCommunicator = mock[VSCommunicator]
-      comm.requestGet(anyString,any,any,any)(any,any) returns Future(Right(returnedXml))
+      comm.request(any,any,any,any,any,any)(any,any) returns Future(Right(returnedXml))
 
       val result = Await.result(initialItem.getMoreMetadata(Seq("field1","field2","field3")), 30 seconds)
 
