@@ -27,8 +27,26 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  /**
+    * return an akka streams sink that accepts [[VSFile]] objects and writes them to the index, overwriting any existing record
+    * @param esClient ElasticClient object to access the cluster
+    * @param actorRefFactory implicitly provided Actor System
+    * @return the sink
+    */
   def getSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
     implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => update(t.vsid) in s"$indexName/vsfile" docAsUpsert t
+    Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize=batchSize, concurrentRequests = concurrentBatches))
+  }
+
+  /**
+    * return an akka streams sink that accepts [[VSFile]] objects and performs a partial update or insert on it.
+    * the `archiveHunterId` field is always left out (unchanged) and any optional fields that are None are also left out
+    * @param esClient ElasticClient object to access the cluster
+    * @param actorRefFactory implicitly provided Actor System
+    * @return the sink
+    */
+  def getPartialUpdateSink(esClient:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = {
+    implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => update(t.vsid) in s"$indexName/vsfile" docAsUpsert t.partialMap()
     Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize=batchSize, concurrentRequests = concurrentBatches))
   }
 

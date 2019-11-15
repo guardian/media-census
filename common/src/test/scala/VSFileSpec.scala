@@ -1,7 +1,7 @@
 import java.time.ZonedDateTime
 
 import org.specs2.mutable.Specification
-import vidispine.VSFile
+import vidispine.{VSFile, VSFileState}
 
 class VSFileSpec extends Specification{
   "VSFile.storageSubpath" should {
@@ -50,7 +50,8 @@ class VSFileSpec extends Specification{
         1,
         "VX-18",
         Some(Map("created"->"1558437337823","mtime"->"1558437337823")),
-        None
+        None,
+        None,
       )))
     }
 
@@ -59,6 +60,21 @@ class VSFileSpec extends Specification{
       val result = VSFile.fromXmlString(sampleFileXml)
 
       result must beSuccessfulTry(None)
+    }
+  }
+
+  "VSFile.partialMap" should {
+    "output a map that only contains the right fields" in {
+      val t = ZonedDateTime.now()
+      val toTest = VSFile("VX-1234","/path/to/file","file://path/to/file",Some(VSFileState.CLOSED),1234L,Some("hash-goes-here"),t,1,"VX-2",None,None,None)
+
+      val result = toTest.partialMap()
+      result.contains("archiveHunterId") mustEqual false
+      result.contains("membership") mustEqual false
+      result.get("vsid") must beSome("VX-1234")
+      result.get("path") must beSome("/path/to/file")
+      result.get("uri") must beSome("file://path/to/file")
+      result.get("size") must beSome(1234L)
     }
   }
 }

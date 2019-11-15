@@ -55,7 +55,7 @@ object NearlineScanner extends CleanoutFunctions {
       val src = builder.add(new VSStorageScanSource(Some(storageId), None, vsCommunicator,pageSize=100))
       val updater = builder.add(new PeriodicUpdateBasic[VSFile](initialJobRecord))
 
-      val sink = builder.add(indexer.getSink(esClient))
+      val sink = builder.add(indexer.getPartialUpdateSink(esClient))
       val splitter = builder.add(new Broadcast[VSFile](2,eagerCancel = true))
 
       src.out.log("vs-file-indexer-stream") ~> updater ~> splitter ~> sink

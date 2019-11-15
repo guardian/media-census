@@ -12,7 +12,30 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class VSFile(vsid:String, path:String, uri:String, state:Option[VSFileState.Value], size:Long, hash:Option[String],
                   timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]],
-                  membership: Option[VSFileItemMembership], archiveHunterId: Option[String])
+                  membership: Option[VSFileItemMembership], archiveHunterId: Option[String]) {
+  /**
+    * returns a Map that contains the relevant parts of the object for updating in NearlineScanner.
+    * this is to ensure that archiveHunterId does not get overwritten.
+    */
+  def partialMap() = {
+    val optionalParamMap = Seq(
+      state.map(s=>Map("state"->s)),
+      hash.map(h=>Map("hash"->h)),
+      metadata.map(m=>Map("membership"->m)),
+      membership.map(m=>Map("membership"->m)),
+    ).collect({case Some(entry)=>entry}).reduce(_ ++ _)
+
+    Map(
+      "vsid"->vsid,
+      "path"->path,
+      "uri"->uri,
+      "size"->size,
+      "timestamp"->timestamp,
+      "refreshFlag"->refreshFlag,
+      "storage"->storage
+    ) ++ optionalParamMap
+  }
+}
 
 object VSFile {
   val logger = LoggerFactory.getLogger(getClass)
