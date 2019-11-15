@@ -91,6 +91,10 @@ class PeriodicUpdateBasic[T](initialJobRecord:JobHistory, updateEvery:Int=100, i
                 val toWrite = currentRecord.copy(itemsCounted = itemsProcessed)
                 writeNewRecord(toWrite, elem, failedCb, completedCb)
               }
+          }).recover({
+            case err:Throwable=>
+              logger.error("updateEvery crashed: ", err)
+              failStage(err)
           })  //jobForUuid.flatMap
         } else {
           push(out, elem)
