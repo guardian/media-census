@@ -1,8 +1,8 @@
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
-import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
+import akka.stream.{ActorMaterializer, ClosedShape, Materializer, UniformFanOutShape}
+import akka.stream.scaladsl.{Balance, Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer}
 import streamComponents._
@@ -54,6 +54,8 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
 
+  lazy val paralellism = sys.env.getOrElse("PARALELLISM","1").toInt
+
   lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
 
   lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
@@ -67,6 +69,11 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
   /**
     * builds the main stream for conducting the mediacensus
     * @param vsPathMap Vidispine path map. Get this from the getPathMap call
+    * @param maybeStartAt Optional int at which to start scanning
+    * @param initialJobRecord a [[JobHistory]] record that indicates the job in progress, this will be updated as the stream proceeds
+    * @param esClient implicitly provided ElasticSearch client
+    * @param jobHistoryDAO implicitly provided [[JobHistoryDAO]] object
+    * @param indexer implicitly providedd [[MediaCensusIndexer]] object
     * @return
     */
   def buildStream(vsPathMap:Map[String,VSStorage], maybeStartAt:Option[Long], initialJobRecord:JobHistory)(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
@@ -78,18 +85,56 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
       val indexSink = builder.add(indexer.getIndexSink(esClient))
       val srcFactory = new AssetSweeperFilesSource(assetSweeperConfig, maybeStartAt, limit.map(_.toLong)).async
       val streamSource = builder.add(srcFactory)
+
+      val parallelBrancher = builder.add(Balance[MediaCensusEntry](paralellism))
+      val indexMerger = builder.add(Merge[MediaCensusEntry](paralellism))
+      val reduceMerger = builder.add(Merge[MediaCensusEntry](paralellism))
+      val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery=500))
+
+      streamSource ~> parallelBrancher
+
+      val innerStreamFact = innerStream(vsPathMap, maybeStartAt)
+      for(i<-0 to paralellism) {
+        val stream = builder.add(innerStreamFact)
+        parallelBrancher.out(i) ~> stream
+        stream.out(0) ~> indexMerger
+        stream.out(1) ~> reduceMerger
+      }
+      indexMerger ~> periodicUpdate ~> indexSink
+      reduceMerger ~> reduceSink
+      ClosedShape
+    }}
+  }
+
+  /**
+    * builds a stream that performs the scan. This is then included into the main stream n times, where n is the provided paralellism factor.
+    * The stream operates as follows:
+    *
+    *  - filter out anything with the "ignore" flag set
+    *  - filter out anything that is not on a known storage
+    *  - check the replicas present for the file
+    *  - output the end result
+    * @param vsPathMap Vidispine path map. Get this from the getPathMap call
+    * @param maybeStartAt Optional int at which to start scanning
+    * @param esClient implicitly provided ElasticSearch client
+    * @param jobHistoryDAO implicitly provided [[JobHistoryDAO]] object
+    * @param indexer implicitly providedd [[MediaCensusIndexer]] object
+    * @return a Graph that accepts a single input of [[MediaCensusEntry]] and outputs two streams of [[MediaCensusEntry]]. This is a "factory object" and can be added
+    *         multiple times with builder.add() in a GraphDSL.create block
+    */
+  def innerStream(vsPathMap:Map[String,VSStorage], maybeStartAt:Option[Long])(implicit esClient:ElasticClient, jobHistoryDAO:JobHistoryDAO, indexer:MediaCensusIndexer) = {
+    GraphDSL.create() { implicit builder=>
+      import akka.stream.scaladsl.GraphDSL.Implicits._
       val ignoresFilter = builder.add(new FilterOutIgnores)
 
       val knownStorageSwitch = builder.add(new KnownStorageSwitch(vsPathMap))
       val vsFileSwitch = builder.add(new VSFileSwitch().async)  //VSFileSwitch args are implicits
       val vsFindReplicas = builder.add(new VSFindReplicas())
 
-      val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery=500))
-
       val merge = builder.add(Merge[MediaCensusEntry](4,eagerComplete = false))
-      val sinkBranch = builder.add(Broadcast[MediaCensusEntry](2,eagerCancel=false))
 
-      streamSource.out.log("scanner-stream") ~> ignoresFilter ~> knownStorageSwitch
+      val sinkBranch = builder.add(Broadcast[MediaCensusEntry](2,eagerCancel=true))
+      ignoresFilter ~> knownStorageSwitch
 
       knownStorageSwitch.out(0) ~> vsFileSwitch
       knownStorageSwitch.out(1) ~> merge
@@ -100,12 +145,10 @@ object CronScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
       vsFindReplicas.out(0) ~> merge
       vsFindReplicas.out(1) ~> merge
 
-      merge ~> periodicUpdate ~> sinkBranch
+      merge ~> sinkBranch
 
-      sinkBranch.out(0) ~> indexSink
-      sinkBranch.out(1) ~> reduceSink
-      ClosedShape
-    }}
+      UniformFanOutShape(ignoresFilter.in, sinkBranch.out(0), sinkBranch.out(1))
+    }
   }
 
   /**
