@@ -92,14 +92,14 @@ class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extend
               "Content-Type"->"application/xml",
               "Content-Length"->updateXmlDoc.length.toString
             )
-//            vsComm.request(VSCommunicator.OperationType.PUT, uriPath, Some(updateXmlDoc),headersMap).map({
-//              case Left(err)=>
-//                logger.error(s"Vidispine returned an error updating metadata: ${err.toString}")
-//                throw new RuntimeException("Vidispine error, consult logs for details")
-//              case Right(_)=>
-//                logger.info(s"Item updated")
-//                Some(updatedMetadataToWrite)
-//            })
+            vsComm.request(VSCommunicator.OperationType.PUT, uriPath, Some(updateXmlDoc),headersMap).map({
+              case Left(err)=>
+                logger.error(s"Vidispine returned an error updating metadata: ${err.toString}")
+                throw new RuntimeException("Vidispine error, consult logs for details")
+              case Right(_)=>
+                logger.info(s"Item updated")
+                Some(updatedMetadataToWrite)
+            })
             Future(elem.vsMeta)
           } else {
             logger.info(s"Item ${elem.nearlineItem.membership.get.itemId} did not need metadata update")
