@@ -143,7 +143,7 @@ class ArchivalMetadataSpec extends Specification with Mockito {
       val fields = result \ "field"
       val committedNode = fields.head
       (committedNode \ "name").text mustEqual "gnm_external_archive_committed_to_archive_at"
-      (committedNode \ "value").text mustEqual "2019-01-02T03:04:05+0000"
+      (committedNode \ "value").text mustEqual "2019-01-02T03:04:05Z"
 
       val deviceNode = fields(1)
       (deviceNode \ "name").text mustEqual "gnm_external_archive_external_archive_device"
