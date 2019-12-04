@@ -62,7 +62,7 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     if(reallyDelete) {
       Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize = batchSize, concurrentRequests = concurrentBatches))
     } else {
-      Sink.foreach[VSFile](elem=>logger.warn(s"I would delete ${elem.path} from ${elem.storage} if reallyDelete were true"))
+      Sink.foreach[VSFile](elem=>logger.warn(s"I would delete the index record for ${elem.path} from ${elem.storage} if reallyDelete were true"))
     }
   }
 

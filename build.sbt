@@ -22,7 +22,7 @@ val awsSdkVersion = "1.11.346"
 
 lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerPlugin, AshScriptPlugin)
   .dependsOn(common)
-  .aggregate(archivescanner, cronscanner, deletescanner, nearlinescanner, findarchivednearline, fixmissing, fixorphans)
+  .aggregate(archivescanner, cronscanner, deletescanner, nearlinescanner, findarchivednearline, fixmissing, fixorphans, `remove-archived-nearline`)
   .settings(version := sys.props.getOrElse("build.number","DEV"),
     dockerPermissionStrategy := DockerPermissionStrategy.Run,
     daemonUserUid in Docker := None,

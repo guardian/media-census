@@ -25,7 +25,8 @@ case class ArchivalMetadata(committedAt:Option[ZonedDateTime], externalArchiveDe
     * @return
     */
   def makeXml:NodeSeq  = {
-    <group name="ExternalArchiveRequest">
+    <group>
+      <name>ExternalArchiveRequest</name>
       {committedAt.map(value=>makeXmlBlock("gnm_external_archive_committed_to_archive_at",value.format(ArchivalMetadata.vidispineDateFormat))).getOrElse(NodeSeq.Empty)}
       {externalArchiveDevice.map(value=>makeXmlBlock("gnm_external_archive_external_archive_device", value)).getOrElse(NodeSeq.Empty)}
       {externalArchiveRequest.map(value=>makeXmlBlock("gnm_external_archive_external_archive_request",value)).getOrElse(NodeSeq.Empty)}
@@ -33,12 +34,14 @@ case class ArchivalMetadata(committedAt:Option[ZonedDateTime], externalArchiveDe
       {externalArchiveStatus.map(value=>makeXmlBlock("gnm_external_archive_external_archive_status", value)).getOrElse(NodeSeq.Empty)}
       {externalArchivePath.map(value=>makeXmlBlock("gnm_external_archive_external_archive_path", value)).getOrElse(NodeSeq.Empty)}
       {externalArchiveDeleteShape.map(deleteValue=>
-        <field name="gnm_external_archive_delete_shape">
+        <field>
+          <name>gnm_external_archive_delete_shape</name>
           <value>{if(deleteValue) "true" else "false"}</value>
         </field>
       ).getOrElse(NodeSeq.Empty)}
       {externalArchiveProblems.map(probsValue=>
-        <field name="gnm_external_archive_problems">
+        <field>
+          <name>gnm_external_archive_problems</name>
           <value>{probsValue}</value>
         </field>
       ).getOrElse(NodeSeq.Empty)}
@@ -82,7 +85,7 @@ object ArchivalMetadata {
   val AS_VERIFYING = "Awaiting Verification"
   val AS_ARCHIVED = "Archived"
 
-  val vidispineDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
+  val vidispineDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
 
   private def boolFromString(str: String): Boolean = {
     val toCheck = str.toLowerCase

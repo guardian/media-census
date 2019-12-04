@@ -35,7 +35,9 @@ class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extend
       (true, true)
     } else {
       (!meta.get.externalArchiveRequest.contains(ArchivalMetadata.AR_NONE) ||
-      !meta.get.externalArchiveStatus.contains(ArchivalMetadata.AS_ARCHIVED),
+       !meta.get.externalArchiveStatus.contains(ArchivalMetadata.AS_ARCHIVED) ||
+        !meta.get.externalArchiveDevice.contains(s3Bucket) ||
+        !meta.get.externalArchivePath.contains(s3Path),
         meta.get.externalArchiveDevice.contains(s3Bucket) ||
         meta.get.externalArchivePath.contains(s3Path)
         )
@@ -44,11 +46,13 @@ class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extend
 
   def makeXmlDoc(content:NodeSeq) =
     <MetadataDocument xmlns="http://xml.vidispine.com/schema/vidispine">
+      <timespan start="-INF" end="+INF">
       {content}
+      </timespan>
     </MetadataDocument>
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    private val logger = LoggerFactory.getLogger(getClass)
+    private val logger:org.slf4j.Logger = LoggerFactory.getLogger(getClass)
 
     val successCb = createAsyncCallback[ArchivedItemRecord](rec=>push(out,rec))
     val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
@@ -66,8 +70,8 @@ class FixVidispineMeta (implicit vsComm:VSCommunicator, mat:Materializer) extend
           logger.debug(s"Got existing archival metadata ${elem.vsMeta.map(_.makeXml.toString)}")
           val (shouldWrite,correctPath) = needsFix(elem.vsMeta, elem.s3Bucket, elem.s3Path)
           if(!correctPath){
-            logger.error(s"Vidispine item for file ${elem.nearlineItem.vsid} has archived URL of s3://${archivalMetaIncoming.externalArchiveDevice}/${archivalMetaIncoming.externalArchivePath} but expected s3://${elem.s3Bucket}/${elem.s3Path}")
-            failStage(new RuntimeException("Incorrect archived URL"))
+            logger.warn(s"Vidispine item for file ${elem.nearlineItem.vsid} has archived URL of s3://${archivalMetaIncoming.externalArchiveDevice}/${archivalMetaIncoming.externalArchivePath} but expected s3://${elem.s3Bucket}/${elem.s3Path}, overwriting it")
+//            failStage(new RuntimeException("Incorrect archived URL"))
           }
 
           val writeFut = if(shouldWrite){

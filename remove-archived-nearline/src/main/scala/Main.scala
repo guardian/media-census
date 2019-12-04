@@ -10,7 +10,7 @@ import config.{ESConfig, VSConfig}
 import helpers.{CleanoutFunctions, TrustStoreHelper, ZonedDateTimeEncoder}
 import models.{ArchiveNearlineEntryIndexer, ArchivedItemRecord, JobHistory, JobHistoryDAO, JobType, VSFileIndexer}
 import org.slf4j.LoggerFactory
-import streamComponents.{DecodeArchiveHunterId, FixVidispineMeta, GetArchivalMetadata, LookupS3Metadata, PostLookupMerge, VSGetItem, VerifyS3Metadata}
+import streamComponents.{DecodeArchiveHunterId, FixVidispineMeta, GetArchivalMetadata, LookupS3Metadata, PostLookupMerge, VSGetItem, VerifyS3Metadata, VerifyVSFile}
 import com.softwaremill.sttp._
 import io.circe.generic.auto._
 import vidispine.{ArchivalMetadata, VSCommunicator, VSFile, VSFileStateEncoder}
@@ -102,7 +102,7 @@ object Main extends ZonedDateTimeEncoder with VSFileStateEncoder with CleanoutFu
       val decoder = builder.add(new DecodeArchiveHunterId)
       val metaLookup = builder.add(new LookupS3Metadata(s3Client))
       val metaVerify = builder.add(new VerifyS3Metadata)
-
+      val verifyVSFile = builder.add(new VerifyVSFile())
       val writeUpdateSink = builder.add(nearlineEntriesIndexer.getSink(esClient))
 
       val vsLookup = builder.add(new VSGetItem(ArchivalMetadata.interestingFields))
@@ -119,7 +119,10 @@ object Main extends ZonedDateTimeEncoder with VSFileStateEncoder with CleanoutFu
       val deleteSplitter = builder.add(Broadcast[VSFile](2))
 
       src.out.map(_.to[VSFile]) ~> decoder
-      decoder.out.map(tuple => ArchivedItemRecord(tuple._1, tuple._2, tuple._3, None)) ~> metaLookup ~> metaVerify
+      decoder.out.map(tuple => ArchivedItemRecord(tuple._1, tuple._2, tuple._3, None)) ~> verifyVSFile
+      verifyVSFile.out(1).map(_.nearlineItem) ~> deleteIndexRecord  //"NO" branch - file does not exist in VS, so delete the index record
+
+      verifyVSFile.out(0) ~> metaLookup ~> metaVerify       //"YES" branch - file is still in VS
       metaVerify.out(1).map(_.nearlineItem) ~> writeUpdateSink // "NO" branch - metadata did not verify against S3, write updated item back to index
 
       metaVerify.out(0) ~> lookupSplitter
