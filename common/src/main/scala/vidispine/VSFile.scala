@@ -69,7 +69,9 @@ object VSFile {
         (xmlNode \ "storage").text,
         metadataDictFromNodes(xmlNode \ "metadata") match {
           case Success(mdDict) => Some(mdDict)
-          case Failure(err) => None
+          case Failure(err) =>
+            logger.warn(s"Could not get metadata from ${xmlNode.toString}, continuing without", err)
+            None
         },
         (xmlNode \ "item").headOption.map(node => VSFileItemMembership.fromXml(node) match {
           case Success(membership) => membership

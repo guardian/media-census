@@ -3,7 +3,7 @@ package vidispine
 import scala.util.{Failure, Success, Try}
 import scala.xml.NodeSeq
 
-case class VSFileItemMembership (itemId:String, shapes:Seq[VSFileShapeMembership])
+case class VSFileItemMembership (itemId:Option[String], shapes:Seq[VSFileShapeMembership])
 
 case class VSFileShapeMembership(shapeId:String,componentId:Seq[String])
 
