@@ -73,7 +73,9 @@ object VSFile {
         },
         (xmlNode \ "item").headOption.map(node => VSFileItemMembership.fromXml(node) match {
           case Success(membership) => membership
-          case Failure(err) => throw err
+          case Failure(err) =>
+            logger.error(s"Could not get membership data from ${xmlNode.toString()}: ", err)
+            throw err
         }),
         None
       ),
