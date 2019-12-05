@@ -4,12 +4,12 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Broadcast, GraphDSL, RunnableGraph, Sink}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
-import config.{DatabaseConfiguration, ESConfig, VSConfig}
+import config.{ESConfig, VSConfig}
 import models.{JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer, VSFileIndexer}
 import play.api.Logger
-import vidispine.{VSCommunicator, VSFile}
+import vidispine.{VSCommunicator, VSFile, VSFileStateEncoder}
 import com.softwaremill.sttp._
-import helpers.CleanoutFunctions
+import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
 import streamComponents.{PeriodicUpdate, PeriodicUpdateBasic, VSFileIdInList, VSStorageScanSource}
 
 import scala.concurrent.duration._
@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
-object NearlineScanner extends CleanoutFunctions {
+object NearlineScanner extends CleanoutFunctions with ZonedDateTimeEncoder with VSFileStateEncoder {
   val logger = Logger(getClass)
 
   private implicit val actorSystem = ActorSystem("NearlineScanner")
@@ -48,7 +48,6 @@ object NearlineScanner extends CleanoutFunctions {
   lazy implicit val indexer = new VSFileIndexer(indexName, batchSize = 200)
 
   def buildStream(initialJobRecord: JobHistory, storageId:String)(implicit esClient:ElasticClient, jobHistoryDAO: JobHistoryDAO,indexer: VSFileIndexer) = {
-    //val counterSink = Sink.fold[Int, VSFile](0)((acc,_)=>acc+1)
     val counterSink = Sink.seq[String]
     GraphDSL.create(counterSink) { implicit builder=> counter=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
@@ -64,7 +63,7 @@ object NearlineScanner extends CleanoutFunctions {
     }
   }
 
-  def removeNotFoundStream(initialJobRecord: JobHistory, foundIdsList:Seq[String])(implicit esClient:ElasticClient, jobHistoryDAO: JobHistoryDAO, indexer: VSFileIndexer) = {
+  def removeNotFoundStream(initialJobRecord: JobHistory, foundIdsList:Seq[String], storageId:String)(implicit esClient:ElasticClient, jobHistoryDAO: JobHistoryDAO, indexer: VSFileIndexer) = {
     val counterSink = Sink.fold[Int, VSFile](0)((acc,_)=>acc+1)
     GraphDSL.create(counterSink) { implicit builder=> counter=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
@@ -72,15 +71,15 @@ object NearlineScanner extends CleanoutFunctions {
       import io.circe.generic.auto._
       import com.sksamuel.elastic4s.circe._
 
-      val src = indexer.getSource(esClient,Seq(matchAllQuery()),limit=None)
+      val src = indexer.getSource(esClient,Seq(matchQuery("storage",storageId)),limit=None)
       val listSwitcher = builder.add(new VSFileIdInList(foundIdsList))
       val ignoreSink = Sink.ignore
       val deleteSink = indexer.deleteSink(esClient, reallyDelete=true)
       val counterSplitter = builder.add(Broadcast[VSFile](2))
 
       src.map(_.to[VSFile]) ~> listSwitcher
-      listSwitcher.out(0) ~> ignoreSink   //"YES" branch - file was in the provided list so it still exists, don't delete it
-      listSwitcher.out(1) ~> counterSplitter ~> deleteSink   //"NO" branch - file was not seen in the previous run so it has been removed from the system; remove it from index
+      listSwitcher.out(0) ~> ignoreSink                       //"YES" branch - file was in the provided list so it still exists, don't delete it
+      listSwitcher.out(1) ~> counterSplitter ~> deleteSink    //"NO" branch - file was not seen in the previous run so it has been removed from the system; remove it from index
       counterSplitter.out(1) ~> counter
       ClosedShape
     }
@@ -154,7 +153,7 @@ object NearlineScanner extends CleanoutFunctions {
             val resultFuture = scanFuture.flatMap(fileIdsFound=>{
               logger.info(s"Counted ${fileIdsFound.length} records, purging out non-found records")
 
-              val removalGraph = removeNotFoundStream(runInfo,fileIdsFound)
+              val removalGraph = removeNotFoundStream(runInfo,fileIdsFound, storageId)
               RunnableGraph.fromGraph(removalGraph).run().map(deletedCount=>(deletedCount, fileIdsFound.length))
             })
 
