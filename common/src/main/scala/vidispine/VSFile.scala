@@ -21,7 +21,7 @@ case class VSFile(vsid:String, path:String, uri:String, state:Option[VSFileState
     val optionalParamMap = Seq(
       state.map(s => Map("state" -> s)),
       hash.map(h => Map("hash" -> h)),
-      metadata.map(m => Map("membership" -> m)),
+      metadata.map(m => Map("metadata" -> m)),
       membership.map(m => Map("membership" -> m)),
     ).collect({ case Some(entry) => entry }).reduce(_ ++ _)
 
