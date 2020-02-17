@@ -88,7 +88,14 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
 
       val splitter = builder.add(Broadcast[ArchiveNearlineEntry](2))
 
-      src.out.map(_.to[VSFile]) ~> distributor
+      src.out.map(searchHit=>{
+        searchHit.safeTo[VSFile] match {
+          case Success(vsFile)=>vsFile
+          case Failure(decodeErr)=>
+            logger.error(s"Could not decode result for ${searchHit.sourceAsMap}", decodeErr)
+            throw decodeErr
+        }
+      }) ~> distributor
 
       for(i <- 0 until parallelism) {
         val lookup = builder.add(lookupFactory)

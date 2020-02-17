@@ -1,0 +1,5 @@
+package streamComponents
+
+class VerifyVSMetadata {
+
+}

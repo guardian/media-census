@@ -12,27 +12,27 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class VSFile(vsid:String, path:String, uri:String, state:Option[VSFileState.Value], size:Long, hash:Option[String],
                   timestamp:ZonedDateTime,refreshFlag:Int,storage:String, metadata:Option[Map[String,String]],
-                  membership: Option[VSFileItemMembership], archiveHunterId: Option[String]) {
+                  membership: Option[VSFileItemMembership], archiveHunterId: Option[String], archiveConflict:Option[Boolean]=None) {
   /**
     * returns a Map that contains the relevant parts of the object for updating in NearlineScanner.
     * this is to ensure that archiveHunterId does not get overwritten.
     */
   def partialMap() = {
     val optionalParamMap = Seq(
-      state.map(s=>Map("state"->s)),
-      hash.map(h=>Map("hash"->h)),
-      metadata.map(m=>Map("membership"->m)),
-      membership.map(m=>Map("membership"->m)),
-    ).collect({case Some(entry)=>entry}).reduce(_ ++ _)
+      state.map(s => Map("state" -> s)),
+      hash.map(h => Map("hash" -> h)),
+      metadata.map(m => Map("metadata" -> m)),
+      membership.map(m => Map("membership" -> m)),
+    ).collect({ case Some(entry) => entry }).reduce(_ ++ _)
 
     Map(
-      "vsid"->vsid,
-      "path"->path,
-      "uri"->uri,
-      "size"->size,
-      "timestamp"->timestamp,
-      "refreshFlag"->refreshFlag,
-      "storage"->storage
+      "vsid" -> vsid,
+      "path" -> path,
+      "uri" -> uri,
+      "size" -> size,
+      "timestamp" -> timestamp,
+      "refreshFlag" -> refreshFlag,
+      "storage" -> storage
     ) ++ optionalParamMap
   }
 }
@@ -69,12 +69,15 @@ object VSFile {
         (xmlNode \ "storage").text,
         metadataDictFromNodes(xmlNode \ "metadata") match {
           case Success(mdDict) => Some(mdDict)
-          case Failure(err) => None
+          case Failure(err) =>
+            logger.warn(s"Could not get metadata from ${xmlNode.toString}, continuing without", err)
+            None
         },
         (xmlNode \ "item").headOption.map(node => VSFileItemMembership.fromXml(node) match {
           case Success(membership) => membership
           case Failure(err) => throw err
         }),
+        None,
         None
       ),
       )

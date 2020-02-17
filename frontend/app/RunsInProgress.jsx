@@ -57,7 +57,11 @@ class RunsInProgress extends React.Component {
             <ul className="no-bullets">{
                 this.state.runData.map(entry=><li key={entry.jobId}>
                         {/*<ClickableIcon onClick={()=>this.deletionClicked(entry.jobId)} icon="times-circle"/>*/}
-                        {entry.jobType} started <TimestampDiffComponent endTime={entry.scanStart}/><br/>{entry.itemsCounted} items so far
+                        {entry.jobType}:
+                    <ul>
+                        <li><TimestampDiffComponent endTime={entry.scanStart}/></li>
+                        <li>{entry.itemsCounted} items so far</li>
+                    </ul>
                 </li>)
             }</ul>
             <LoadingThrobber show={this.state.loading} small={true}/>

@@ -3,6 +3,7 @@ package vidispine
 import akka.stream.Materializer
 import models.HttpError
 import org.slf4j.LoggerFactory
+import vidispine.VSCommunicator.OperationType
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,8 +24,9 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
     * @return
     */
   def getMoreMetadata(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materializer):Future[Either[GetMetadataError,VSLazyItem]] =
-    comm.requestGet(s"/API/item/$itemId/metadata?field=${fieldList.mkString(",")}", Map("Accept"->"application/xml")).map({
+    comm.request(OperationType.GET, s"/API/item/$itemId/metadata", None, Map("Accept"->"application/xml"), Map("field"->fieldList.mkString(","))).map({
       case Right(returnedXml) =>
+        logger.debug(s"Vidispine returned $returnedXml")
         val maybeParsedData = Try {
           XML.loadString(returnedXml)
         }
@@ -40,6 +42,7 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
             Left(GetMetadataError(None, None, Some(parseError.toString)))
         }
       case Left(httpErr) =>
+        logger.debug(s"Vidispine returned an error ${httpErr.toString}")
         Left(GetMetadataError(Some(httpErr), None, None))
     })
 
@@ -52,6 +55,16 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
 
   def getSingle(fieldName:String):Option[String] = {
     get(fieldName).flatMap(_.headOption)
+  }
+
+  def toXmlDoc(rootGroup:Option[String]):Node = {
+    <MetadataDocument xmlns="http://xml.vidispine.com/schema/vidispine">
+      lookedUpMetadata.map(mdTuple=>{
+      <field name="${mdTuple._1}">
+        mdTuple._2.toSimpleXml()
+      </field>
+      }
+    </MetadataDocument>
   }
 }
 

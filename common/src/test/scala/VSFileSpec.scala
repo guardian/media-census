@@ -52,6 +52,7 @@ class VSFileSpec extends Specification{
         Some(Map("created"->"1558437337823","mtime"->"1558437337823")),
         None,
         None,
+        None
       )))
     }
 

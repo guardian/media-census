@@ -56,7 +56,7 @@ class VSItemSearchSource(metadataFields:Seq[String], searchDoc:String, includeSh
 
     /**
       * either services the request from the queue or calls out to VS for more data, refills the queue and processes that.
-      * recurses after a 30s delay if an error is returned from VS.
+      * re-runs after a 30s delay (trigged through ActorSystem scheduler) if an error is returned from VS.
       * @param failedCb
       * @param newItemCb
       * @param completedCb
@@ -91,11 +91,11 @@ class VSItemSearchSource(metadataFields:Seq[String], searchDoc:String, includeSh
     }
 
     setHandler(out, new AbstractOutHandler {
-      override def onPull(): Unit = {
-        val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
-        val newItemCb = createAsyncCallback[VSLazyItem](item=>push(out, item))
-        val completedCb = createAsyncCallback[Unit](_=>complete(out))
+      val failedCb = createAsyncCallback[Throwable](err=>failStage(err))
+      val newItemCb = createAsyncCallback[VSLazyItem](item=>push(out, item))
+      val completedCb = createAsyncCallback[Unit](_=>complete(out))
 
+      override def onPull(): Unit = {
         processPull(failedCb, newItemCb, completedCb)
       }
     })

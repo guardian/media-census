@@ -7,7 +7,11 @@ import scala.util.{Success,Failure, Try}
 import scala.xml.NodeSeq
 
 case class VSMetadataValue(value:String, uuid:Option[UUID], user:Option[String], timestamp:Option[ZonedDateTime], change:Option[String])
-case class VSMetadataEntry(name:String, uuid:Option[UUID], user:Option[String], timestamp:Option[ZonedDateTime], change:Option[String], values:Seq[VSMetadataValue])
+case class VSMetadataEntry(name:String, uuid:Option[UUID], user:Option[String], timestamp:Option[ZonedDateTime], change:Option[String], values:Seq[VSMetadataValue]) {
+  def toSimpleXml():NodeSeq = {
+    values.map(v=>{<value>${v.value}</value>})
+  }
+}
 
 object VSMetadataEntry {
   def safeUuidString(str:String,xml:NodeSeq):Option[UUID] = Try {
