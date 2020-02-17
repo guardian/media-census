@@ -17,6 +17,9 @@ object VSFileItemMembership {
       })
     )
   }
+
+  def fromMap(values:Map[String,AnyRef]) =
+    new VSFileItemMembership(values("itemId").toString, values("shapes").asInstanceOf[Seq[Map[String,AnyRef]]].map(VSFileShapeMembership.fromMap))
 }
 
 object VSFileShapeMembership {
@@ -26,4 +29,6 @@ object VSFileShapeMembership {
       (node \ "component").map(componentNode=>(componentNode \ "id").text)
     )
   }
+
+  def fromMap(values:Map[String,AnyRef]) = new VSFileShapeMembership(values("shapeId").toString, values("componentId").asInstanceOf[Seq[String]])
 }

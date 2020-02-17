@@ -18,7 +18,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 
-object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileStateEncoder{
+object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileStateEncoder {
   val logger = LoggerFactory.getLogger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
