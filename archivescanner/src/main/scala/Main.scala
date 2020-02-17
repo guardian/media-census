@@ -92,7 +92,7 @@ object Main extends ZonedDateTimeEncoder with CleanoutFunctions with VSFileState
         searchHit.safeTo[VSFile] match {
           case Success(vsFile)=>vsFile
           case Failure(decodeErr)=>
-            logger.error(s"Could not decode result for ${searchHit.sourceAsMap}", decodeErr)
+            logger.error(s"Could not decode result for ${searchHit.sourceAsString}", decodeErr)
             throw decodeErr
         }
       }) ~> distributor
