@@ -1,3 +1,5 @@
+
+
 import com.typesafe.sbt.packager.docker
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.{dockerExposedPorts, dockerUsername}
 import com.typesafe.sbt.packager.docker.{Cmd, DockerPermissionStrategy}
@@ -187,7 +189,6 @@ lazy val `deletescanner` = (project in file("deletescanner"))
       Cmd("USER", "daemon")
     )
   )
-
 lazy val `nearlinescanner` = (project in file("nearlinescanner"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)
   .dependsOn(common)
@@ -221,6 +222,44 @@ lazy val `nearlinescanner` = (project in file("nearlinescanner"))
       Cmd("USER", "daemon")
     )
   )
+
+lazy val `collectionscanner` = (project in file("collectionscanner"))
+  .enablePlugins(DockerPlugin, AshScriptPlugin)
+  .dependsOn(common)
+  .settings(commonSettings, libraryDependencies ++= Seq(
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion,
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+    "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
+    "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion % "test",
+    specs2 % Test
+  ),version := sys.props.getOrElse("build.number","DEV"),
+    dockerPermissionStrategy := DockerPermissionStrategy.Run,
+    daemonUserUid in Docker := None,
+    daemonUser in Docker := "daemon",
+    dockerUsername  := sys.props.get("docker.username"),
+    dockerRepository := Some("guardianmultimedia"),
+    packageName in Docker := "guardianmultimedia/mediacensus-collectionscanner",
+    packageName := "mediacensus",
+    dockerBaseImage := "openjdk:8-jdk-alpine",
+    dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-collectionscanner",Some(sys.props.getOrElse("build.number","DEV"))),
+    dockerCommands ++= Seq(
+      Cmd("USER","root"),
+      Cmd("RUN", "chmod -R a+x /opt/docker"),
+      Cmd("USER", "daemon")
+    )
+  )
+
 
 lazy val `findarchivednearline` = (project in file("findarchivednearline"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)
