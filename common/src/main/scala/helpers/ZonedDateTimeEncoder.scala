@@ -1,6 +1,6 @@
 package helpers
 
-import java.time.ZonedDateTime
+import java.time.{LocalDate, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
 import io.circe.Decoder.Result
@@ -12,4 +12,10 @@ trait ZonedDateTimeEncoder {
   implicit val decodeZonedDateTime: Decoder[ZonedDateTime] = (c: HCursor) => for {
     str <- c.value.as[String]
   } yield ZonedDateTime.parse(str, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+  implicit val encodeLocalDate: Encoder[LocalDate] = (a: LocalDate) => Json.fromString(a.format(DateTimeFormatter.ISO_DATE))
+
+  implicit val decodeLocalDate: Decoder[LocalDate] = (c: HCursor) => for {
+    str <- c.value.as[String]
+  } yield LocalDate.parse(str, DateTimeFormatter.ISO_DATE)
 }
