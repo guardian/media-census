@@ -15,7 +15,6 @@ import vidispine.{VSFile, VSFileItemMembership, VSFileShapeMembership, VSFileSta
 class VSFileHitReaderSpec extends Specification with Mockito {
   class ToTest extends VSFileHitReader
 
-  /*
   "VSFileHitReader" should {
     "correctly decode a fully populated map" in {
       val mapData:Map[String,AnyRef] = Map(
@@ -23,15 +22,15 @@ class VSFileHitReaderSpec extends Specification with Mockito {
         "path"->"path/to/some/thing.mxf",
         "uri"->"file://path/to/some/thing.mxf",
         "state"->"CLOSED",
-        "size"->1234567L,
+        "size"->(1234567:java.lang.Long),
         "hash"->"someHashHere",
         "timestamp"->"2019-01-02T03:04:05.678+0000",
-        "refreshFlag"->1L,
+        "refreshFlag"->(1:java.lang.Integer),
         "storage"->"VX-3",
         "metadata"->Map("key"->"value"),
         "membership"->Map("itemId"->"VX-111", "shapes"->Seq(Map("shapeId"->"VX-234", "componentId"->Seq("Container")))),
         "archiveHunterId"->"something",
-        "archiveConflict"->0L
+        "archiveConflict"->(0:java.lang.Long)
       )
       val fakeHit = mock[Hit]
       fakeHit.sourceAsMap returns mapData
@@ -55,5 +54,5 @@ class VSFileHitReaderSpec extends Specification with Mockito {
         Some(false)
       ))
     }
-  }*/
+  }
 }
