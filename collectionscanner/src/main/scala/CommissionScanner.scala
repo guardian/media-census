@@ -5,22 +5,34 @@ import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
 import models.{JobHistory, JobHistoryDAO, JobType, PlutoCommission, PlutoCommissionIndexer}
 import streamComponents._
-import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
-import helpers.{ZonedDateTimeEncoder, CleanoutFunctions}
+import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
+
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticError, ElasticProperties, HttpClient}
 import io.circe.generic.auto._
+import org.slf4j.LoggerFactory
+import streamcomponents.PlutoCommissionSource
+import vidispine.VSCommunicator
+import com.softwaremill.sttp._
 
 import scala.concurrent.duration._
 
 object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
-  val logger = Logger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
   private implicit val mat:Materializer = ActorMaterializer.create(actorSystem)
+
+  lazy val vsConfig = VSConfig(
+    uri"${sys.env("VIDISPINE_BASE_URL")}",
+    sys.env("VIDISPINE_USER"),
+    sys.env("VIDISPINE_PASSWORD")
+  )
+
+  lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
 
   lazy val esConfig = ESConfig(
     sys.env.get("ES_URI"),
@@ -29,6 +41,7 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
   )
 
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
+  lazy val indexName = sys.env.getOrElse("INDEX_NAME", "mediacensus-commproj")
   lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
   lazy val commissionIndexName = sys.env.getOrElse("COMMISSION_INDEX","commissions")
   lazy implicit val commissionIndexer = new PlutoCommissionIndexer(commissionIndexName)
@@ -37,7 +50,8 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     * Builds the main stream for conducting the commission scan
     * @return
     */
-  def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient) = {
+  def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
+                                               mat:Materializer) = {
     val counterSink = Sink.fold[Int, PlutoCommission](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
@@ -45,14 +59,15 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
       import com.sksamuel.elastic4s.circe._
 
       val commissionSink = builder.add(commissionIndexer.getIndexSink(esClient))
-      val srcFactory = commissionIndexer.getIndexSource(esClient)
+      val srcFactory = new PlutoCommissionSource()
 
       val streamSource = builder.add(srcFactory)
       val sinkSplitter = builder.add(Broadcast[PlutoCommission](2, eagerCancel=false))
 
-      streamSource.out ~> sinkSplitter
-      sinkSplitter ~> commissionSink
-      sinkSplitter ~> reduceSink
+
+      streamSource ~> sinkSplitter.in
+      sinkSplitter.out(0) ~> commissionSink
+      sinkSplitter.out(1) ~> reduceSink
 
       ClosedShape
     }}
@@ -84,7 +99,7 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
 
   def checkIndex(esClient:ElasticClient):Unit = {
     //we can't continue startup until this is done anyway, so it's fine to block here.
-    val checkResult = Await.result(indexer.checkIndex(esClient), 30 seconds)
+    val checkResult = Await.result(commissionIndexer.checkIndex(esClient), 30 seconds)
 
     if(checkResult.isError) {
       logger.error(s"Could not check index status: ${checkResult.error}")
@@ -155,17 +170,6 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     resultFuture.onComplete({
       case Success(Right(resultCount))=>
         println(s"Found a total of $resultCount commissions that are now indexed")
-        indexer.calculateStats(esClient, runInfo).onComplete({
-          case Failure(err)=>
-            logger.error(s"Calculate stats crashed: ", err)
-            complete_run(1,Some(s"Calculate stats crashed: ${err.toString}"),Some(runInfo))
-          case Success(Left(errs))=>
-            complete_run(1,Some(errs.mkString("; ")),Some(runInfo))
-          case Success(Right(updatedJH))=>
-            val finalJH = updatedJH.copy(itemsCounted=resultCount)
-            complete_run(0,None,Some(finalJH))
-        })
-
       case Success(Left(err))=>
         logger.error(s"ERROR: ${err.toString}")
         complete_run(1,Some(err.toString),None)

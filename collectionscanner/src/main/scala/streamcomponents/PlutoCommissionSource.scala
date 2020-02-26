@@ -43,7 +43,7 @@ class PlutoCommissionSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator,m
         if(buffer.isEmpty) {
           logger.debug("buffer is empty, pulling more content...")
           val responseFut = comm.request(VSCommunicator.OperationType.PUT,
-            s"/api/collection;number=$recordsPerPage;first=$currentRecord",
+            s"/API/collection;number=$recordsPerPage;first=$currentRecord",
             Some(searchDoc.toString),
             Map("Content-Type"->"application/xml","Accept"->"application/xml"),
             Map("content"->"metadata")
