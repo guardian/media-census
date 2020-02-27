@@ -30,50 +30,56 @@ class PlutoProjectSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator,mat:
         logger.info("downstream finished, terminating")
       }
 
+      def getNextStatus():Unit = {
+        if(onStatus>=statuses.length) {
+          logger.info("Processed all projects")
+          onCompleteHandler.invoke( () )
+          return
+        }
+        val responseFuture = comm.request(VSCommunicator.OperationType.GET,
+          "/project/api/extsearch/",
+          None,
+          Map(),
+          Map("status"->statuses(onStatus),"limit"->"100000"),
+          wantXml = false
+        )
+
+        responseFuture.onComplete({
+          case Failure(err) =>
+            logger.error(s"Pluto request crashed: ", err)
+            onErrorHandler.invoke(err)
+          case Success(Left(vserr)) =>
+            logger.error(s"Pluto returned a ${vserr.errorCode} error: ${vserr.message}")
+            onErrorHandler.invoke(new RuntimeException(s"Pluto returned a ${vserr.errorCode}"))
+          case Success(Right(rawJson)) =>
+            onStatus +=1
+            io.circe.parser.parse(rawJson).flatMap(_.as[List[PlutoProject]]) match {
+              case Left(jsonErr)=>
+                logger.error(s"Could not understand server response: ${jsonErr.toString}")
+                onErrorHandler.invoke(new RuntimeException("Could not understand server response"))
+              case Right(projectList)=>
+                logger.info(s"PlutoProjectSource got ${projectList.length} new projects with the status of '${statuses(onStatus-1)}'")
+                this.synchronized {
+                  buffer = buffer ++ projectList
+                }
+
+                if(buffer.isEmpty) {
+                  getNextStatus()
+                } else {
+                  val head = buffer.head
+                  this.synchronized {
+                    buffer = buffer.tail
+                  }
+                  logger.debug(s"Got ${buffer.length} more items")
+                  onOutputHandler.invoke(head)
+                }
+            }
+        })
+      }
+
       override def onPull(): Unit = {
         if(buffer.isEmpty) {
-          if(onStatus>=statuses.length) {
-            logger.info("Processed all projects")
-            onCompleteHandler.invoke( () )
-            return
-          }
-
-          val responseFuture = comm.request(VSCommunicator.OperationType.GET,
-            "/project/api/extsearch/",
-            None,
-            Map(),
-            Map("status"->statuses(onStatus),"limit"->"100000"),
-            wantXml = false
-          )
-
-          responseFuture.onComplete({
-            case Failure(err) =>
-              logger.error(s"Pluto request crashed: ", err)
-              onErrorHandler.invoke(err)
-            case Success(Left(vserr)) =>
-              logger.error(s"Pluto returned a ${vserr.errorCode} error: ${vserr.message}")
-              onErrorHandler.invoke(new RuntimeException(s"Pluto returned a ${vserr.errorCode}"))
-            case Success(Right(rawJson)) =>
-              onStatus +=1
-              io.circe.parser.parse(rawJson).flatMap(_.as[List[PlutoProject]]) match {
-                case Left(jsonErr)=>
-                  logger.error(s"Could not understand server response: ${jsonErr.toString}")
-                  onErrorHandler.invoke(new RuntimeException("Could not understand server response"))
-                case Right(projectList)=>
-                  logger.info(s"PlutoProjectSource got ${projectList.length} new projects with the status of '${statuses(onStatus-1)}'")
-                  this.synchronized {
-                    buffer = buffer ++ projectList
-                  }
-                  if(buffer.nonEmpty) {
-                    val head = buffer.head
-                    this.synchronized {
-                      buffer = buffer.tail
-                    }
-                    logger.debug(s"Got ${buffer.length} more items")
-                    onOutputHandler.invoke(head)
-                  }
-              }
-          })
+          getNextStatus()
         } else {
           val head = buffer.head
           this.synchronized {
