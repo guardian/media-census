@@ -173,7 +173,6 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     }}
   }
 
-
   def main(args: Array[String]): Unit = {
     implicit val esClient = getEsClientWithRetry()
 
