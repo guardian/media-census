@@ -321,7 +321,7 @@ class PlutoCommissionSourceSpec extends Specification with Mockito{
       implicit val mat:Materializer = ActorMaterializer.create(system)
       implicit val mockedComm = mock[VSCommunicator]
 
-      mockedComm.request(any,any,any,any,any,any)(any,any) returns Future(Right(sampleXml)) thenReturn Future(Right("<CollectionListDocument/>"))
+      mockedComm.request(any,any,any,any,any,any,any)(any,any) returns Future(Right(sampleXml)) thenReturn Future(Right("<CollectionListDocument/>"))
 
       val sinkFact = Sink.seq[PlutoCommission]
 
