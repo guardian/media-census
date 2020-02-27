@@ -3,18 +3,17 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
-import models.{JobHistory, JobHistoryDAO, JobType, PlutoCommission, PlutoCommissionIndexer}
+import models.{JobHistory, JobHistoryDAO, JobType, PlutoCommission, PlutoCommissionIndexer, PlutoProjectIndexer, PlutoProject}
 import streamComponents._
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
 import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
-
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticError, ElasticProperties, HttpClient}
 import io.circe.generic.auto._
 import org.slf4j.LoggerFactory
-import streamcomponents.PlutoCommissionSource
+import streamcomponents.{PlutoCommissionSource, PlutoProjectSource}
 import vidispine.VSCommunicator
 import com.softwaremill.sttp._
 
@@ -39,6 +38,16 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     sys.env.getOrElse("ES_HOST","mediacensus-elasticsearch"),
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
+
+  lazy val portalConfig = VSConfig(
+    uri"${sys.env("PORTAL_BASE_URL")}",
+    sys.env("VIDISPINE_USER"),
+    sys.env("VIDISPINE_PASSWORD")
+  )
+
+  lazy val portalCommunicator = new VSCommunicator(portalConfig.vsUri, portalConfig.plutoUser, portalConfig.plutoPass)
+  lazy val projectIndexName = sys.env.getOrElse("PROJECT_INDEX","projects")
+  lazy implicit val projectIndexer = new PlutoProjectIndexer(projectIndexName)
 
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
   lazy val indexName = sys.env.getOrElse("INDEX_NAME", "mediacensus-commproj")
@@ -137,6 +146,33 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     })
   }
 
+  /**
+    * Builds the main stream for conducting the project scan
+    * @return
+    */
+  def buildProjectStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
+                                               mat:Materializer) = {
+    val counterSinkProjects = Sink.fold[Int, PlutoProject](0)((acc,elem)=>acc+1)
+
+    GraphDSL.create(counterSinkProjects) { implicit builder=> { reduceSinkProjects =>
+      import akka.stream.scaladsl.GraphDSL.Implicits._
+      import com.sksamuel.elastic4s.circe._
+
+      val projectSink = builder.add(projectIndexer.getIndexSink(esClient))
+      val srcFactoryProjects = new PlutoProjectSource()(portalCommunicator, mat)
+
+      val streamSourceProjects = builder.add(srcFactoryProjects)
+      val sinkSplitterProjects = builder.add(Broadcast[PlutoProject](2, eagerCancel=false))
+
+      streamSourceProjects ~> sinkSplitterProjects.in
+      sinkSplitterProjects.out(0) ~> projectSink
+      sinkSplitterProjects.out(1) ~> reduceSinkProjects
+
+      ClosedShape
+    }}
+  }
+
+
   def main(args: Array[String]): Unit = {
     implicit val esClient = getEsClientWithRetry()
 
@@ -162,14 +198,19 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     val resultFuture = jobHistoryDAO.put(runInfo).flatMap({
       case Right(_)=>
         logger.info(s"Saved run info ${runInfo.toString}")
-        RunnableGraph.fromGraph(buildStream(runInfo)).run().map(resultCount=>Right(resultCount))
+        val commissionStreamFut = RunnableGraph.fromGraph(buildStream(runInfo)).run()//.map(resultCount=>Right(resultCount))
+        val projectStreamFut = RunnableGraph.fromGraph(buildProjectStream(runInfo)).run()
+        Future.sequence(Seq(commissionStreamFut,projectStreamFut)).map(results=>Right(results))
       case Left(err)=>
         Future(Left(err))
     })
 
     resultFuture.onComplete({
-      case Success(Right(resultCount))=>
-        println(s"Found a total of $resultCount commissions that are now indexed")
+      case Success(Right(resultCounts))=>
+        val commissionResultCount = resultCounts.head
+        val projectResultCount = resultCounts(1)
+        println(s"Found a total of $commissionResultCount commissions and $projectResultCount projects that are now indexed")
+        complete_run(0,None,None)
       case Success(Left(err))=>
         logger.error(s"ERROR: ${err.toString}")
         complete_run(1,Some(err.toString),None)

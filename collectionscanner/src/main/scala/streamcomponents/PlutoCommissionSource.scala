@@ -38,7 +38,7 @@ class PlutoCommissionSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator,m
           </field>
         </CollectionSearchDocument>
 
-        println("onPull")
+        logger.debug("onPull")
 
         if(buffer.isEmpty) {
           logger.debug("buffer is empty, pulling more content...")
