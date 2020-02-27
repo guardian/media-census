@@ -45,6 +45,7 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     sys.env("VIDISPINE_PASSWORD")
   )
 
+  lazy val siteIdentifierLoaded = sys.env.getOrElse("SITE_IDENTIFIER","VX")
   lazy val portalCommunicator = new VSCommunicator(portalConfig.vsUri, portalConfig.plutoUser, portalConfig.plutoPass)
   lazy val projectIndexName = sys.env.getOrElse("PROJECT_INDEX","projects")
   lazy implicit val projectIndexer = new PlutoProjectIndexer(projectIndexName)
@@ -164,7 +165,7 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
       val streamSourceProjects = builder.add(srcFactoryProjects)
       val sinkSplitterProjects = builder.add(Broadcast[PlutoProject](2, eagerCancel=false))
 
-      streamSourceProjects ~> sinkSplitterProjects.in
+      streamSourceProjects.out.map(_.copy(siteIdentifier=Option(siteIdentifierLoaded))) ~> sinkSplitterProjects.in
       sinkSplitterProjects.out(0) ~> projectSink
       sinkSplitterProjects.out(1) ~> reduceSinkProjects
 
