@@ -5,7 +5,7 @@ import io.circe.{Decoder, HCursor, Json}
 
 import scala.util.Try
 
-case class PlutoProject (siteIdentifier:Option[String], collectionId:Int, name:String, status:String, commissionCollection:Int) {
+case class PlutoProject (siteIdentifier:Option[String], collectionId:Int, name:String, status:String, commissionCollection:Option[Int]) {
   def commissionVSID() = s"${siteIdentifier.getOrElse("VX")}-$commissionCollection"
   def projectVSID() = s"${siteIdentifier.getOrElse("VX")}-$collectionId"
 }
@@ -41,7 +41,7 @@ object PlutoProject {
         collectionId <- c.downField("collection_id").as[Int]
         name <- c.downField("gnm_project_headline").as[String]
         status <- c.downField("gnm_project_status").as[String]
-        commissionCollection <- c.downField("commission").as[Int]
+        commissionCollection <- c.downField("commission").as[Option[Int]]
       } yield PlutoProject(None,collectionId, name, status, commissionCollection)
   }
 
