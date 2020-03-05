@@ -24,7 +24,7 @@ val awsSdkVersion = "1.11.346"
 
 lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerPlugin, AshScriptPlugin)
   .dependsOn(common)
-  .aggregate(archivescanner, cronscanner, deletescanner, nearlinescanner, findarchivednearline, fixmissing, fixorphans, `remove-archived-nearline`, collectionscanner)
+  .aggregate(archivescanner, cronscanner, deletescanner, nearlinescanner, findarchivednearline, fixmissing, fixorphans, `remove-archived-nearline`, collectionscanner, unclognearline)
   .settings(version := sys.props.getOrElse("build.number","DEV"),
     dockerPermissionStrategy := DockerPermissionStrategy.Run,
     daemonUserUid in Docker := None,
@@ -260,6 +260,42 @@ lazy val `collectionscanner` = (project in file("collectionscanner"))
     )
   )
 
+lazy val `unclognearline` = (project in file("unclognearline"))
+  .enablePlugins(DockerPlugin, AshScriptPlugin)
+  .dependsOn(common)
+  .settings(commonSettings, libraryDependencies ++= Seq(
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion,
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+    "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
+    "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion % "test",
+    specs2 % Test
+  ),version := sys.props.getOrElse("build.number","DEV"),
+    dockerPermissionStrategy := DockerPermissionStrategy.Run,
+    daemonUserUid in Docker := None,
+    daemonUser in Docker := "daemon",
+    dockerUsername  := sys.props.get("docker.username"),
+    dockerRepository := Some("guardianmultimedia"),
+    packageName in Docker := "guardianmultimedia/mediacensus-unclognearline",
+    packageName := "mediacensus",
+    dockerBaseImage := "openjdk:8-jdk-alpine",
+    dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-unclognearline",Some(sys.props.getOrElse("build.number","DEV"))),
+    dockerCommands ++= Seq(
+      Cmd("USER","root"),
+      Cmd("RUN", "chmod -R a+x /opt/docker"),
+      Cmd("USER", "daemon")
+    )
+  )
 
 lazy val `findarchivednearline` = (project in file("findarchivednearline"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)

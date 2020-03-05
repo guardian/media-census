@@ -3,23 +3,28 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
-import models.{JobHistory, JobHistoryDAO, JobType, PlutoCommission, PlutoCommissionIndexer, PlutoProjectIndexer, PlutoProject, VidispineProject, VidispineProjectIndexer}
+import com.sksamuel.elastic4s.http.ElasticDsl.matchQuery
+import models._
 import streamComponents._
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
 import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
+
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticError, ElasticProperties, HttpClient}
 import io.circe.generic.auto._
 import org.slf4j.LoggerFactory
-import streamcomponents.{PlutoCommissionSource, PlutoProjectSource, VidispineProjectSource}
-import vidispine.VSCommunicator
+import vidispine.{VSCommunicator, VSFile, VSFileStateEncoder}
 import com.softwaremill.sttp._
 
 import scala.concurrent.duration._
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
+import com.sksamuel.elastic4s.http.search.SearchHit
 
-object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
+
+
+object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with CleanoutFunctions {
   val logger = LoggerFactory.getLogger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
@@ -39,14 +44,8 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
 
-  lazy val portalConfig = VSConfig(
-    uri"${sys.env("PORTAL_BASE_URL")}",
-    sys.env("VIDISPINE_USER"),
-    sys.env("VIDISPINE_PASSWORD")
-  )
-
+  lazy val storageId = sys.env.get("STORAGE_IDENTIFIER")
   lazy val siteIdentifierLoaded = sys.env.getOrElse("SITE_IDENTIFIER","VX")
-  lazy val portalCommunicator = new VSCommunicator(portalConfig.vsUri, portalConfig.plutoUser, portalConfig.plutoPass)
   lazy val projectIndexName = sys.env.getOrElse("PROJECT_INDEX","projects")
   lazy implicit val projectIndexer = new PlutoProjectIndexer(projectIndexName)
 
@@ -55,31 +54,35 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
   lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
   lazy val commissionIndexName = sys.env.getOrElse("COMMISSION_INDEX","commissions")
   lazy implicit val commissionIndexer = new PlutoCommissionIndexer(commissionIndexName)
-  lazy val vidispineProjectIndexName = sys.env.getOrElse("VIDISPINE_PROJECT_INDEX","vidispine-projects")
-  lazy implicit val vidispineProjectIndexer = new VidispineProjectIndexer(vidispineProjectIndexName)
 
+  lazy val fileIndexName = sys.env.getOrElse("INDEX_NAME","mediacensus-nearline")
+  lazy implicit val fileIndexer = new VSFileIndexer(fileIndexName)
+
+  val interestingFields = Seq("gnm_storage_rule_deletable","gnm_storage_rule_deep_archive","gnm_storage_rule_sensitive","__collection")
   /**
-    * Builds the main stream for conducting the commission scan
+    * Builds the main stream for processing the data
     * @return
     */
   def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
                                                mat:Materializer) = {
-    val counterSink = Sink.fold[Int, PlutoCommission](0)((acc,elem)=>acc+1)
+    val counterSink = Sink.fold[Int, VSFile](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
+      import com.sksamuel.elastic4s.http.ElasticDsl._
+      import io.circe.generic.auto._
       import com.sksamuel.elastic4s.circe._
 
-      val commissionSink = builder.add(commissionIndexer.getIndexSink(esClient))
-      val srcFactory = new PlutoCommissionSource()
+      val src = fileIndexer.getSource(esClient,Seq(matchQuery("storage",storageId)),limit=None)
+      val lookup = builder.add(new VSGetItem(interestingFields))
 
-      val streamSource = builder.add(srcFactory)
-      val sinkSplitter = builder.add(Broadcast[PlutoCommission](2, eagerCancel=false))
-
-
-      streamSource ~> sinkSplitter.in
-      sinkSplitter.out(0) ~> commissionSink
-      sinkSplitter.out(1) ~> reduceSink
+      //src.map(_.to[VSFile]) ~> lookup ~>
+      //src.out.map(_.to[VSFile])
+      //src.map(_.to[VSFile])
+      //src.map(_.to[VSFile])
+      //src.map(VSFile)
+      src.map(_.to[VSFile]) ~> lookup
+      lookup.out.map(_._2)
 
       ClosedShape
     }}
@@ -149,61 +152,6 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     })
   }
 
-  /**
-    * Builds the main stream for conducting the project scan
-    * @return
-    */
-  def buildProjectStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
-                                               mat:Materializer) = {
-    val counterSinkProjects = Sink.fold[Int, PlutoProject](0)((acc,elem)=>acc+1)
-
-    GraphDSL.create(counterSinkProjects) { implicit builder=> { reduceSinkProjects =>
-      import akka.stream.scaladsl.GraphDSL.Implicits._
-      import com.sksamuel.elastic4s.circe._
-
-      val projectSink = builder.add(projectIndexer.getIndexSink(esClient))
-      val srcFactoryProjects = new PlutoProjectSource()(portalCommunicator, mat)
-
-      val streamSourceProjects = builder.add(srcFactoryProjects)
-      val sinkSplitterProjects = builder.add(Broadcast[PlutoProject](2, eagerCancel=false))
-
-      streamSourceProjects.out.map(_.copy(siteIdentifier=Option(siteIdentifierLoaded))) ~> sinkSplitterProjects.in
-      sinkSplitterProjects.out(0) ~> projectSink
-      sinkSplitterProjects.out(1) ~> reduceSinkProjects
-
-      ClosedShape
-    }}
-  }
-
-  /**
-    * Builds the main stream for conducting the project scan
-    * @return
-    */
-  def buildVidispineProjectStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
-                                               mat:Materializer) = {
-    val counterSink = Sink.fold[Int, VidispineProject](0)((acc,elem)=>acc+1)
-
-    GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
-      import akka.stream.scaladsl.GraphDSL.Implicits._
-      import com.sksamuel.elastic4s.circe._
-
-      val projectSink = builder.add(vidispineProjectIndexer.getIndexSink(esClient))
-      val srcFactory = new VidispineProjectSource()
-
-      val streamSource = builder.add(srcFactory)
-      val sinkSplitter = builder.add(Broadcast[VidispineProject](2, eagerCancel=false))
-
-
-      streamSource ~> sinkSplitter.in
-      sinkSplitter.out(0) ~> projectSink
-      sinkSplitter.out(1) ~> reduceSink
-
-      ClosedShape
-    }}
-  }
-
-
-
   def main(args: Array[String]): Unit = {
     implicit val esClient = getEsClientWithRetry()
 
@@ -229,9 +177,7 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     val resultFuture = jobHistoryDAO.put(runInfo).flatMap({
       case Right(_)=>
         logger.info(s"Saved run info ${runInfo.toString}")
-        val commissionStreamFut = RunnableGraph.fromGraph(buildStream(runInfo)).run()//.map(resultCount=>Right(resultCount))
-        val projectStreamFut = RunnableGraph.fromGraph(buildProjectStream(runInfo)).run()
-        Future.sequence(Seq(commissionStreamFut,projectStreamFut)).map(results=>Right(results))
+        RunnableGraph.fromGraph(buildStream(runInfo)).run().map(resultCount=>Right(resultCount))
       case Left(err)=>
         Future(Left(err))
     })

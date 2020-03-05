@@ -46,5 +46,4 @@ object PlutoProject {
   }
 
   def fromJson(json:Json) = json.as[PlutoProject]
-
 }
