@@ -11,6 +11,10 @@ case class VSMetadataEntry(name:String, uuid:Option[UUID], user:Option[String], 
   def toSimpleXml():NodeSeq = {
     values.map(v=>{<value>${v.value}</value>})
   }
+
+  def mergeValues(other:VSMetadataEntry) = {
+    this.copy(values=this.values++other.values)
+  }
 }
 
 object VSMetadataEntry {

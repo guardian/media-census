@@ -4,6 +4,7 @@ import akka.stream.Materializer
 import models.HttpError
 import org.slf4j.LoggerFactory
 import vidispine.VSCommunicator.OperationType
+import vidispine.VSLazyItem.logger
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,7 +36,16 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
             val newMetadataSeq = VSMetadataEntry.fromXml(parsedData \ "item" \ "metadata" \ "timespan")
             logger.debug(s"Got ${newMetadataSeq.length} more metadata keys")
 
-            val newMetadataMap = newMetadataSeq.map(entry => entry.name -> entry).toMap
+            val newMetadataMap = newMetadataSeq
+              .map(entry => entry.name -> entry)
+              .foldLeft(Map[String,VSMetadataEntry]())((acc, elem)=>{
+                val updatedMetaEntry = if(acc.keySet.contains(elem._1)) {
+                  acc(elem._1).mergeValues(elem._2)
+                } else {
+                  elem._2
+                }
+                acc ++ Map(elem._1 -> updatedMetaEntry)
+              })
             Right(this.copy(lookedUpMetadata = this.lookedUpMetadata ++ newMetadataMap))
           case Failure(parseError) =>
             logger.error(s"Could not parse XML returned from Vidispine: ", parseError)
@@ -69,6 +79,7 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
 }
 
 object VSLazyItem extends ((String,Map[String,VSMetadataEntry],Option[Map[String,VSShape]])=>VSLazyItem) {
+  private val logger = LoggerFactory.getLogger(getClass)
   /**
     * simple constructor for blank item
     * @param itemId item id to hold
