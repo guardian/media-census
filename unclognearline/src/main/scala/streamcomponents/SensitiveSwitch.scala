@@ -1,16 +1,16 @@
 package streamcomponents
 
-import akka.stream.{Attributes, FanOutShape, Inlet, Outlet, UniformFanOutShape}
+import akka.stream.{Attributes, Inlet, Outlet, UniformFanOutShape}
 import akka.stream.stage.{AbstractInHandler, AbstractOutHandler, GraphStage, GraphStageLogic}
 import models.UnclogStream
 import org.slf4j.LoggerFactory
+import scala.util.control.Breaks._
 
 /**
-  * checks whether the incoming census entry identifies a file that corresponds to a filepath known by VS.
-  * if so, pushes it to the outYes port, if not pushes it to the outNo port
-  * @param vsPathMap
+  * Checks whether the incoming object contains a VidispineProject object set to sensitive.
+  * If so, pushes it to the outYes port, if not pushes it to the outNo port.
   */
-class SensitiveSwitch() extends GraphStage[UniformFanOutShape[UnclogStream, UnclogStream]]{
+class SensitiveSwitch extends GraphStage[UniformFanOutShape[UnclogStream, UnclogStream]]{
   private final val in:Inlet[UnclogStream] = Inlet.create("SensitiveSwitch.in")
   private final val outYes:Outlet[UnclogStream] = Outlet.create("SensitiveSwitch.yes")
   private final val outNo:Outlet[UnclogStream] = Outlet.create("SensitiveSwitch.no")
@@ -32,19 +32,14 @@ class SensitiveSwitch() extends GraphStage[UniformFanOutShape[UnclogStream, Uncl
       def onPushBody(): Unit = {
         val elem = grab(in)
 
-        //filter out tuples from the map where the element's filepath starts with the map's key
-        val matchingElements = vsPathMap.filter(tuple=>elem.originalSource.filepath.startsWith(tuple._1))
-        if(matchingElements.isEmpty){
-          logger.info(s"Could not find item ${elem.originalSource.filepath}/${elem.originalSource.filename} on any known storage")
-          push(outNo, elem)
-        } else {
-          val updatedElem = elem.copy(
-            sourceStorage = Some(matchingElements.head._2.vsid),
-            storageSubpath = VSFile.storageSubpath(elem.originalSource.filepath + "/" + elem.originalSource.filename, matchingElements.head._1)
-          )
-          logger.info(s"Found item on storage ${updatedElem.sourceStorage} at relative path ${updatedElem.storageSubpath}")
-          push(outYes, updatedElem)
-        }
+        elem.ParentProjects.foreach ( process_projects => {
+          if(process_projects.sensitive){
+            push(outYes, elem)
+            break
+          }
+        })
+
+        push(outNo, elem)
       }
     })
 
