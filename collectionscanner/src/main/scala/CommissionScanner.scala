@@ -230,7 +230,8 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
       case Right(_)=>
         logger.info(s"Saved run info ${runInfo.toString}")
         val commissionStreamFut = RunnableGraph.fromGraph(buildStream(runInfo)).run()//.map(resultCount=>Right(resultCount))
-        val projectStreamFut = RunnableGraph.fromGraph(buildProjectStream(runInfo)).run()
+        //val projectStreamFut = RunnableGraph.fromGraph(buildProjectStream(runInfo)).run()
+        val projectStreamFut = RunnableGraph.fromGraph(buildVidispineProjectStream(runInfo)).run()
         Future.sequence(Seq(commissionStreamFut,projectStreamFut)).map(results=>Right(results))
       case Left(err)=>
         Future(Left(err))
