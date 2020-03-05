@@ -2,12 +2,13 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
-import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
+import akka.stream.scaladsl.{Broadcast, GraphDSL, Keep, Merge, RunnableGraph, Sink}
 import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer}
 import streamComponents._
 import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
-import helpers.{ZonedDateTimeEncoder, CleanoutFunctions}
+import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
+
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}

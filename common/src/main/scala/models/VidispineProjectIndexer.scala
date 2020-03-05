@@ -3,12 +3,14 @@ package models
 import akka.actor.ActorRefFactory
 import akka.stream.scaladsl.{Sink, Source}
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
-import com.sksamuel.elastic4s.http.ElasticClient
+import com.sksamuel.elastic4s.http.{ElasticClient, ElasticDsl}
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import com.sksamuel.elastic4s.streams.RequestBuilder
+import com.sksamuel.elastic4s.circe._
 import helpers.ZonedDateTimeEncoder
 import io.circe.generic.auto._
 import org.slf4j.LoggerFactory
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class VidispineProjectIndexer(indexName:String, batchSize:Int=20, concurrentBatches:Int=2) extends ZonedDateTimeEncoder {
@@ -40,4 +42,41 @@ class VidispineProjectIndexer(indexName:String, batchSize:Int=20, concurrentBatc
       indexExists(indexName)
     }
   }
+
+  /**
+    * look up a single record from the index
+    * @param client ElasticClient object
+    * @param projectId vidispine ID to look up
+    * @return
+    */
+  def lookup(client:ElasticClient, projectId:String) =
+    client.execute {
+      get(projectId).from(indexName)
+    }.map(response=>{
+      if(response.isError) {
+        Left(response.error)
+      } else {
+        Right(response.result.to[VidispineProject])
+      }
+    })
+
+  /**
+    * perform an efficient bulk lookup on multiple project ids from the index
+    * @param client ElasticClient object
+    * @param projectIdList list of vidispine IDs to look up
+    * @return a Future containing either an ElasticError describing a problem or an IndexedSeq of VidispineProject items
+    */
+  def lookupBulk(client:ElasticClient, projectIdList:Seq[String]) = {
+    val ops = projectIdList.map(projectId=>get(projectId).from(indexName))
+
+    client.execute {
+      multiget(ops)
+    }
+  }.map(response=>{
+    if(response.isError) {
+      Left(response.error)
+    } else {
+      Right(response.result.to[VidispineProject])
+    }
+  })
 }
