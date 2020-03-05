@@ -36,13 +36,13 @@ trait VSFileHitReader extends ZonedDateTimeEncoder {
         size=hit.sourceAsMap("size").asInstanceOf[Long],
         hash=hit.sourceAsMap.get("hash").map(_.toString),
         timestamp=ZonedDateTime.parse(hit.sourceAsMap("timestamp").toString, DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-        refreshFlag = hit.sourceAsMap("refreshFlat").asInstanceOf[Int],
+        refreshFlag = hit.sourceAsMap("refreshFlag").asInstanceOf[Int],
         storage=hit.sourceAsMap("storage").toString,
         metadata=hit.sourceAsMap.get("metadata").asInstanceOf[Option[Map[String,String]]],
         membership = hit.sourceAsMap.get("membership").map(_.asInstanceOf[Map[String,AnyRef]]).flatMap(decodeMembership),
         archiveHunterId = hit.sourceAsMap.get("archiveHunterId").map(_.toString),
-        archiveConflict = hit.sourceAsMap.get("archiveConflict").map(_.asInstanceOf[Boolean]
-      ))
+        archiveConflict = hit.sourceAsMap.get("archiveConflict").map(_.asInstanceOf[Boolean])
+      )
     }
   }
 }

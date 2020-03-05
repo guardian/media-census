@@ -24,26 +24,30 @@ object TrustStoreHelper {
     * @return a Try with either the X509TrustManager or an error
     */
   def getCustomTrustManager(keyStorePath:String, passwordString:Option[String]):Try[X509TrustManager] = {
-    val myKeys = new FileInputStream(keyStorePath)
     try {
-      // Do the same with your trust store this time
-      // Adapt how you load the keystore to your needs
-      val myTrustStore = KeyStore.getInstance(KeyStore.getDefaultType)
-      myTrustStore.load(myKeys, passwordString.map(_.toCharArray).getOrElse(null))
+      val myKeys = new FileInputStream(keyStorePath)
+      try {
+        // Do the same with your trust store this time
+        // Adapt how you load the keystore to your needs
+        val myTrustStore = KeyStore.getInstance(KeyStore.getDefaultType)
+        myTrustStore.load(myKeys, passwordString.map(_.toCharArray).getOrElse(null))
 
-      val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
-      tmf.init(myTrustStore)
-      val trustManagerList = tmf.getTrustManagers.filter(_.isInstanceOf[X509TrustManager])
+        val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
+        tmf.init(myTrustStore)
+        val trustManagerList = tmf.getTrustManagers.filter(_.isInstanceOf[X509TrustManager])
 
-      if(trustManagerList.isEmpty){
-        Failure(new RuntimeException(s"Could not find x509 trust manager in the provided store $keyStorePath"))
+        if (trustManagerList.isEmpty) {
+          Failure(new RuntimeException(s"Could not find x509 trust manager in the provided store $keyStorePath"))
+        }
+
+        Success(trustManagerList.head.asInstanceOf[X509TrustManager])
+      } catch {
+        case ex: Throwable => Failure(ex)
+      } finally {
+        myKeys.close()
       }
-
-      Success(trustManagerList.head.asInstanceOf[X509TrustManager])
     } catch {
-      case ex:Throwable=>Failure(ex)
-    } finally {
-      myKeys.close()
+      case ex: Throwable=>Failure(ex)
     }
   }
 

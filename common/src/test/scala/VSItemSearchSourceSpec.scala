@@ -25,7 +25,7 @@ class VSItemSearchSourceSpec extends Specification with Mockito{
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       implicit val mockedComm = mock[VSCommunicator]
-      mockedComm.request(any, any,any,any,any,any)(any,any) returns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
+      mockedComm.request(any, any,any,any,any,any,any)(any,any) returns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
 
       val sinkFactory = Sink.fold[Seq[VSLazyItem],VSLazyItem](Seq())((acc,entry)=>acc++Seq(entry))
 
@@ -52,7 +52,7 @@ class VSItemSearchSourceSpec extends Specification with Mockito{
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       implicit val mockedComm = mock[VSCommunicator]
-      mockedComm.request(any,any,any,any,any,any)(any,any) returns Future(Left(HttpError("Vidispine is playing up",503))) thenReturns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
+      mockedComm.request(any,any,any,any,any,any,any)(any,any) returns Future(Left(HttpError("Vidispine is playing up",503))) thenReturns Future(Right(getTestSearch("testsearch.xml"))) thenReturns Future(Right(getTestSearch("emptysearch.xml")))
 
       val sinkFactory = Sink.fold[Seq[VSLazyItem],VSLazyItem](Seq())((acc,entry)=>acc++Seq(entry))
 

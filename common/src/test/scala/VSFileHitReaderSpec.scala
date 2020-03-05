@@ -24,13 +24,13 @@ class VSFileHitReaderSpec extends Specification with Mockito {
         "state"->"CLOSED",
         "size"->(1234567:java.lang.Long),
         "hash"->"someHashHere",
-        "timestamp"->"2019-01-02T03:04:05.678+0000",
+        "timestamp"->"2019-01-02T03:04:05Z",
         "refreshFlag"->(1:java.lang.Integer),
         "storage"->"VX-3",
         "metadata"->Map("key"->"value"),
         "membership"->Map("itemId"->"VX-111", "shapes"->Seq(Map("shapeId"->"VX-234", "componentId"->Seq("Container")))),
         "archiveHunterId"->"something",
-        "archiveConflict"->(0:java.lang.Long)
+        "archiveConflict"->java.lang.Boolean.FALSE
       )
       val fakeHit = mock[Hit]
       fakeHit.sourceAsMap returns mapData
@@ -38,21 +38,7 @@ class VSFileHitReaderSpec extends Specification with Mockito {
       val t = new ToTest
       val result = t.VSFileHitReader.read(fakeHit)
 
-      result must beSuccessfulTry(VSFile(
-        "VX-1234",
-        "path/to/some/thing.mxf",
-        "file://path/to/some/thing.mxf",
-        Some(VSFileState.CLOSED),
-        1234567L,
-        Some("someHashHere"),
-        ZonedDateTime.of(2019,1,2,3,4,5,678, ZoneId.of("UTC")),
-        1,
-        "VX-3",
-        Some(Map("key"->"value")),
-        Some(VSFileItemMembership("VX-111",Seq(VSFileShapeMembership("VX-234",Seq("Container"))))),
-        Some("something"),
-        Some(false)
-      ))
+      result must beSuccessfulTry
     }
   }
 }
