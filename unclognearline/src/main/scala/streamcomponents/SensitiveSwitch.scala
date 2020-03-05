@@ -4,7 +4,6 @@ import akka.stream.{Attributes, Inlet, Outlet, UniformFanOutShape}
 import akka.stream.stage.{AbstractInHandler, AbstractOutHandler, GraphStage, GraphStageLogic}
 import models.UnclogStream
 import org.slf4j.LoggerFactory
-import scala.util.control.Breaks._
 
 /**
   * Checks whether the incoming object contains a VidispineProject object set to sensitive.
@@ -35,7 +34,7 @@ class SensitiveSwitch extends GraphStage[UniformFanOutShape[UnclogStream, Unclog
         elem.ParentProjects.foreach ( process_projects => {
           if(process_projects.sensitive){
             push(outYes, elem)
-            break
+            return
           }
         })
 
