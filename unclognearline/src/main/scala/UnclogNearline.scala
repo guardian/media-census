@@ -184,10 +184,10 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
 
     resultFuture.onComplete({
       case Success(Right(resultCounts))=>
-        val commissionResultCount = resultCounts.head
-        val projectResultCount = resultCounts(1)
-        println(s"Found a total of $commissionResultCount commissions and $projectResultCount projects that are now indexed")
-        complete_run(0,None,None)
+        //val commissionResultCount = resultCounts.head
+        //val projectResultCount = resultCounts(1)
+        //println(s"Found a total of $commissionResultCount commissions and $projectResultCount projects that are now indexed")
+        //complete_run(0,None,None)
       case Success(Left(err))=>
         logger.error(s"ERROR: ${err.toString}")
         complete_run(1,Some(err.toString),None)
