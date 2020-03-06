@@ -3,11 +3,14 @@ package models
 import com.sksamuel.elastic4s.http.ElasticClient
 import org.slf4j.LoggerFactory
 import vidispine.{VSFile, VSLazyItem}
-
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class UnclogStream (VSFile:VSFile, VSItem:Option[VSLazyItem], ParentProjects:Seq[VidispineProject]) {
+//object MediaStatusValue extends Enumeration {
+//  val SHOULD_BE_ARCHIVED,NO_PROJECT,BRANDING,DELETABLE,SENSITIVE,PROJECT_OPEN_COMMISSION_COMPLETED,PROJECT_OPEN_COMMISSION_EXPIRED,PROJECT_OPEN_COMMISSION_OPEN = Value
+//}
+
+case class UnclogStream (VSFile:VSFile, VSItem:Option[VSLazyItem], ParentProjects:Seq[VidispineProject], MediaStatus:Option[MediaStatusValue.Value]) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   /**
