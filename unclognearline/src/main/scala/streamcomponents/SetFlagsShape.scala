@@ -33,7 +33,7 @@ class SetFlagsShape extends GraphStage[FlowShape[UnclogStream, UnclogStream]]{
         val killed_count = elem.ParentProjects.count(_.status.contains("Killed"))
         val sensitive_count = elem.ParentProjects.count(_.sensitive)
         val held_count = elem.ParentProjects.count(_.status.contains("Held"))
-        val new_count = elem.ParentProjects.count(_.status.contains("Held"))
+        val new_count = elem.ParentProjects.count(_.status.contains("New"))
         val title_production_count = elem.ParentProjects.count(_.status.contains("In Production"))
         val production_count = title_production_count + elem.ParentProjects.count(_.status.contains("In production"))
         val restored_count = elem.ParentProjects.count(_.status.contains("Restore"))
@@ -57,7 +57,7 @@ class SetFlagsShape extends GraphStage[FlowShape[UnclogStream, UnclogStream]]{
         } else if(completed_count==elem.ParentProjects.length) {
           if (deletable_count==elem.ParentProjects.length) {
             MediaStatusValue.DELETABLE
-          } else if(deep_count==elem.ParentProjects.length) {
+          } else if(deep_count>0) {
             MediaStatusValue.SHOULD_BE_ARCHIVED
           } else {
             MediaStatusValue.UNKNOWN
