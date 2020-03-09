@@ -21,8 +21,7 @@ import com.softwaremill.sttp._
 import scala.concurrent.duration._
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import com.sksamuel.elastic4s.http.search.SearchHit
-
-
+import streamcomponents.{ProjectCountSwitch, SetFlagsShape}
 
 object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with CleanoutFunctions {
   val logger = LoggerFactory.getLogger(getClass)
@@ -52,11 +51,13 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
   lazy val indexName = sys.env.getOrElse("INDEX_NAME", "mediacensus-commproj")
   lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
-  lazy val commissionIndexName = sys.env.getOrElse("COMMISSION_INDEX","commissions")
-  lazy implicit val commissionIndexer = new PlutoCommissionIndexer(commissionIndexName)
+  lazy val unclogIndexName = sys.env.getOrElse("UNCLOG_INDEX","unclog-nearline")
+  lazy implicit val unclogIndexer = new UnclogOutputIndexer(unclogIndexName)
 
   lazy val fileIndexName = sys.env.getOrElse("INDEX_NAME","mediacensus-nearline")
   lazy implicit val fileIndexer = new VSFileIndexer(fileIndexName)
+  lazy val vidispineProjectIndexName = sys.env.getOrElse("VIDISPINE_PROJECT_INDEX","vidispine-projects")
+  lazy implicit val vidispineProjectIndexer = new VidispineProjectIndexer(vidispineProjectIndexName)
 
   val interestingFields = Seq("gnm_storage_rule_deletable","gnm_storage_rule_deep_archive","gnm_storage_rule_sensitive","__collection")
   /**
@@ -65,24 +66,37 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
     */
   def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
                                                mat:Materializer) = {
-    val counterSink = Sink.fold[Int, VSFile](0)((acc,elem)=>acc+1)
+    val sinkFact = Sink.fold[Int, UnclogOutput](0)((acc,elem)=>acc+1)
 
-    GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
+    GraphDSL.create(sinkFact) { implicit builder=> { counterSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.http.ElasticDsl._
       import io.circe.generic.auto._
       import com.sksamuel.elastic4s.circe._
 
+      val unclogSink = builder.add(unclogIndexer.getIndexSink(esClient))
+
       val src = fileIndexer.getSource(esClient,Seq(matchQuery("storage",storageId)),limit=None)
       val lookup = builder.add(new VSGetItem(interestingFields))
+      val checkBrandingSwitch = builder.add(new ProjectCountSwitch)
+      val setFlags = builder.add(new SetFlagsShape)
 
-      //src.map(_.to[VSFile]) ~> lookup ~>
-      //src.out.map(_.to[VSFile])
-      //src.map(_.to[VSFile])
-      //src.map(_.to[VSFile])
-      //src.map(VSFile)
-      src.map(_.to[VSFile]) ~> lookup
-      lookup.out.map(_._2)
+      val outputMerger = builder.add(Merge[UnclogStream](2,false))
+
+      val outputSplitter = builder.add(Broadcast[UnclogOutput](2,false))
+
+      src.map(hit=>{
+        println(s"raw hit data: $hit")
+        hit.to[VSFile]
+      }) ~> lookup
+      lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkBrandingSwitch
+      checkBrandingSwitch.out(1)  //"no" branch, i.e. <15 projects
+        .mapAsync(4)(_.lookupProjectsMapper(esClient, vidispineProjectIndexer)) ~> setFlags ~> outputMerger
+
+      checkBrandingSwitch.out(0).map(_.copy(MediaStatus = Some(MediaStatusValue.BRANDING))) ~> outputMerger
+
+      outputMerger.out.map(_.makeWritable()) ~> outputSplitter ~> unclogSink
+      outputSplitter.out(1) ~> counterSink
 
       ClosedShape
     }}
@@ -114,7 +128,7 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
 
   def checkIndex(esClient:ElasticClient):Unit = {
     //we can't continue startup until this is done anyway, so it's fine to block here.
-    val checkResult = Await.result(commissionIndexer.checkIndex(esClient), 30 seconds)
+    val checkResult = Await.result(unclogIndexer.checkIndex(esClient), 30 seconds)
 
     if(checkResult.isError) {
       logger.error(s"Could not check index status: ${checkResult.error}")

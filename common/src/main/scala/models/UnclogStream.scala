@@ -39,4 +39,12 @@ case class UnclogStream (VSFile:VSFile, VSItem:Option[VSLazyItem], ParentProject
           })
       }
   }
+
+  def makeWritable():UnclogOutput = UnclogOutput(
+    VSFile.vsid,
+    VSItem.map(_.itemId),
+    VSFile.size,
+    ParentProjects.map(_.vsid),
+    MediaStatus.getOrElse(MediaStatusValue.UNKNOWN)
+  )
 }
