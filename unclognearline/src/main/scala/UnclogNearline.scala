@@ -85,17 +85,17 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
 
       val outputSplitter = builder.add(Broadcast[UnclogOutput](2,false))
 
-      src.map(hit=>{
-        println(s"raw hit data: $hit")
-        hit.to[VSFile]
-      }) ~> lookup
+      src.map(_.to[VSFile]) ~> lookup
       lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkBrandingSwitch
       checkBrandingSwitch.out(1)  //"no" branch, i.e. <15 projects
         .mapAsync(4)(_.lookupProjectsMapper(esClient, vidispineProjectIndexer)) ~> setFlags ~> outputMerger
 
       checkBrandingSwitch.out(0).map(_.copy(MediaStatus = Some(MediaStatusValue.BRANDING))) ~> outputMerger
 
-      outputMerger.out.map(_.makeWritable()) ~> outputSplitter ~> unclogSink
+      outputMerger.out.map(elem=>{
+        println(s"final elem: $elem")
+        elem.makeWritable()
+      }) ~> outputSplitter ~> unclogSink
       outputSplitter.out(1) ~> counterSink
 
       ClosedShape
@@ -169,13 +169,13 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
   def main(args: Array[String]): Unit = {
     implicit val esClient = getEsClientWithRetry()
 
-    try {
+ //   try {
       checkIndex(esClient)
-    } catch {
-      case err:Throwable=>
-        logger.error(s"Could not establish contact with Elasticsearch: ", err)
-        complete_run(1,None,None)(null)
-    }
+//    } catch {
+//      case err:Throwable=>
+//        logger.error(s"Could not establish contact with Elasticsearch: ", err)
+//        Await.ready(complete_run(1,None,None)(null), 2 hours)
+//    }
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 

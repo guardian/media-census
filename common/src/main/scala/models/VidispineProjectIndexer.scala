@@ -76,6 +76,9 @@ class VidispineProjectIndexer(indexName:String, batchSize:Int=20, concurrentBatc
     if(response.isError) {
       Left(response.error)
     } else {
+      if(response.result.size<1) {
+        Right(IndexedSeq())
+      }
       Right(response.result.to[VidispineProject])
     }
   })
