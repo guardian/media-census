@@ -86,11 +86,9 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
       val outputSplitter = builder.add(Broadcast[UnclogOutput](2,false))
 
       src.map(hit=>{
-        println(s"raw hit data: ${hit.sourceAsString}")
-        val content = hit.to[VSFile]
-        println(s"decoded data: $content")
-        content
-      })  ~> lookup
+        println(s"raw hit data: $hit")
+        hit.to[VSFile]
+      }) ~> lookup
       lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkBrandingSwitch
       checkBrandingSwitch.out(1)  //"no" branch, i.e. <15 projects
         .mapAsync(4)(_.lookupProjectsMapper(esClient, vidispineProjectIndexer)) ~> setFlags ~> outputMerger
@@ -181,14 +179,14 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
-    Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.UnclogScan,leaveOpenDays).map({
+    Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.CommissionScan,leaveOpenDays).map({
       case Left(errs)=>
         logger.error(s"Cleanout of old census jobs failed: $errs")
       case Right(results)=>
         logger.info(s"Cleanout of old census jobs succeeded: $results")
     }), 5 minutes)
 
-    val runInfo = JobHistory.newRun(JobType.UnclogScan)
+    val runInfo = JobHistory.newRun(JobType.CommissionScan)
 
     val resultFuture = jobHistoryDAO.put(runInfo).flatMap({
       case Right(_)=>
@@ -200,9 +198,10 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
 
     resultFuture.onComplete({
       case Success(Right(resultCounts))=>
-        val unclogResultCount = resultCounts
-        println(s"Processed a total of $unclogResultCount files that are now indexed")
-        complete_run(0,None,None)
+        //val commissionResultCount = resultCounts.head
+        //val projectResultCount = resultCounts(1)
+        //println(s"Found a total of $commissionResultCount commissions and $projectResultCount projects that are now indexed")
+        //complete_run(0,None,None)
       case Success(Left(err))=>
         logger.error(s"ERROR: ${err.toString}")
         complete_run(1,Some(err.toString),None)
