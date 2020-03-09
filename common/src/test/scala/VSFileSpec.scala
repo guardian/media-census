@@ -1,9 +1,10 @@
-import java.time.ZonedDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
+import helpers.ZonedDateTimeEncoder
 import org.specs2.mutable.Specification
-import vidispine.{VSFile, VSFileState}
+import vidispine.{VSFile, VSFileItemMembership, VSFileShapeMembership, VSFileState, VSFileStateEncoder}
 
-class VSFileSpec extends Specification{
+class VSFileSpec extends Specification with VSFileStateEncoder with ZonedDateTimeEncoder {
   "VSFile.storageSubpath" should {
     "strip the storage path out of a fullpath" in {
       val result = VSFile.storageSubpath("/path/to/storage/with/media/on/it","/path/to/storage")
@@ -76,6 +77,45 @@ class VSFileSpec extends Specification{
       result.get("path") must beSome("/path/to/file")
       result.get("uri") must beSome("file://path/to/file")
       result.get("size") must beSome(1234L)
+    }
+  }
+
+  "VSFile" should {
+    "encode correctly to JSON" in {
+      import io.circe.generic.auto._
+      import io.circe.syntax._
+
+      val t = ZonedDateTime.of(2020,1,2,3,4,5,0,ZoneId.systemDefault())
+      val membership = VSFileItemMembership("VX-5678",Seq(VSFileShapeMembership("VX-910",Seq("VX-111"))))
+      val toTest = VSFile("VX-1234","/path/to/file","file://path/to/file",Some(VSFileState.CLOSED),1234L,Some("hash-goes-here"),t,0,"VX-2",None,Some(membership),None)
+
+      val result = toTest.asJson.toString()
+      println(s"got $result")
+      result mustEqual """{
+                         |  "vsid" : "VX-1234",
+                         |  "path" : "/path/to/file",
+                         |  "uri" : "file://path/to/file",
+                         |  "state" : "CLOSED",
+                         |  "size" : 1234,
+                         |  "hash" : "hash-goes-here",
+                         |  "timestamp" : "2020-01-02T03:04:05Z",
+                         |  "refreshFlag" : 0,
+                         |  "storage" : "VX-2",
+                         |  "metadata" : null,
+                         |  "membership" : {
+                         |    "itemId" : "VX-5678",
+                         |    "shapes" : [
+                         |      {
+                         |        "shapeId" : "VX-910",
+                         |        "componentId" : [
+                         |          "VX-111"
+                         |        ]
+                         |      }
+                         |    ]
+                         |  },
+                         |  "archiveHunterId" : null,
+                         |  "archiveConflict" : null
+                         |}""".stripMargin
     }
   }
 }
