@@ -21,7 +21,7 @@ import com.softwaremill.sttp._
 import scala.concurrent.duration._
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import com.sksamuel.elastic4s.http.search.SearchHit
-import streamcomponents.{ProjectCountSwitch, SetFlagsShape}
+import streamcomponents.{ProjectCountSwitch, SetFlagsShape, ItemSwitch}
 
 object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with CleanoutFunctions {
   val logger = LoggerFactory.getLogger(getClass)
@@ -75,21 +75,22 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
       import com.sksamuel.elastic4s.circe._
 
       val unclogSink = builder.add(unclogIndexer.getIndexSink(esClient))
-
       val src = fileIndexer.getSource(esClient,Seq(matchQuery("storage",storageId)),limit=None)
       val lookup = builder.add(new VSGetItem(interestingFields))
       val checkBrandingSwitch = builder.add(new ProjectCountSwitch)
       val setFlags = builder.add(new SetFlagsShape)
-
-      val outputMerger = builder.add(Merge[UnclogStream](2,false))
-
+      val outputMerger = builder.add(Merge[UnclogStream](3,false))
       val outputSplitter = builder.add(Broadcast[UnclogOutput](2,false))
+      val checkItemSwitch = builder.add(new ItemSwitch)
 
       src.map(hit=>{
         println(s"raw hit data: $hit")
         hit.to[VSFile]
       }) ~> lookup
-      lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkBrandingSwitch
+      //lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkBrandingSwitch
+      lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkItemSwitch
+      checkItemSwitch.out(0) ~> checkBrandingSwitch
+      checkItemSwitch.out(1).map(_.copy(MediaStatus = Some(MediaStatusValue.NO_ITEM))) ~> outputMerger
       checkBrandingSwitch.out(1)  //"no" branch, i.e. <15 projects
         .mapAsync(4)(_.lookupProjectsMapper(esClient, vidispineProjectIndexer)) ~> setFlags ~> outputMerger
 
