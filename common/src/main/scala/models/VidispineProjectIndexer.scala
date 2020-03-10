@@ -76,8 +76,8 @@ class VidispineProjectIndexer(indexName:String, batchSize:Int=20, concurrentBatc
     if(response.isError) {
       Left(response.error)
     } else {
-      println(s"got response: ${response.result.toString}")
-      println(s"got ${response.result.size} records")
+      logger.debug(s"got response: ${response.result.toString}")
+      logger.debug(s"got ${response.result.size} records")
       Right(response.result.docs.flatMap(rec=>{
         if(rec.found) {
           Some(rec.to[VidispineProject])
