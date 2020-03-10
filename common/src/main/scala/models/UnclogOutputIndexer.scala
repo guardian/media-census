@@ -67,4 +67,27 @@ class UnclogOutputIndexer(indexName:String, batchSize:Int=20, concurrentBatches:
     )
   }
 
+  def getMediaStatusStats(implicit client:ElasticClient) = client.execute {
+    search(indexName) aggs termsAgg("mediastatus","MediaStatus.keyword").subaggs(sumAgg("size","FileSize"))
+  }.map(response=>{
+    if(response.isError) {
+      Left(response.error)
+    } else {
+      val aggregateData = response.result.aggregationsAsMap("mediastatus").asInstanceOf[Map[String,Any]]
+      logger.debug(s"got aggregate data: $aggregateData")
+      val buckets = aggregateData("buckets").asInstanceOf[List[Map[String,Any]]]
+
+      val output = buckets.map(entry=>{
+//        val resultData = kv._2.asInstanceOf[Map[String,Any]]
+//
+//        kv._1 -> GenericAggregationValue(resultData("doc_count").asInstanceOf[Int],resultData("size").asInstanceOf[Long])
+        GenericAggregationValue(
+          entry("key").asInstanceOf[String],
+          entry("doc_count").asInstanceOf[Int],
+          entry("size").asInstanceOf[Map[String,Double]]("value").toLong
+        )
+      })
+      Right(output)
+    }
+  })
 }
