@@ -73,11 +73,11 @@ class VidispineProjectSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator,
               }
 
               if(buffer.nonEmpty) {
+                logger.debug(s"Got ${buffer.length} more items")
                 val head = buffer.head
                 this.synchronized {
                   buffer = buffer.tail
                 }
-                logger.debug(s"Got ${buffer.length} more items")
                 onOutputHandler.invoke(head)
               } else {
                 logger.info("Processed all projects")
@@ -85,11 +85,11 @@ class VidispineProjectSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator,
               }
           })
         } else {
+          logger.debug(s"Pushing next project, got ${buffer.length} remaining")
           val head = buffer.head
           this.synchronized {
             buffer = buffer.tail
           }
-          logger.debug(s"Pushing next project, got ${buffer.length} remaining")
           push(out, head)
         }
       }
