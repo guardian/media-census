@@ -28,7 +28,8 @@ case class UnclogStream (VSFile:VSFile, VSItem:Option[VSLazyItem], ParentProject
     case Some(vsItem)=>
       vsItem.get("__collection") match {
         case None=>
-          Future.failed(new RuntimeException("vsitem had no parent collection fields!"))
+          logger.debug(s"VSItem $vsItem had no parent collection fields!")
+          Future(this)
         case Some(parentCollectionNames)=>
           indexer.lookupBulk(esClient, parentCollectionNames).map({
             case Left(err)=>

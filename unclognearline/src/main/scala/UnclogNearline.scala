@@ -84,9 +84,11 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
       val checkItemSwitch = builder.add(new ItemSwitch)
 
       src.map(hit=>{
-        println(s"raw hit data: $hit")
-        hit.to[VSFile]
-      }) ~> lookup
+        println(s"raw hit data: ${hit.sourceAsString}")
+        val content = hit.to[VSFile]
+        println(s"decoded data: $content")
+        content
+      })  ~> lookup
       //lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkBrandingSwitch
       lookup.map(tuple=>UnclogStream(tuple._1,tuple._2,Seq(),None)) ~> checkItemSwitch
       checkItemSwitch.out(0) ~> checkBrandingSwitch
