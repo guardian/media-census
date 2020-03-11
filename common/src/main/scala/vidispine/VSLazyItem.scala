@@ -79,6 +79,7 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
 }
 
 object VSLazyItem extends ((String,Map[String,VSMetadataEntry],Option[Map[String,VSShape]])=>VSLazyItem) {
+  private val logger = LoggerFactory.getLogger(getClass)
   /**
     * simple constructor for blank item
     * @param itemId item id to hold
