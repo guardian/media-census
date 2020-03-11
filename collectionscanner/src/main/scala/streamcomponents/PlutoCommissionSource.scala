@@ -72,11 +72,11 @@ class PlutoCommissionSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator,m
               }
 
               if(buffer.nonEmpty) {
+                logger.debug(s"Got ${buffer.length} more items")
                 val head = buffer.head
                 this.synchronized {
                   buffer = buffer.tail
                 }
-                logger.debug(s"Got ${buffer.length} more items")
                 onOutputHandler.invoke(head)
               } else {
                 logger.info("Processed all commissions")
@@ -84,11 +84,11 @@ class PlutoCommissionSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator,m
               }
           })
         } else {
+          logger.debug(s"Pushing next commission, got ${buffer.length} remaining")
           val head = buffer.head
           this.synchronized {
             buffer = buffer.tail
           }
-          logger.debug(s"Pushing next commission, got ${buffer.length} remaining")
           push(out, head)
         }
       }
