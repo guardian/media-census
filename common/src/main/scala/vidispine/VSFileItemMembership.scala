@@ -3,9 +3,19 @@ package vidispine
 import scala.util.{Failure, Success, Try}
 import scala.xml.NodeSeq
 
-case class VSFileItemMembership (itemId:String, shapes:Seq[VSFileShapeMembership])
+case class VSFileItemMembership (itemId:String, shapes:Seq[VSFileShapeMembership]) {
+  def toMap : Map[String,AnyRef] = Map(
+    "itemId" -> itemId,
+    "shapes" -> shapes.map(_.toMap)
+  )
+}
 
-case class VSFileShapeMembership(shapeId:String,componentId:Seq[String])
+case class VSFileShapeMembership(shapeId:String,componentId:Seq[String]) {
+  def toMap:Map[String,AnyRef] = Map(
+    "shapeId" -> shapeId,
+    "componentId" -> componentId
+  )
+}
 
 object VSFileItemMembership {
   def fromXml(node:NodeSeq):Try[VSFileItemMembership] = Try {

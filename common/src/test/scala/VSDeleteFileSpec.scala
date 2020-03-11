@@ -19,7 +19,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
     "send a DELETE request to the relevant URI when it receives a file" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       implicit val mockedVSCommunicator = mock[VSCommunicator]
-      mockedVSCommunicator.request(any,any,any,any,any,any)(any,any) returns Future(Right(""))
+      mockedVSCommunicator.request(any,any,any,any,any,any,any)(any,any) returns Future(Right(""))
 
       val initialFile = VSFile("VX-1234","path/to/file","file://path/to/file",None,1234L,None,ZonedDateTime.now(),0,"VX-1",None,None,None,None)
       val sinkFact = Sink.seq[VSFile]
@@ -39,7 +39,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
     "not fail if a 404 is returned" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       implicit val mockedVSCommunicator = mock[VSCommunicator]
-      mockedVSCommunicator.request(any,any,any,any,any,any)(any,any) returns Future(Left(HttpError("Not found", 404)))
+      mockedVSCommunicator.request(any,any,any,any,any,any,any)(any,any) returns Future(Left(HttpError("Not found", 404)))
 
       val initialFile = VSFile("VX-1234","path/to/file","file://path/to/file",None,1234L,None,ZonedDateTime.now(),0,"VX-1",None,None,None,None)
       val sinkFact = Sink.seq[VSFile]
@@ -59,7 +59,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
     "fail if the server returns an error" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       implicit val mockedVSCommunicator = mock[VSCommunicator]
-      mockedVSCommunicator.request(any,any,any,any,any,any)(any,any) returns Future(Left(HttpError("Kaboom", 500)))
+      mockedVSCommunicator.request(any,any,any,any,any,any,any)(any,any) returns Future(Left(HttpError("Kaboom", 500)))
 
       val initialFile = VSFile("VX-1234","path/to/file","file://path/to/file",None,1234L,None,ZonedDateTime.now(),0,"VX-1",None,None,None,None)
       val sinkFact = Sink.seq[VSFile]
@@ -80,7 +80,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
     "fail if the lookup future fails" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       implicit val mockedVSCommunicator = mock[VSCommunicator]
-      mockedVSCommunicator.request(any,any,any,any,any,any)(any,any) returns Future.failed(new RuntimeException("kaboom"))
+      mockedVSCommunicator.request(any,any,any,any,any,any,any)(any,any) returns Future.failed(new RuntimeException("kaboom"))
 
       val initialFile = VSFile("VX-1234","path/to/file","file://path/to/file",None,1234L,None,ZonedDateTime.now(),0,"VX-1",None,None,None,None)
       val sinkFact = Sink.seq[VSFile]
@@ -101,7 +101,7 @@ class VSDeleteFileSpec extends Specification with Mockito {
     "NOT send a DELETE request to the relevant URI if reallyDelete is false" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       implicit val mockedVSCommunicator = mock[VSCommunicator]
-      mockedVSCommunicator.request(any,any,any,any,any,any)(any,any) returns Future(Right(""))
+      mockedVSCommunicator.request(any,any,any,any,any,any,any)(any,any) returns Future(Right(""))
 
       val initialFile = VSFile("VX-1234","path/to/file","file://path/to/file",None,1234L,None,ZonedDateTime.now(),0,"VX-1",None,None,None,None)
       val sinkFact = Sink.seq[VSFile]

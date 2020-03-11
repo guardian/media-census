@@ -2,33 +2,36 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
-import akka.stream.scaladsl.{Broadcast, GraphDSL, Keep, Merge, RunnableGraph, Sink}
-import models.{AssetSweeperFile, JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer}
+import akka.stream.scaladsl.{Broadcast, GraphDSL, Merge, RunnableGraph, Sink}
+import models.{JobHistory, JobHistoryDAO, JobType, PlutoCommission, PlutoCommissionIndexer, PlutoProjectIndexer, PlutoProject, VidispineProject, VidispineProjectIndexer}
 import streamComponents._
-import play.api.{Configuration, Logger}
 import config.{DatabaseConfiguration, ESConfig, VSConfig}
 import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
-
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticError, ElasticProperties, HttpClient}
 import io.circe.generic.auto._
+import org.slf4j.LoggerFactory
+import streamcomponents.{PlutoCommissionSource, PlutoProjectSource, VidispineProjectSource}
+import vidispine.VSCommunicator
+import com.softwaremill.sttp._
 
 import scala.concurrent.duration._
 
-object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
-  val logger = Logger(getClass)
+object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
+  val logger = LoggerFactory.getLogger(getClass)
 
   private implicit val actorSystem = ActorSystem("CronScanner")
   private implicit val mat:Materializer = ActorMaterializer.create(actorSystem)
 
-  lazy val assetSweeperConfig = DatabaseConfiguration(
-    sys.env.getOrElse("ASSETSWEEPER_JDBC_DRIVER","org.postgresql.Driver"),
-    sys.env("ASSETSWEEPER_JDBC_URL"),
-    sys.env("ASSETSWEEPER_JDBC_USER"),
-    sys.env("ASSETSWEEPER_PASSWORD")
+  lazy val vsConfig = VSConfig(
+    uri"${sys.env("VIDISPINE_BASE_URL")}",
+    sys.env("VIDISPINE_USER"),
+    sys.env("VIDISPINE_PASSWORD")
   )
+
+  lazy implicit val vsCommunicator = new VSCommunicator(vsConfig.vsUri, vsConfig.plutoUser, vsConfig.plutoPass)
 
   lazy val esConfig = ESConfig(
     sys.env.get("ES_URI"),
@@ -36,34 +39,47 @@ object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
 
-  lazy val indexName = sys.env.getOrElse("INDEX_NAME","mediacensus")
+  lazy val portalConfig = VSConfig(
+    uri"${sys.env("PORTAL_BASE_URL")}",
+    sys.env("VIDISPINE_USER"),
+    sys.env("VIDISPINE_PASSWORD")
+  )
+
+  lazy val siteIdentifierLoaded = sys.env.getOrElse("SITE_IDENTIFIER","VX")
+  lazy val portalCommunicator = new VSCommunicator(portalConfig.vsUri, portalConfig.plutoUser, portalConfig.plutoPass)
+  lazy val projectIndexName = sys.env.getOrElse("PROJECT_INDEX","projects")
+  lazy implicit val projectIndexer = new PlutoProjectIndexer(projectIndexName)
+
   lazy val jobIndexName = sys.env.getOrElse("JOBS_INDEX","mediacensus-jobs")
-  lazy implicit val indexer = new MediaCensusIndexer(indexName)
+  lazy val indexName = sys.env.getOrElse("INDEX_NAME", "mediacensus-commproj")
   lazy val leaveOpenDays = sys.env.getOrElse("LEAVE_OPEN_DAYS","5").toInt
+  lazy val commissionIndexName = sys.env.getOrElse("COMMISSION_INDEX","commissions")
+  lazy implicit val commissionIndexer = new PlutoCommissionIndexer(commissionIndexName)
+  lazy val vidispineProjectIndexName = sys.env.getOrElse("VIDISPINE_PROJECT_INDEX","vidispine-projects")
+  lazy implicit val vidispineProjectIndexer = new VidispineProjectIndexer(vidispineProjectIndexName)
 
   /**
-    * builds the main stream for conducting the delete scan
+    * Builds the main stream for conducting the commission scan
     * @return
     */
-  def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient) = {
-    val counterSink = Sink.fold[Int, MediaCensusEntry](0)((acc,elem)=>acc+1)
+  def buildStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
+                                               mat:Materializer) = {
+    val counterSink = Sink.fold[Int, PlutoCommission](0)((acc,elem)=>acc+1)
 
     GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.circe._
 
-      val deleteSink = builder.add(indexer.getDeleteSink(esClient))
-      val srcFactory = indexer.getIndexSource(esClient)
+      val commissionSink = builder.add(commissionIndexer.getIndexSink(esClient))
+      val srcFactory = new PlutoCommissionSource()
 
-      val periodicUpdate = builder.add(new PeriodicUpdate[MediaCensusEntry](initialJobRecord, updateEvery = 500))
-      val deletionFilter = builder.add(new DeletionFilter(assetSweeperConfig))
-      val existInFilesFilter = builder.add(new AssetSweeperNotExistFilter(assetSweeperConfig))
       val streamSource = builder.add(srcFactory)
-      val sinkSplitter = builder.add(Broadcast[MediaCensusEntry](2, eagerCancel=false))
+      val sinkSplitter = builder.add(Broadcast[PlutoCommission](2, eagerCancel=false))
 
-      streamSource.out.log("deleteStream").map(_.to[MediaCensusEntry]) ~> periodicUpdate ~> deletionFilter ~> existInFilesFilter ~> sinkSplitter
-      sinkSplitter ~> deleteSink
-      sinkSplitter ~> reduceSink
+
+      streamSource ~> sinkSplitter.in
+      sinkSplitter.out(0) ~> commissionSink
+      sinkSplitter.out(1) ~> reduceSink
 
       ClosedShape
     }}
@@ -95,7 +111,7 @@ object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
 
   def checkIndex(esClient:ElasticClient):Unit = {
     //we can't continue startup until this is done anyway, so it's fine to block here.
-    val checkResult = Await.result(indexer.checkIndex(esClient), 30 seconds)
+    val checkResult = Await.result(commissionIndexer.checkIndex(esClient), 30 seconds)
 
     if(checkResult.isError) {
       logger.error(s"Could not check index status: ${checkResult.error}")
@@ -133,6 +149,35 @@ object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     })
   }
 
+  /**
+    * Builds the main stream for conducting the project scan
+    * @return
+    */
+  def buildVidispineProjectStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
+                                               mat:Materializer) = {
+    val counterSink = Sink.fold[Int, VidispineProject](0)((acc,elem)=>acc+1)
+
+    GraphDSL.create(counterSink) { implicit builder=> { reduceSink =>
+      import akka.stream.scaladsl.GraphDSL.Implicits._
+      import com.sksamuel.elastic4s.circe._
+
+      val projectSink = builder.add(vidispineProjectIndexer.getIndexSink(esClient))
+      val srcFactory = new VidispineProjectSource()
+
+      val streamSource = builder.add(srcFactory)
+      val sinkSplitter = builder.add(Broadcast[VidispineProject](2, eagerCancel=false))
+
+
+      streamSource ~> sinkSplitter.in
+      sinkSplitter.out(0) ~> projectSink
+      sinkSplitter.out(1) ~> reduceSink
+
+      ClosedShape
+    }}
+  }
+
+
+
   def main(args: Array[String]): Unit = {
     implicit val esClient = getEsClientWithRetry()
 
@@ -146,37 +191,31 @@ object DeleteScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
 
     lazy implicit val jobHistoryDAO = new JobHistoryDAO(esClient, jobIndexName)
 
-    Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.DeletedScan,leaveOpenDays).map({
+    Await.ready(cleanoutOldJobs(jobHistoryDAO, JobType.CommissionScan,leaveOpenDays).map({
       case Left(errs)=>
         logger.error(s"Cleanout of old census jobs failed: $errs")
       case Right(results)=>
         logger.info(s"Cleanout of old census jobs succeeded: $results")
     }), 5 minutes)
 
-    val runInfo = JobHistory.newRun(JobType.DeletedScan)
+    val runInfo = JobHistory.newRun(JobType.CommissionScan)
 
     val resultFuture = jobHistoryDAO.put(runInfo).flatMap({
       case Right(_)=>
         logger.info(s"Saved run info ${runInfo.toString}")
-        RunnableGraph.fromGraph(buildStream(runInfo)).run().map(resultCount=>Right(resultCount))
+        val commissionStreamFut = RunnableGraph.fromGraph(buildStream(runInfo)).run()//.map(resultCount=>Right(resultCount))
+        val projectStreamFut = RunnableGraph.fromGraph(buildVidispineProjectStream(runInfo)).run()
+        Future.sequence(Seq(commissionStreamFut,projectStreamFut)).map(results=>Right(results))
       case Left(err)=>
         Future(Left(err))
-      })
+    })
 
     resultFuture.onComplete({
-      case Success(Right(resultCount))=>
-        println(s"Deleted a total of $resultCount items that are now moved off primary storage")
-        indexer.calculateStats(esClient, runInfo).onComplete({
-          case Failure(err)=>
-            logger.error(s"Calculate stats crashed: ", err)
-            complete_run(1,Some(s"Calculate stats crashed: ${err.toString}"),Some(runInfo))
-          case Success(Left(errs))=>
-            complete_run(1,Some(errs.mkString("; ")),Some(runInfo))
-          case Success(Right(updatedJH))=>
-            val finalJH = updatedJH.copy(itemsCounted=resultCount)
-            complete_run(0,None,Some(finalJH))
-        })
-
+      case Success(Right(resultCounts))=>
+        val commissionResultCount = resultCounts.head
+        val projectResultCount = resultCounts(1)
+        println(s"Found a total of $commissionResultCount commissions and $projectResultCount projects that are now indexed")
+        complete_run(0,None,None)
       case Success(Left(err))=>
         logger.error(s"ERROR: ${err.toString}")
         complete_run(1,Some(err.toString),None)

@@ -42,18 +42,18 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
     * @param queryParams String->string map of query params
     * @return a Future, with a response containing a stream source to read the body.
     */
-  protected def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String]):Future[Response[Source[ByteString, Any]]] = {
+  protected def sendGeneric(operation:OperationType.Value, uriPath:String, maybeXmlString:Option[String], headers:Map[String,String], queryParams:Map[String,String], wantXml:Boolean=true):Future[Response[Source[ByteString, Any]]] = {
     val bs = maybeXmlString.map(xmlString=>ByteString(xmlString,"UTF-8"))
 
     val uriWithPath = vsUri.path(uriPath)
     val uri = queryParams.foldLeft[Uri](uriWithPath)((acc, tuple)=>acc.queryFragment(Uri.QueryFragment.KeyValue(tuple._1,tuple._2)))
     val source:Option[Source[ByteString, Any]] = bs.map(Source.single)
 
+    val defaultAccept = if(wantXml) Map("Accept"->"application/xml") else Map()
     val hdr = Map(
-      "Accept"->"application/xml",
       "Authorization"->s"Basic $authString",
       "Content-Type"->"application/xml"
-    ) ++ headers
+    ) ++ headers ++ defaultAccept
 
     logger.debug(s"Got headers, initiating $operation to $uri")
 
@@ -99,9 +99,9 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
     * @param ec implicitly provided execution context for async operations
     * @return a Future, containing either an [[HttpError]] instance or a String of the server's response
     */
-  def request(operationType: OperationType.Value, uriPath:String,maybeXmlString:Option[String],headers:Map[String,String], queryParams:Map[String,String]=Map(), attempt:Int=0)
+  def request(operationType: OperationType.Value, uriPath:String,maybeXmlString:Option[String],headers:Map[String,String], queryParams:Map[String,String]=Map(), wantXml:Boolean=true, attempt:Int=0)
              (implicit materializer: akka.stream.Materializer,ec: ExecutionContext): Future[Either[HttpError,String]] =
-    sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams).flatMap({ response =>
+    sendGeneric(operationType, uriPath, maybeXmlString, headers, queryParams, wantXml).flatMap({ response =>
       response.body match {
         case Right(source) =>
           logger.debug("Send succeeded")
@@ -116,7 +116,7 @@ class VSCommunicator(vsUri:Uri, plutoUser:String, plutoPass:String, maxAttempts:
               Future(Left(HttpError("Gave up after 20 attempts", 503)))
             } else {
               Thread.sleep(delayTime * 1000) //FIXME: should do this in a non-blocking way, if possible.
-              request(operationType, uriPath, maybeXmlString, headers, queryParams, attempt + 1)
+              request(operationType, uriPath, maybeXmlString, headers, queryParams, wantXml, attempt + 1)
             }
           } else {
             VSError.fromXml(errorString) match {

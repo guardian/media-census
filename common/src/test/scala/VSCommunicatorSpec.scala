@@ -24,7 +24,7 @@ class VSCommunicatorSpec extends Specification with Mockito{
         Future(Response[Source[ByteString, Any]](Right(Source.single(ByteString("eventual content"))),200,scala.collection.immutable.Seq[(String,String)](),List()))
 
       val comm = new VSCommunicator(uri"http://test-server.org","user","password") {
-        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String]): Future[Response[Source[ByteString, Any]]] =
+        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String], wantXml:Boolean): Future[Response[Source[ByteString, Any]]] =
           mockedSendGeneric(operation, uriPath, maybeXmlString, headers, queryParams)
       }
 
@@ -42,7 +42,7 @@ class VSCommunicatorSpec extends Specification with Mockito{
         Future(Response[Source[ByteString, Any]](Right(Source.single(ByteString("eventual content"))),200,scala.collection.immutable.Seq[(String,String)](),List()))
 
       val comm = new VSCommunicator(uri"http://test-server.org","user","password") {
-        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String]): Future[Response[Source[ByteString, Any]]] =
+        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String], wantXml:Boolean): Future[Response[Source[ByteString, Any]]] =
           mockedSendGeneric(operation, uriPath, maybeXmlString, headers, queryParams)
       }
 
@@ -60,7 +60,7 @@ class VSCommunicatorSpec extends Specification with Mockito{
         Future(Response[Source[ByteString, Any]](Right(Source.single(ByteString("eventual content"))),200,scala.collection.immutable.Seq[(String,String)](),List()))
 
       val comm = new VSCommunicator(uri"http://test-server.org","user","password") {
-        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String]): Future[Response[Source[ByteString, Any]]] =
+        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String], wantXml:Boolean): Future[Response[Source[ByteString, Any]]] =
           mockedSendGeneric(operation, uriPath, maybeXmlString, headers, queryParams)
       }
 
@@ -78,7 +78,7 @@ class VSCommunicatorSpec extends Specification with Mockito{
         Future(Response[Source[ByteString, Any]](Right(Source.single(ByteString("eventual content"))),200,scala.collection.immutable.Seq[(String,String)](),List()))
 
       val comm = new VSCommunicator(uri"http://test-server.org","user","password") {
-        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String]): Future[Response[Source[ByteString, Any]]] =
+        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String], wantXml:Boolean): Future[Response[Source[ByteString, Any]]] =
           mockedSendGeneric(operation, uriPath, maybeXmlString, headers, queryParams)
       }
 
@@ -95,7 +95,7 @@ class VSCommunicatorSpec extends Specification with Mockito{
         Future(Response[Source[ByteString, Any]](Right(Source.single(ByteString("my content"))),200,scala.collection.immutable.Seq[(String,String)](),List()))
 
       val comm = new VSCommunicator(uri"http://test-server.org","user","password") {
-        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String]): Future[Response[Source[ByteString, Any]]] =
+        override protected def sendGeneric(operation: VSCommunicator.OperationType.Value, uriPath: String, maybeXmlString: Option[String], headers: Map[String, String], queryParams: Map[String, String], wantXml:Boolean): Future[Response[Source[ByteString, Any]]] =
           mockedSendGeneric(operation, uriPath, maybeXmlString, headers, queryParams)
       }
 

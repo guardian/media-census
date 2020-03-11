@@ -117,5 +117,44 @@ class VSFileSpec extends Specification with VSFileStateEncoder with ZonedDateTim
                          |  "archiveConflict" : null
                          |}""".stripMargin
     }
+
+    "decode correclty from json" in {
+      import io.circe.generic.auto._
+      import io.circe.syntax._
+      val rawjson = """{
+                      |  "refreshFlag": 1,
+                      |  "membership": {
+                      |    "itemId": "KP-619187",
+                      |    "shapes": [
+                      |      {
+                      |        "shapeId": "KP-1195358",
+                      |        "componentId": [
+                      |          "KP-2988899",
+                      |          "KP-2988897",
+                      |          "KP-2988898",
+                      |          "KP-2988895",
+                      |          "KP-2988896",
+                      |          "KP-2988894"
+                      |        ]
+                      |      }
+                      |    ]
+                      |  },
+                      |  "path": "151127Ambulance_1_KP-26082010_KP-619187.mxf",
+                      |  "timestamp": "2015-11-30T01:07:02.460Z",
+                      |  "size": -1,
+                      |  "state": "LOST",
+                      |  "uri": "",
+                      |  "vsid": "KP-26082057",
+                      |  "hash": "",
+                      |  "metadata": {
+                      |    "created": "1448637476000",
+                      |    "mtime": "1448637476000"
+                      |  },
+                      |  "storage": "KP-2"
+                      |}""".stripMargin
+      val result = io.circe.parser.parse(rawjson).flatMap(_.as[VSFile])
+      result must beRight
+
+    }
   }
 }
