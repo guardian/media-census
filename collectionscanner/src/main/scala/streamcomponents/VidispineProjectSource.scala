@@ -5,10 +5,12 @@ import akka.stream.{Attributes, Materializer, Outlet, SourceShape}
 import models.VidispineProject
 import org.slf4j.LoggerFactory
 import vidispine.VSCommunicator
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
+/**
+  * Queries the Vidispine API for Pluto projects and is therefore much slower than PlutoProjectSource, but does include media management fields.
+  */
 class VidispineProjectSource(recordsPerPage:Int=5)(implicit comm:VSCommunicator, mat:Materializer) extends GraphStage[SourceShape[VidispineProject]] {
   private final val out:Outlet[VidispineProject] = Outlet.create("VidispineProjectSource")
 

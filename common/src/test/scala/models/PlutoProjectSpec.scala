@@ -27,7 +27,6 @@ class PlutoProjectSpec extends Specification {
                       |    "project_locker_id_prelude": null
                       |  }""".stripMargin
       val a = io.circe.parser.parse(rawJson).flatMap(_.as[PlutoProject])
-      a
       a must beRight(PlutoProject(None,53555,Some("Made in Britain: Project Template"), "In Production", Some(50339)))
     }
   }

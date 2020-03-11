@@ -153,32 +153,6 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
     * Builds the main stream for conducting the project scan
     * @return
     */
-  def buildProjectStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
-                                               mat:Materializer) = {
-    val counterSinkProjects = Sink.fold[Int, PlutoProject](0)((acc,elem)=>acc+1)
-
-    GraphDSL.create(counterSinkProjects) { implicit builder=> { reduceSinkProjects =>
-      import akka.stream.scaladsl.GraphDSL.Implicits._
-      import com.sksamuel.elastic4s.circe._
-
-      val projectSink = builder.add(projectIndexer.getIndexSink(esClient))
-      val srcFactoryProjects = new PlutoProjectSource()(portalCommunicator, mat)
-
-      val streamSourceProjects = builder.add(srcFactoryProjects)
-      val sinkSplitterProjects = builder.add(Broadcast[PlutoProject](2, eagerCancel=false))
-
-      streamSourceProjects.out.map(_.copy(siteIdentifier=Option(siteIdentifierLoaded))) ~> sinkSplitterProjects.in
-      sinkSplitterProjects.out(0) ~> projectSink
-      sinkSplitterProjects.out(1) ~> reduceSinkProjects
-
-      ClosedShape
-    }}
-  }
-
-  /**
-    * Builds the main stream for conducting the project scan
-    * @return
-    */
   def buildVidispineProjectStream(initialJobRecord:JobHistory)(implicit jobHistoryDAO: JobHistoryDAO, esClient:ElasticClient,
                                                mat:Materializer) = {
     val counterSink = Sink.fold[Int, VidispineProject](0)((acc,elem)=>acc+1)
@@ -230,7 +204,6 @@ object CommissionScanner extends ZonedDateTimeEncoder with CleanoutFunctions {
       case Right(_)=>
         logger.info(s"Saved run info ${runInfo.toString}")
         val commissionStreamFut = RunnableGraph.fromGraph(buildStream(runInfo)).run()//.map(resultCount=>Right(resultCount))
-        //val projectStreamFut = RunnableGraph.fromGraph(buildProjectStream(runInfo)).run()
         val projectStreamFut = RunnableGraph.fromGraph(buildVidispineProjectStream(runInfo)).run()
         Future.sequence(Seq(commissionStreamFut,projectStreamFut)).map(results=>Right(results))
       case Left(err)=>

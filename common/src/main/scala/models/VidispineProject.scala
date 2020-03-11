@@ -13,12 +13,7 @@ object VidispineProject {
     applicableFieldNodes.headOption.map(fieldNode=>(fieldNode\"value").text)
   }
 
-  def checkField(field:Option[String], check:Option[String]): Boolean = {
-    if (field == check)
-      true
-    else
-      false
-  }
+  def checkField(field:Option[String], check:Option[String]): Boolean = field==check
 
   val pattern = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 

@@ -8,6 +8,9 @@ import vidispine.VSCommunicator
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits._
 
+/**
+  * Queries the Pluto API for projects and does not include media management flags.
+  */
 class PlutoProjectSource(recordsPerPage:Int=100)(implicit comm:VSCommunicator,mat:Materializer) extends GraphStage[SourceShape[PlutoProject]] {
   private final val out: Outlet[PlutoProject] = Outlet.create("PlutoProjectSource")
 
