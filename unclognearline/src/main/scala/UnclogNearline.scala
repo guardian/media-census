@@ -75,7 +75,7 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
       import com.sksamuel.elastic4s.circe._
 
       val unclogSink = builder.add(unclogIndexer.getIndexSink(esClient))
-      val src = fileIndexer.getSource(esClient,Seq(matchQuery("storage",storageId)),limit=None)
+      val src = fileIndexer.getSource(esClient,Seq(matchQuery("storage.keyword",storageId)),limit=None)
       val lookup = builder.add(new VSGetItem(interestingFields))
       val checkBrandingSwitch = builder.add(new ProjectCountSwitch)
       val setFlags = builder.add(new SetFlagsShape)
