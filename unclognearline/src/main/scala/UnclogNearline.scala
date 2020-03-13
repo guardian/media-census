@@ -48,7 +48,7 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
     case None=>
       val error_message = "Error loading STORAGE_IDENTIFIER. Stopping run."
       logger.error(error_message)
-      complete_run(1,Option(error_message),None)(null)
+      complete_run(1,Some(error_message),None)(null)
   }
   lazy val siteIdentifierLoaded = sys.env.getOrElse("SITE_IDENTIFIER","VX")
   lazy val projectIndexName = sys.env.getOrElse("PROJECT_INDEX","projects")
