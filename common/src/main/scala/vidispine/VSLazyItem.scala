@@ -1,5 +1,7 @@
 package vidispine
 
+import java.net.URLEncoder
+
 import akka.stream.Materializer
 import models.HttpError
 import org.slf4j.LoggerFactory
@@ -24,8 +26,10 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
     * @param mat implicitly provided akka Materializer
     * @return
     */
-  def getMoreMetadata(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materializer):Future[Either[GetMetadataError,VSLazyItem]] =
-    comm.request(OperationType.GET, s"/API/item/$itemId/metadata", None, Map("Accept"->"application/xml"), Map("field"->fieldList.mkString(","))).map({
+  def getMoreMetadata(fieldList:Seq[String])(implicit comm:VSCommunicator, mat:Materializer):Future[Either[GetMetadataError,VSLazyItem]] = {
+    val fieldQuery = s"field=${fieldList.map(URLEncoder.encode).mkString(",")}"
+
+    comm.request(OperationType.GET, s"/API/item/$itemId/metadata;$fieldQuery", None, Map("Accept"->"application/xml")).map({
       case Right(returnedXml) =>
         logger.debug(s"Vidispine returned $returnedXml")
         val maybeParsedData = Try {
@@ -55,6 +59,7 @@ case class VSLazyItem (itemId:String, lookedUpMetadata:Map[String,VSMetadataEntr
         logger.debug(s"Vidispine returned an error ${httpErr.toString}")
         Left(GetMetadataError(Some(httpErr), None, None))
     })
+  }
 
   /**
     * get any metadata for the given key

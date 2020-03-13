@@ -157,7 +157,7 @@ class SetFlagsShapeSpec extends Specification {
       val result = Await.result(RunnableGraph.fromGraph(testStream).run(), 30 seconds)
       result.head mustEqual UnclogStream(VSFile("VX-123344", "/test", "/test", None, 2318793, None, ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern), 1, "VX-4", None, None, None, None),None,Seq(VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), true, true, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern)))), Some(MediaStatusValue.DELETABLE))
     }
-    "Push an object including the SHOULD_BE_ARCHIVED flag to the out" in new AkkaTestkitSpecs2Support {
+    "Push an object including the SHOULD_BE_ARCHIVED_AND_DELETED flag to the out" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       val sinkFactory = Sink.fold[Seq[(UnclogStream)], UnclogStream](Seq())((acc,entry)=>acc++Seq(entry))
@@ -173,7 +173,7 @@ class SetFlagsShapeSpec extends Specification {
       }
 
       val result = Await.result(RunnableGraph.fromGraph(testStream).run(), 30 seconds)
-      result.head mustEqual UnclogStream(VSFile("VX-123344", "/test", "/test", None, 2318793, None, ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern), 1, "VX-4", None, None, None, None),None,Seq(VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), true, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern)))), Some(MediaStatusValue.SHOULD_BE_ARCHIVED))
+      result.head mustEqual UnclogStream(VSFile("VX-123344", "/test", "/test", None, 2318793, None, ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern), 1, "VX-4", None, None, None, None),None,Seq(VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), true, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern)))), Some(MediaStatusValue.SHOULD_BE_ARCHIVED_AND_DELETED))
     }
     "Push an object including the UNKNOWN flag to the out" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
@@ -193,7 +193,7 @@ class SetFlagsShapeSpec extends Specification {
       val result = Await.result(RunnableGraph.fromGraph(testStream).run(), 30 seconds)
       result.head mustEqual UnclogStream(VSFile("VX-123344", "/test", "/test", None, 2318793, None, ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern), 1, "VX-4", None, None, None, None),None,Seq(VidispineProject("VX-1234", Option("Test Name"), Option("Wibble"), Option("VX-12"), true, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern)))), Some(MediaStatusValue.UNKNOWN))
     }
-    "Push an object including the SHOULD_BE_ARCHIVED flag to the out" in new AkkaTestkitSpecs2Support {
+    "Push an object including the SHOULD_BE_ARCHIVED_AND_DELETED flag to the out" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
 
       val sinkFactory = Sink.fold[Seq[(UnclogStream)], UnclogStream](Seq())((acc,entry)=>acc++Seq(entry))
@@ -209,7 +209,7 @@ class SetFlagsShapeSpec extends Specification {
       }
 
       val result = Await.result(RunnableGraph.fromGraph(testStream).run(), 30 seconds)
-      result.head mustEqual UnclogStream(VSFile("VX-123344", "/test", "/test", None, 2318793, None, ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern), 1, "VX-4", None, None, None, None),None,Seq(VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), false, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern))), VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), false, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern))), VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), true, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern)))), Some(MediaStatusValue.SHOULD_BE_ARCHIVED))
+      result.head mustEqual UnclogStream(VSFile("VX-123344", "/test", "/test", None, 2318793, None, ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern), 1, "VX-4", None, None, None, None),None,Seq(VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), false, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern))), VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), false, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern))), VidispineProject("VX-1234", Option("Test Name"), Option("Completed"), Option("VX-12"), true, false, false, Option(ZonedDateTime.parse("2019-07-17T10:35:12.598Z", pattern)), Option(ZonedDateTime.parse("2019-10-16T04:00:00.523+01:00", pattern)))), Some(MediaStatusValue.SHOULD_BE_ARCHIVED_AND_DELETED))
     }
   }
 }

@@ -39,6 +39,7 @@ class SetFlagsShape extends GraphStage[FlowShape[UnclogStream, UnclogStream]]{
         val restored_count = elem.ParentProjects.count(_.status.contains("Restore"))
         val completed_count = elem.ParentProjects.count(_.status.contains("Completed"))
         val deletable_count = elem.ParentProjects.count(_.deletable)
+        val deep_completed_count = elem.ParentProjects.filter(_.deepArchive).count(_.status.contains("Completed"))
 
         val updatedStatus = if(elem.ParentProjects.isEmpty) {
           MediaStatusValue.NO_PROJECT
@@ -58,10 +59,12 @@ class SetFlagsShape extends GraphStage[FlowShape[UnclogStream, UnclogStream]]{
           if (deletable_count==elem.ParentProjects.length) {
             MediaStatusValue.DELETABLE
           } else if(deep_count>0) {
-            MediaStatusValue.SHOULD_BE_ARCHIVED
+            MediaStatusValue.SHOULD_BE_ARCHIVED_AND_DELETED
           } else {
             MediaStatusValue.UNKNOWN
           }
+        } else if(deep_completed_count>0) {
+          MediaStatusValue.SHOULD_BE_ARCHIVED
         } else {
           MediaStatusValue.UNKNOWN
         }

@@ -43,7 +43,13 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
     sys.env.getOrElse("ES_PORT","9200").toInt
   )
 
-  lazy val storageId = sys.env.get("STORAGE_IDENTIFIER")
+  val storageId = sys.env.get("STORAGE_IDENTIFIER") match {
+    case Some(id)=>id
+    case None=>
+      val error_message = "Error loading STORAGE_IDENTIFIER. Stopping run."
+      logger.error(error_message)
+      complete_run(1,Some(error_message),None)(null)
+  }
   lazy val siteIdentifierLoaded = sys.env.getOrElse("SITE_IDENTIFIER","VX")
   lazy val projectIndexName = sys.env.getOrElse("PROJECT_INDEX","projects")
   lazy implicit val projectIndexer = new PlutoProjectIndexer(projectIndexName)
@@ -75,7 +81,7 @@ object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with 
       import com.sksamuel.elastic4s.circe._
 
       val unclogSink = builder.add(unclogIndexer.getIndexSink(esClient))
-      val src = fileIndexer.getSource(esClient,Seq(matchQuery("storage",storageId)),limit=None)
+      val src = fileIndexer.getSource(esClient,Seq(termQuery("storage.keyword", storageId)),limit=None)
       val lookup = builder.add(new VSGetItem(interestingFields))
       val checkBrandingSwitch = builder.add(new ProjectCountSwitch)
       val setFlags = builder.add(new SetFlagsShape)
