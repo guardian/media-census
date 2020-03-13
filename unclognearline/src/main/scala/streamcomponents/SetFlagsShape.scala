@@ -64,11 +64,7 @@ class SetFlagsShape extends GraphStage[FlowShape[UnclogStream, UnclogStream]]{
             MediaStatusValue.UNKNOWN
           }
         } else if(deep_completed_count>0) {
-          if (deletable_count==elem.ParentProjects.length) {
-            MediaStatusValue.DELETABLE
-          } else {
-            MediaStatusValue.SHOULD_BE_ARCHIVED
-          }
+          MediaStatusValue.SHOULD_BE_ARCHIVED
         } else {
           MediaStatusValue.UNKNOWN
         }
