@@ -71,7 +71,7 @@ object NearlineScanner extends CleanoutFunctions with ZonedDateTimeEncoder with 
       import io.circe.generic.auto._
       import com.sksamuel.elastic4s.circe._
 
-      val src = indexer.getSource(esClient,Seq(matchQuery("storage",storageId)),limit=None)
+      val src = indexer.getSource(esClient,Seq(termQuery("storage.keyword", storageId)),limit=None)
       val listSwitcher = builder.add(new VSFileIdInList(foundIdsList))
       val ignoreSink = Sink.ignore
       val deleteSink = indexer.deleteSink(esClient, reallyDelete=true)
