@@ -26,7 +26,7 @@ class NearlineUnclog extends React.Component {
         return values;
     }
 
-    static colourValues = NearlineUnclog.makeColourValues(17, 10);
+    static colourValues = NearlineUnclog.makeColourValues(19, 10);
 
     refresh(){
         this.setState({loading: true}, ()=>axios.get("/api/unclog/mediaStatus").then(response=>{
@@ -83,6 +83,10 @@ class NearlineUnclog extends React.Component {
                    }]
 
                }
+           }}
+           getElementAtEvent = {elems=>{
+               const bar = elems[0];
+               console.log("You clicked on bar number ", bar._datasetIndex, bar._model.datasetLabel);
            }}
 
             />
