@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import {Pie,Bar,HorizontalBar} from "react-chartjs-2";
 import NearlineControlsBanner from "./common/NearlineControlsBanner.jsx";
+import ProjectSearchView from "./ProjectSearchView.jsx";
 
 class NearlineUnclog extends React.Component {
     constructor(props){
@@ -11,7 +12,9 @@ class NearlineUnclog extends React.Component {
             loading: false,
             lastError:null,
             chartMode: NearlineControlsBanner.CHART_MODE_COUNT,
-            allData: null
+            allData: null,
+            showProjectsList: false,
+            selectedProjectStatus: null
         };
 
         this.refresh = this.refresh.bind(this);
@@ -87,9 +90,14 @@ class NearlineUnclog extends React.Component {
            getElementAtEvent = {elems=>{
                const bar = elems[0];
                console.log("You clicked on bar number ", bar._datasetIndex, bar._model.datasetLabel);
+               this.setState({selectedProjectStatus: bar._model.datasetLabel, showProjectsList: true});
            }}
 
             />
+            <div>
+                <br />
+            <ProjectSearchView projectStatus={this.state.selectedProjectStatus} visible={this.state.showProjectsList}/>
+        </div>
         </div>
 
     }
