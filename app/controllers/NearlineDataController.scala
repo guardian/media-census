@@ -2,9 +2,11 @@ package controllers
 
 import java.time.ZonedDateTime
 
+import akka.actor.ActorSystem
+import akka.util.ByteString
 import helpers.{ESClientManager, ZonedDateTimeEncoder}
 import javax.inject.Inject
-import models.{MembershipAggregationData, VSFileIndexer}
+import models.{ArchiveNearlineEntry, MediaStatusValue, MembershipAggregationData, UnclogOutputIndexer, VSFileIndexer}
 import org.slf4j.LoggerFactory
 import play.api.Configuration
 import play.api.libs.circe.Circe
@@ -17,13 +19,17 @@ import vidispine.VSFileStateEncoder
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class NearlineDataController @Inject() (config:Configuration, cc:ControllerComponents, esClientMgr:ESClientManager) extends AbstractController(cc) with Circe with ZonedDateTimeEncoder with VSFileStateEncoder {
+class NearlineDataController @Inject() (config:Configuration, cc:ControllerComponents, esClientMgr:ESClientManager)(implicit sys:ActorSystem)
+  extends AbstractController(cc) with Circe with ZonedDateTimeEncoder with VSFileStateEncoder {
   private val logger = LoggerFactory.getLogger(getClass)
 
   private val esClient = esClientMgr.getCachedClient()
   private val indexName = config.get[String]("elasticsearch.nearlineIndexName")
 
   private val indexer = new VSFileIndexer(indexName)
+
+  private val unclogIndexName = config.get[String]("elasticsearch.unclogIndexName")
+  private val unclogIndexer = new UnclogOutputIndexer(unclogIndexName)
 
   def currentStateData = Action.async {
     indexer.aggregateByStateAndStorage(esClient).map({
@@ -71,5 +77,15 @@ class NearlineDataController @Inject() (config:Configuration, cc:ControllerCompo
       case Right(stats)=>
         Ok(stats.asJson)
     })
+  }
+
+  def byCloggingStatus(status:Option[String]) = Action {
+    if(status.isEmpty) {
+      BadRequest(GenericResponse("missing_args","you must specify the 'status' argument").asJson)
+    } else {
+      val realStatus = MediaStatusValue.withName(status.get)
+      val src = unclogIndexer.NearlineEntriesForStatus(realStatus, esClient, indexer)
+      Ok.chunked(src.map(vsFile=>ByteString(vsFile.asJson.noSpaces)))
+    }
   }
 }
