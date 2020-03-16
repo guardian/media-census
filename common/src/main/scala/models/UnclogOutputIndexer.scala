@@ -31,7 +31,7 @@ class UnclogOutputIndexer(indexName:String, batchSize:Int=20, concurrentBatches:
   }
 
   def getIndexSource(client:ElasticClient)(implicit actorRefFactory: ActorRefFactory) = Source.fromPublisher(
-    client.publisher(search(indexName) sortByFieldAsc "originalSource.ctime" scroll "5m")
+    client.publisher(search(indexName) sortByFieldAsc "VSFileId.keyword" scroll "5m")
   )
 
   /**
@@ -56,9 +56,9 @@ class UnclogOutputIndexer(indexName:String, batchSize:Int=20, concurrentBatches:
   def NearlineEntriesForStatus(unclogStatus: MediaStatusValue.Value,client:ElasticClient, vsFileIndexer:VSFileIndexer)(implicit actorRefFactory: ActorRefFactory):Source[VSFile, NotUsed] = {
     Source.fromGraph(
       Source.fromPublisher(
-        client.publisher(search(indexName) query termQuery("MediaStatus.keyword", unclogStatus.toString) sortByFieldAsc "originalSource.ctime" scroll "5m")
-      ).map(_.to[UnclogOutput])
-        .mapAsync(parallelism = 5)(entry=>vsFileIndexer.getById(client, entry.VSFileId).map({
+        client.publisher(search(indexName) query termQuery("MediaStatus.keyword", unclogStatus.toString) sortByFieldAsc "VSFileId.keyword" scroll "5m")
+      ).log("nearline-entries-for-status-stream").map(_.to[UnclogOutput])
+        .mapAsync(parallelism = 1)(entry=>vsFileIndexer.getById(client, entry.VSFileId).map({
           case Left(err)=>
             logger.error(s"Could not look up vs file ${entry.VSFileId} in nearline index: $err")
             throw new RuntimeException("Could not look up file, see logs for exception")

@@ -208,7 +208,18 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
       if(response.isError){
         Left(response.error)
       } else {
-        Right(response.result.to[VSFile])
+        if(response.status==404){
+          Right(VSFile(vsid,"","",None,-1L,None,ZonedDateTime.now(),0,"none",None,None,None,None))
+        } else {
+          response.result.safeTo[VSFile] match {
+            case Success(vsFile) =>
+              Right(vsFile)
+            case Failure(err) =>
+              logger.error(s"Offending data was ${response.result.sourceAsString}")
+              logger.error("Could not decode result from VSFile: ", err)
+              throw err
+          }
+        }
       }
     })
   }

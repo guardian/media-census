@@ -3,6 +3,7 @@ package controllers
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import helpers.{ESClientManager, ZonedDateTimeEncoder}
 import javax.inject.Inject
@@ -84,8 +85,12 @@ class NearlineDataController @Inject() (config:Configuration, cc:ControllerCompo
       BadRequest(GenericResponse("missing_args","you must specify the 'status' argument").asJson)
     } else {
       val realStatus = MediaStatusValue.withName(status.get)
-      val src = unclogIndexer.NearlineEntriesForStatus(realStatus, esClient, indexer)
-      Ok.chunked(src.map(vsFile=>ByteString(vsFile.asJson.noSpaces)))
+      val src = Source.fromGraph(
+        unclogIndexer.NearlineEntriesForStatus(realStatus, esClient, indexer)
+          .map(vsFile=>ByteString(vsFile.asJson.noSpaces + "\n"))
+      )
+
+      Ok.chunked(src)
     }
   }
 }
