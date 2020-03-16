@@ -201,6 +201,29 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     })
   }
 
+  def getById(esClient:ElasticClient, vsid:String) = {
+    esClient.execute {
+      get(indexName, "vsfile", vsid)
+    }.map(response=>{
+      if(response.isError){
+        Left(response.error)
+      } else {
+        if(response.status==404){
+          Right(VSFile(vsid,"","",None,-1L,None,ZonedDateTime.now(),0,"none",None,None,None,None))
+        } else {
+          response.result.safeTo[VSFile] match {
+            case Success(vsFile) =>
+              Right(vsFile)
+            case Failure(err) =>
+              logger.error(s"Offending data was ${response.result.sourceAsString}")
+              logger.error("Could not decode result from VSFile: ", err)
+              throw err
+          }
+        }
+      }
+    })
+  }
+
   /**
     * obtains statistics for how many items have the "ArchiveHunterId" field set, i.e. are also present in deep archive
     * returns either an error string or Map containing "total_count" and "missing_archive_id_count" fields boths as Long

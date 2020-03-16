@@ -33,7 +33,10 @@
   <logger name="responses.HistogramDataResponse$" level="INFO"/>
   <logger name="controllers.StatsController" level="WARN"/>
 
+  <logger name="nearline-entries-for-status-stream" level="DEBUG"/>
   <logger name="archivehunter.ArchiveHunterRequestor" level="DEBUG"/>
+  <logger name="akka.actor.RepointableActorRef" level="DEBUG"/>
+
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
   <logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="OFF" />
