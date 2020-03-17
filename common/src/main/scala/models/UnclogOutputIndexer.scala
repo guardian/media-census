@@ -99,7 +99,7 @@ class UnclogOutputIndexer(indexName:String, batchSize:Int=20, concurrentBatches:
   })
 
   def projectsForMediaStatus(statusValue: MediaStatusValue.Value)(implicit client:ElasticClient) = client.execute( {
-    search(indexName) query termQuery("MediaStatus.keyword", statusValue.toString) size 0 aggs termsAgg("parent_project", "ParentCollectionIds.keyword").size(128).subaggs(sumAgg("size","FileSize"))
+    search(indexName) query termQuery("MediaStatus.keyword", statusValue.toString) size 0 aggs termsAgg("parent_project", "ParentCollectionIds.keyword").size(129).subaggs(sumAgg("size","FileSize"))
   }).map(response=>{
     if(response.isError) {
       Left(response.error)

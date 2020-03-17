@@ -81,8 +81,8 @@ class ProjectSearchView extends React.Component {
                 </tr>
             })}
             {
-                this.state.projectsList.length < this.state.totalCount ?
-                    <tr><td colSpan={7} style={{textAlign:"center"}}><i>Results limited to {this.state.projectsList.length}</i></td></tr> :
+                this.state.projectsList.length > 128 ?
+                    <tr><td colSpan={7} style={{textAlign:"center"}}><i>More than 128 projects found</i></td></tr> :
                     <tr><td colSpan={7} style={{textAlign:"center"}}><i>All results shown</i></td></tr>
             }
             </tbody>
