@@ -85,7 +85,7 @@ class ProjectSearchView extends React.Component {
             </tbody>
         </table>
         </div>
-            <div className="projectdata">Projects with this status: {this.props.projectNumber}</div>
+            <div className="projectdata">Projects containing files with this status: {this.props.projectNumber}</div>
         </div>
     }
 }
