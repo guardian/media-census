@@ -229,3 +229,7 @@ ul.no-bullets {
     overflow: hidden;
     align-content: center;
 }
+
+div.projectdata {
+    float: left;
+}

@@ -7,7 +7,8 @@ import BytesFormatter from "./common/BytesFormatter.jsx";
 class ProjectSearchView extends React.Component {
     static propTypes = {
         visible: PropTypes.bool.isRequired,
-        projectStatus: PropTypes.string
+        projectStatus: PropTypes.string,
+        projectNumber: PropTypes.string
     };
 
     constructor(props) {
@@ -26,8 +27,6 @@ class ProjectSearchView extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        console.log("ProjectSearch update: ", prevProps, this.props);
-
         if ((prevProps.projectStatus !== this.props.projectStatus) && this.props.visible) {
             console.log("Reloading data");
             this.reloadData();
@@ -39,7 +38,7 @@ class ProjectSearchView extends React.Component {
         if (this.props.projectStatus) {
             uriParams["status"] = this.props.projectStatus;
         }
-        console.log(uriParams);
+
         if (Object.keys(uriParams).length > 0) {
             const uri = "/api/unclog/mediaStatus/" + this.props.projectStatus +"/projects";
 
@@ -62,13 +61,12 @@ class ProjectSearchView extends React.Component {
     render() {
         if (this.state.lastError) return <ErrorViewComponent error={this.state.lastError}/>;
 
-        return <table className="dashboardpanel"
-                      style={{width: "100%", display: this.props.visible ? "block" : "none"}}>
+        return <div style={{display: this.props.visible ? "block" : "none"}}><div className="projectdata">{this.props.projectStatus}<br /><br /><table className="dashboardpanel">
             <thead>
             <tr className="dashboardheader">
                 <td style={{width:"50px"}}>Project</td>
                 <td style={{width:"120px"}}>File Count</td>
-                <td style={{width:"200px"}}>File Size</td>
+                <td style={{width:"200px"}}>Data Size</td>
             </tr>
             </thead>
             <tbody>
@@ -76,8 +74,7 @@ class ProjectSearchView extends React.Component {
                 return <tr>
                     <td><a href={"https://pluto.gnm.int/project/"+entry.label} target="_blank">{entry.label}</a></td>
                     <td>{entry.count}</td>
-                    <td>{entry.size}</td>
-
+                    <td><BytesFormatter value={entry.size}/></td>
                 </tr>
             })}
             {
@@ -87,6 +84,9 @@ class ProjectSearchView extends React.Component {
             }
             </tbody>
         </table>
+        </div>
+            <div className="projectdata">Projects with this status: {this.props.projectNumber}</div>
+        </div>
     }
 }
 

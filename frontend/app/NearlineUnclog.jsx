@@ -15,37 +15,32 @@ class NearlineUnclog extends React.Component {
             chartMode: NearlineControlsBanner.CHART_MODE_COUNT,
             allData: null,
             showProjectsList: false,
-            selectedProjectStatus: null
+            selectedProjectStatus: null,
+            statusProjectCounts: null
         };
 
         this.refresh = this.refresh.bind(this);
     }
 
-    static makeColourValues(count, offset){
+    static makeColourValues(count, offset, alpha){
         let values = [];
         for(let n=0;n<count;++n){
             let hue = (n/count)*360.0 + offset;
-            values[n] = 'hsla(' + hue + ',75%,50%,0.6)'
+            values[n] = 'hsla(' + hue + ',75%,50%,' + alpha + ')'
         }
         return values;
     }
 
-    static colourValues = NearlineUnclog.makeColourValues(19, 10);
-
-    static makeHoverColourValues(count, offset){
-        let values = [];
-        for(let n=0;n<count;++n){
-            let hue = (n/count)*360.0 + offset;
-            values[n] = 'hsla(' + hue + ',75%,50%,0.8)'
-        }
-        return values;
-    }
-
-    static hoverColourValues = NearlineUnclog.makeHoverColourValues(19, 10);
+    static colourValues = NearlineUnclog.makeColourValues(19, 10, 0.6);
+    static hoverColourValues = NearlineUnclog.makeColourValues(19, 10, 0.8);
 
     refresh(){
         this.setState({loading: true}, ()=>axios.get("/api/unclog/mediaStatus").then(response=>{
-            this.setState({loading: false, allData: response.data});
+            var status_project_count = {};
+            for (let statusObject of response.data) {
+                status_project_count[statusObject.label] = statusObject.projects;
+            }
+            this.setState({loading: false, allData: response.data, statusProjectCounts: status_project_count});
         }).catch(err=>{
             this.setState({loading: false, lastError: err})
         }));
@@ -57,6 +52,14 @@ class NearlineUnclog extends React.Component {
 
     refreshChartData(){
         this.refresh();
+    }
+
+    returnProjects(){
+        if (this.state.selectedProjectStatus == null) {
+            return 0
+        } else {
+            return this.state.statusProjectCounts[this.state.selectedProjectStatus]
+        }
     }
 
     render(){
@@ -100,10 +103,6 @@ class NearlineUnclog extends React.Component {
                            let xLabel=data.datasets[tooltipItem.datasetIndex].label;
                            let yLabel=data.datasets[tooltipItem.datasetIndex].data;
 
-                           console.log(tooltipItem);
-                           console.log(data);
-                           console.log(xLabel, yLabel);
-
                            if(this.state.chartMode===NearlineControlsBanner.CHART_MODE_SIZE) {
                                try {
                                    const result = BytesFormatterImplementation.getValueAndSuffix(yLabel);
@@ -122,14 +121,12 @@ class NearlineUnclog extends React.Component {
            }}
            getElementAtEvent = {elems=>{
                const bar = elems[0];
-               console.log("You clicked on bar number ", bar._datasetIndex, bar._model.datasetLabel);
                this.setState({selectedProjectStatus: bar._model.datasetLabel, showProjectsList: true});
            }}
 
             />
             <div>
-                <br />
-            <ProjectSearchView projectStatus={this.state.selectedProjectStatus} visible={this.state.showProjectsList}/>
+            <ProjectSearchView projectStatus={this.state.selectedProjectStatus} projectNumber={this.returnProjects()} visible={this.state.showProjectsList}/>
         </div>
         </div>
 
