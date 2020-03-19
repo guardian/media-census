@@ -34,6 +34,8 @@
   <logger name="controllers.StatsController" level="WARN"/>
 
   <logger name="nearline-entries-for-status-stream" level="DEBUG"/>
+  <logger name="models.UnclogOutputIndexer" level="DEBUG"/>
+
   <logger name="archivehunter.ArchiveHunterRequestor" level="DEBUG"/>
   <logger name="akka.actor.RepointableActorRef" level="DEBUG"/>
 

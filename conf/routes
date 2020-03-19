@@ -16,6 +16,10 @@ GET     /api/nearline/files         @controllers.NearlineDataController.fileSear
 GET     /api/nearline/archivedStats @controllers.NearlineDataController.archivedStatsData
 GET     /api/nearline/byCloggingStatus @controllers.NearlineDataController.byCloggingStatus(status:Option[String])
 
+GET     /api/unclog/mediaStatus     @controllers.UnclogNearlineDataController.mediaStatusStats
+GET     /api/unclog/mediaStatus/:status/records @controllers.UnclogNearlineDataController.recordsForMediaStatus(status, startAt:Option[Int], limit:Option[Int])
+GET     /api/unclog/mediaStatus/:status/projects @controllers.UnclogNearlineDataController.projectsForMediaStatus(status)
+
 GET     /api/jobs/:jobType/forTimespan  @controllers.JobsController.jobsForTimespan(jobType, startAt:Option[String]?=None,endAt:Option[String]?=None,showRunning:Boolean?=false)
 GET     /api/jobs/running               @controllers.JobsController.runningJobs(limit:Option[Int])
 GET     /api/jobs/:jobType/lastSuccess  @controllers.JobsController.lastSuccessfulJob(jobType, includeRunning:Boolean?=false)
