@@ -26,7 +26,7 @@ import streamcomponents.{ProjectCountSwitch, SetFlagsShape, ItemSwitch}
 object UnclogNearline extends ZonedDateTimeEncoder with VSFileStateEncoder with CleanoutFunctions {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private implicit val actorSystem = ActorSystem("CronScanner")
+  private implicit val actorSystem = ActorSystem("UnclogNearline")
   private implicit val mat:Materializer = ActorMaterializer.create(actorSystem)
 
   lazy val vsConfig = VSConfig(
