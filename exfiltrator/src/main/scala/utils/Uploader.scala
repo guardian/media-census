@@ -1,13 +1,15 @@
+package utils
+
 import akka.actor.ActorSystem
 import akka.stream.alpakka.s3.MultipartUploadResult
-import akka.stream.{ClosedShape, Materializer}
-import com.om.mxs.client.japi.UserInfo
-import streamcomponents.MatrixStoreFileSource
-import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileState, VSLazyItem}
 import akka.stream.alpakka.s3.scaladsl.S3
 import akka.stream.scaladsl.{GraphDSL, RunnableGraph}
+import akka.stream.{ClosedShape, Materializer}
 import com.gu.vidispineakka.streamcomponents.VSFileContentSource
+import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileState, VSLazyItem}
+import com.om.mxs.client.japi.UserInfo
 import org.slf4j.LoggerFactory
+import streamcomponents.MatrixStoreFileSource
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -20,7 +22,7 @@ import scala.concurrent.Future
  * @param mat implicitly provided Materializer
  * @param vsComm implicitly provided VSCommunicator
  */
-class Uploader (userInfo:UserInfo, destBucket:String)(implicit actorSystem: ActorSystem, mat:Materializer, vsComm:VSCommunicator) {
+class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(implicit actorSystem: ActorSystem, mat:Materializer, vsComm:VSCommunicator) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   val interestingFields = Seq("gnm_storage_rule_sensitive")
@@ -43,7 +45,7 @@ class Uploader (userInfo:UserInfo, destBucket:String)(implicit actorSystem: Acto
    * @param vsFile a VSFile instance
    * @return a Future containing a MultipartUploadResult
    */
-  protected def doOMUpload(vsFile:VSFile):Future[MultipartUploadResult] = {
+  def doOMUpload(vsFile:VSFile, destBucket:String):Future[MultipartUploadResult] = {
     val destPath = vsFile.path
     val s3Sink = S3.multipartUpload(destBucket, destPath)
 
@@ -69,7 +71,7 @@ class Uploader (userInfo:UserInfo, destBucket:String)(implicit actorSystem: Acto
    * @param vsFile a VSFile instance
    * @return a Future containing a MultipartUploadResult
    */
-  protected def doVSUpload(vsFile:com.gu.vidispineakka.vidispine.VSFile):Future[MultipartUploadResult] = {
+  def doVSUpload(vsFile:com.gu.vidispineakka.vidispine.VSFile, destBucket:String):Future[MultipartUploadResult] = {
     val destPath = vsFile.path
     val s3Sink = S3.multipartUpload(destBucket, destPath)
 
@@ -93,14 +95,12 @@ class Uploader (userInfo:UserInfo, destBucket:String)(implicit actorSystem: Acto
    * @param maybeItem an Option containing a populated VSLazyItem
    * @return boolean indicator
    */
-  protected def isSensitive(maybeItem:Option[VSLazyItem]):Boolean = maybeItem match {
+  def isSensitive(maybeItem:Option[VSLazyItem]):Boolean = maybeItem match {
     case Some(item)=>
       item.get("gnm_storage_rule_sensitive") match {
         case None=>false
         case Some(values)=>
-          val nonEmptyValues = values.collect({
-            case entry:Any => entry.length>0
-          })
+          val nonEmptyValues = values.filter(_.length>0)
           nonEmptyValues.nonEmpty
       }
     case None=> false
@@ -111,7 +111,7 @@ class Uploader (userInfo:UserInfo, destBucket:String)(implicit actorSystem: Acto
    * @param maybeItem an Option containing a populated VSLazyItem
    * @return a (possibly empty) sequence of VSFile instances
    */
-  protected def findProxy(maybeItem:Option[VSLazyItem]):Seq[VSFile] = maybeItem.flatMap(item=>item.shapes.map(allShapes=>{
+  def findProxy(maybeItem:Option[VSLazyItem]):Seq[VSFile] = maybeItem.flatMap(item=>item.shapes.map(allShapes=>{
       val proxyShapes = potentialProxies.filter(shapetag=>allShapes.contains(shapetag))
       logger.info(s"${item.itemId}: Found ${proxyShapes.length} proxies: ${proxyShapes}")
 
@@ -166,10 +166,11 @@ class Uploader (userInfo:UserInfo, destBucket:String)(implicit actorSystem: Acto
           logger.info(s"${maybeItem.map(_.itemId)}: ${allFilesList.length} files to upload")
 
         Future.sequence(allFilesList.map(fileToUpload=>{
+          val destBucket = if(fileToUpload==file) mediaBucket else proxyBucket
           if(fileToUpload.uri.startsWith("omms")) {
-            doOMUpload(fileToUpload)
+            doOMUpload(fileToUpload, destBucket)
           } else {
-            doVSUpload(fileToUpload)
+            doVSUpload(fileToUpload, destBucket)
           }
         }))
     })
