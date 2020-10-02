@@ -67,22 +67,34 @@ object ExfiltratorMain {
   def makeStream(esClient:ElasticClient) = {
     val finalSink = Sink.ignore
 
+    implicit object VSFileHitReader extends HitReader[VSFile] {
+      /*
+      for some strange reason "size" sometimes presents as an Integer and sometimes as a Long....
+       */
+      def fixNumberCast(someNumber:Any):Long = {
+        try {
+          someNumber.asInstanceOf[Integer].toLong
+        } catch {
+          case _:ClassCastException=>
+            someNumber.asInstanceOf[Long]
+        }
+      }
+
     /*
     looks like the package confusion is preventing the auto-derivation from working :(
      */
-    implicit object VSFileHitReader extends HitReader[VSFile] {
       override def read(hit: Hit): Try[VSFile] = Try {
         val src = hit.sourceAsMap
         val maybeMembership = src.get("membership")
           .map(_.asInstanceOf[Map[String, Any]])
           .map(memsrc=>
             VSFileItemMembership(
-              memsrc("itemid").asInstanceOf[String],
+              memsrc("itemId").asInstanceOf[String],
               memsrc("shapes")
                 .asInstanceOf[Seq[Map[String,Any]]]
                 .map(shapesrc=>VSFileShapeMembership(
                   shapesrc("shapeId").asInstanceOf[String],
-                  shapesrc("componentid").asInstanceOf[Seq[String]]
+                  shapesrc("componentId").asInstanceOf[Seq[String]]
                 ))
             )
           )
@@ -92,7 +104,7 @@ object ExfiltratorMain {
           src("path").asInstanceOf[String],
           src("uri").asInstanceOf[String],
           src.get("state").map(_.asInstanceOf[String]).map(s=>VSFileState.withName(s)),
-          src("size").asInstanceOf[Long],
+          fixNumberCast(src("size")),
           src.get("hash").map(_.asInstanceOf[String]),
           ZonedDateTime.parse(src("timestamp").asInstanceOf[String]),
           src("refreshFlag").asInstanceOf[Int],
@@ -109,7 +121,7 @@ object ExfiltratorMain {
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.http.ElasticDsl._
 
-      val src = nearlineIndexer.getSource(esClient, Seq(termQuery("storage",storageId)), None)
+      val src = nearlineIndexer.getSource(esClient, Seq(matchQuery("storage",storageId)), None)
       val deletionRequestBuilder:RequestBuilder[VSFile] = (t: VSFile) => delete(t.vsid) from s"$indexName/vsfile"
       val deleteRecord = nearlineIndexer.deleteSinkCustom(esClient,
         reallyDelete, deletionRequestBuilder)
@@ -118,7 +130,6 @@ object ExfiltratorMain {
       val deletionMerge = builder.add(Merge[VSFile](2))
       val vsDeleteFile = builder.add(new com.gu.vidispineakka.streamcomponents.VSDeleteFile(reallyDelete))
       val uploadStage = builder.add(new UploadStreamComponent(uploader))
-      val finalMerge = builder.add(Merge[VSFile](3))
 
       src.map(_.to[VSFile]) ~> isArchivedSwitch
 
@@ -128,7 +139,7 @@ object ExfiltratorMain {
       //NO branch - it's not archived - upload it. Upload errors (not ignores) will terminate the stream; ignored files
       //will pull the next file
       isArchivedSwitch.out(1) ~> uploadStage ~> deletionMerge
-      isArchivedSwitch.out(2) ~> finalMerge  //CONFLICT branch
+      isArchivedSwitch.out(2) ~> sink  //CONFLICT branch
 
       deletionMerge ~> vsDeleteFile ~> deleteRecord //this is a sink
       ClosedShape
@@ -145,8 +156,10 @@ object ExfiltratorMain {
         RunnableGraph.fromGraph(stream).run().onComplete({
           case Success(_) =>
             logger.info("Run completed successfully")
+            sys.exit(0)
           case Failure(err) =>
-            logger.error(s"Run terminated abnormally: $err")
+            logger.error(s"Run terminated abnormally", err)
+            sys.exit(1)
         })
     }
   }

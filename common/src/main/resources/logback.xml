@@ -32,7 +32,7 @@
     <logger name="archivehunter" level="INFO"/>
     <logger name="Main" level="DEBUG"/>
 
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref="ASYNCSTDOUT" />
     </root>
 

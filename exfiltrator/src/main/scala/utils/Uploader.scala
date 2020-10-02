@@ -17,7 +17,8 @@ import scala.concurrent.Future
 /**
  * Utility class that performs item checking and uploads
  * @param userInfo ObjectMatrix UserInfo instance that describes the OM appliance to lift data from
- * @param destBucket S3 bucket for deep archive
+ * @param mediaBucket S3 bucket for deep archive
+ * @param proxyBucket S3 bucket for proxies corresponding to the deep archive
  * @param actorSystem implicitly provided ActorSystem
  * @param mat implicitly provided Materializer
  * @param vsComm implicitly provided VSCommunicator
@@ -45,25 +46,19 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
    * @param vsFile a VSFile instance
    * @return a Future containing a MultipartUploadResult
    */
-  def doOMUpload(vsFile:VSFile, destBucket:String):Future[MultipartUploadResult] = {
+  def doOMUpload(vsFile:VSFile, omId:String, destBucket:String):Future[MultipartUploadResult] = {
     val destPath = vsFile.path
     val s3Sink = S3.multipartUpload(destBucket, destPath)
 
-    vsFile.metadata.flatMap(_.get("uuid")) match {
-      case Some(omId) =>
-        val stream = GraphDSL.create(s3Sink) { implicit builder =>
-          sink =>
-            import akka.stream.scaladsl.GraphDSL.Implicits._
-            val src = builder.add(new MatrixStoreFileSource(userInfo, omId))
-            src ~> sink
-            ClosedShape
-        }
+      val stream = GraphDSL.create(s3Sink) { implicit builder =>
+        sink =>
+          import akka.stream.scaladsl.GraphDSL.Implicits._
+          val src = builder.add(new MatrixStoreFileSource(userInfo, omId))
+          src ~> sink
+          ClosedShape
+      }
 
-        RunnableGraph.fromGraph(stream).run()
-      case None =>
-        logger.error(s"File ${vsFile.vsid} (${vsFile.uri}) has no 'uuid' metadata: ${vsFile.metadata}")
-        Future.failed(new RuntimeException("No uuid"))
-    }
+      RunnableGraph.fromGraph(stream).run()
   }
 
   /**
@@ -122,6 +117,24 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
   ).getOrElse(Seq())
 
   /**
+   * check the metadata dictionary for potential uuids
+   * @param maybeFile an Option containing a VSFile
+   * @return an Option contiaining the uuid if (a) the VSItem exists (b) it has a metadata dictionary (c) the metadata
+   *         dictionary contains at least one uuid field
+   */
+  def findObjectMatrixId(maybeFile:Option[VSFile]):Option[String] = {
+    val maybeMeta = for {
+      file <- maybeFile
+      meta <- file.metadata
+    } yield meta
+
+    maybeMeta.flatMap(meta=>{
+      val potentialValues:Seq[Option[String]] = Seq(meta.get("uuid"), meta.get("meta_uuid_s"))
+      potentialValues.collectFirst { case Some(id) => id }
+    })
+  }
+
+  /**
    * main function of this helper.
    * Takes a VSFile from the index, and looks up the associated item.
    * If the item contains the "sensitive" flag, logs a message and does nothing
@@ -158,6 +171,9 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
       }
     })
 
+    //allow VS uploads to fail with a logged error and not abort the run.
+    //this means that we need to have an Option in our sequence; to keep the rest of the logic in-place
+    //we do a final map() on the future to filter out any None values
     supplementaryFiles.flatMap({
       case Left(_)=>  //Left => we should not continue
         Future(Seq())
@@ -167,12 +183,21 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
 
         Future.sequence(allFilesList.map(fileToUpload=>{
           val destBucket = if(fileToUpload==file) mediaBucket else proxyBucket
-          if(fileToUpload.uri.startsWith("omms")) {
-            doOMUpload(fileToUpload, destBucket)
-          } else {
-            doVSUpload(fileToUpload, destBucket)
+          val maybeOMId = findObjectMatrixId(Some(fileToUpload))
+
+          logger.info(s"attempting to upload file at uri '${fileToUpload.uri}'")
+          maybeOMId match {
+            case Some(omId)=>
+              doOMUpload(fileToUpload, omId, destBucket).map(r=>Some(r))
+            case None=>
+              doVSUpload(fileToUpload, destBucket).map(r=>Some(r))
+                .recover({
+                  case _:Throwable=>
+                    logger.error(s"File ${fileToUpload.vsid} (${fileToUpload.uri}) was not uploaded!")
+                    None
+                })
           }
-        }))
+        })).map(_.collect({case Some(result)=>result}))
     })
 
   }

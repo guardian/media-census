@@ -19,25 +19,30 @@ class IsArchivedSwitch extends GraphStage[UniformFanOutShape[VSFile, VSFile]]{
       override def onPush(): Unit = {
         val elem = grab(in)
 
+        logger.info(s"isArchivedSwitch received ${elem.vsid}")
         if(elem.archiveHunterId.isDefined) {
           if(elem.archiveConflict.isEmpty || elem.archiveConflict.contains(false)) {
+            logger.info(s"${elem.vsid} is archived without conflict")
             push(yes, elem)
           } else {
             logger.warn(s"${elem.uri} (${elem.vsid}) has an archive conflict, not continuing")
             push(conflict, elem)
           }
         } else {
+          logger.info(s"${elem.vsid} is not archived")
           push(no, elem)
         }
       }
     })
 
-    setHandler(yes, new AbstractOutHandler {
-      override def onPull(): Unit = if(isAvailable(in)) pull(in)
-    })
+    val defaultOutHandler = new AbstractOutHandler {
+      override def onPull(): Unit = if(!hasBeenPulled(in)) pull(in)
+    }
 
-    setHandler(no, new AbstractOutHandler {
-      override def onPull(): Unit = if(isAvailable(in)) pull(in)
-    })
+    setHandler(yes, defaultOutHandler)
+
+    setHandler(no, defaultOutHandler)
+
+    setHandler(conflict, defaultOutHandler)
   }
 }
