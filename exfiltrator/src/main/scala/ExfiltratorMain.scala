@@ -8,8 +8,9 @@ import config.ESConfig
 import models.VSFileIndexer
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
-import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileState,VSFileItemMembership, VSFileShapeMembership}
+import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileItemMembership, VSFileShapeMembership, VSFileState}
 import com.gu.vidispineakka.streamcomponents.VSDeleteFile
+import com.om.mxs.client.japi.UserInfo
 import streamComponents.IsArchivedSwitch
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -54,9 +55,17 @@ object ExfiltratorMain {
     ElasticClient(ElasticProperties(uri))
   }
 
+  def getUserInfo = UserInfoBuilder.fromFile(sys.env("MXS_VAULT"))
+  val userInfo:UserInfo = getUserInfo.get  //allow it to raise if we can't load the file
+
+  val uploader = new Uploader(userInfo,sys.env("ARCHIVE_BUCKET"))
+
   def makeStream(esClient:ElasticClient) = {
     val finalSink = Sink.ignore
 
+    /*
+    looks like the package confusion is preventing the auto-derivation from working :(
+     */
     implicit object VSFileHitReader extends HitReader[VSFile] {
       override def read(hit: Hit): Try[VSFile] = Try {
         val src = hit.sourceAsMap
@@ -102,19 +111,20 @@ object ExfiltratorMain {
         reallyDelete, deletionRequestBuilder)
 
       val isArchivedSwitch = builder.add(new IsArchivedSwitch)
+      val deletionMerge = builder.add(Merge[VSFile](2))
       val vsDeleteFile = builder.add(new com.gu.vidispineakka.streamcomponents.VSDeleteFile(reallyDelete))
-
       val finalMerge = builder.add(Merge[VSFile](3))
 
       src.map(_.to[VSFile]) ~> isArchivedSwitch
 
       //YES branch - it's archived - delete the files
-      isArchivedSwitch.out(0) ~> vsDeleteFile ~> deleteRecord //this is a sink
+      isArchivedSwitch.out(0) ~> deletionMerge
 
-      //NO branch - it's not archived - upload it
-      //isArchivedSwitch.out(1).mapAsync(4)()
+      //NO branch - it's not archived - upload it. Upload errors (not ignores) will terminate the stream.
+      isArchivedSwitch.out(1).mapAsync(4)(uploader.handleUnarchivedFile) ~> deletionMerge
       isArchivedSwitch.out(2) ~> finalMerge  //CONFLICT branch
 
+      deletionMerge ~> vsDeleteFile ~> deleteRecord //this is a sink
       ClosedShape
     }
 
