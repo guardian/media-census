@@ -59,10 +59,24 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
   def deleteSink(esClient:ElasticClient, reallyDelete:Boolean)(implicit actorRefFactory: ActorRefFactory) = {
     implicit val builder:RequestBuilder[VSFile] = (t: VSFile) => delete(t.vsid) from s"$indexName/vsfile"
 
+    deleteSinkCustom(esClient, reallyDelete, builder)
+  }
+
+  /**
+   * delete sink with a custom requestbuilder
+   * @param esClient
+   * @param reallyDelete
+   * @param builder RequestBuilder. This needs to take in a VSFile and return an Elastic4s query
+   * @param actorRefFactory
+   * @return
+   */
+  def deleteSinkCustom[A](esClient:ElasticClient, reallyDelete:Boolean, builder:RequestBuilder[A])(implicit actorRefFactory:ActorRefFactory) = {
+    implicit val builderImpl:RequestBuilder[A] = builder
+
     if(reallyDelete) {
-      Sink.fromSubscriber(esClient.subscriber[VSFile](batchSize = batchSize, concurrentRequests = concurrentBatches))
+      Sink.fromSubscriber(esClient.subscriber[A](batchSize = batchSize, concurrentRequests = concurrentBatches))
     } else {
-      Sink.foreach[VSFile](elem=>logger.warn(s"I would delete the index record for ${elem.path} from ${elem.storage} if reallyDelete were true"))
+      Sink.foreach[A](elem=>logger.warn(s"I would delete the index record for ${builder.request(elem).toString} if reallyDelete were true"))
     }
   }
 

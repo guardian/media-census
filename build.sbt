@@ -297,6 +297,40 @@ lazy val `unclognearline` = (project in file("unclognearline"))
     )
   )
 
+lazy val `exfiltrator` = (project in file("exfiltrator"))
+  .enablePlugins(DockerPlugin, AshScriptPlugin)
+  .dependsOn(common, mxscopy)
+  .settings(commonSettings, libraryDependencies ++= Seq(
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion,
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+    "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
+    "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion % "test",
+    "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "1.0.2",
+    "com.gu" %% "akka-vidispine-components" % "0.2",
+    specs2 % Test
+  ),version := sys.props.getOrElse("build.number","DEV"),
+    dockerPermissionStrategy := DockerPermissionStrategy.CopyChown,
+    daemonUserUid in Docker := None,
+    daemonUser in Docker := "daemon",
+    dockerUsername  := sys.props.get("docker.username"),
+    dockerRepository := Some("guardianmultimedia"),
+    packageName in Docker := "guardianmultimedia/mediacensus-exfiltrator",
+    packageName := "mediacensus",
+    dockerBaseImage := "openjdk:8-jdk-alpine",
+    dockerAlias := docker.DockerAlias(None,Some("guardianmultimedia"),"mediacensus-exfiltrator",Some(sys.props.getOrElse("build.number","DEV"))),
+  )
+
 lazy val `findarchivednearline` = (project in file("findarchivednearline"))
   .enablePlugins(DockerPlugin, AshScriptPlugin)
   .dependsOn(common)

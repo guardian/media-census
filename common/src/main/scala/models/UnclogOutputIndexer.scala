@@ -1,6 +1,6 @@
 package models
 
-...import akka.actor.ActorRefFactory
+import akka.actor.ActorRefFactory
 import akka.stream.scaladsl.{Sink, Source}
 import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
 import com.sksamuel.elastic4s.http.ElasticClient
