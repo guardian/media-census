@@ -67,59 +67,10 @@ object ExfiltratorMain {
   def makeStream(esClient:ElasticClient) = {
     val finalSink = Sink.ignore
 
-    implicit object VSFileHitReader extends HitReader[VSFile] {
-      /*
-      for some strange reason "size" sometimes presents as an Integer and sometimes as a Long....
-       */
-      def fixNumberCast(someNumber:Any):Long = {
-        try {
-          someNumber.asInstanceOf[Integer].toLong
-        } catch {
-          case _:ClassCastException=>
-            someNumber.asInstanceOf[Long]
-        }
-      }
-
-    /*
-    looks like the package confusion is preventing the auto-derivation from working :(
-     */
-      override def read(hit: Hit): Try[VSFile] = Try {
-        val src = hit.sourceAsMap
-        val maybeMembership = src.get("membership")
-          .map(_.asInstanceOf[Map[String, Any]])
-          .map(memsrc=>
-            VSFileItemMembership(
-              memsrc("itemId").asInstanceOf[String],
-              memsrc("shapes")
-                .asInstanceOf[Seq[Map[String,Any]]]
-                .map(shapesrc=>VSFileShapeMembership(
-                  shapesrc("shapeId").asInstanceOf[String],
-                  shapesrc("componentId").asInstanceOf[Seq[String]]
-                ))
-            )
-          )
-
-        VSFile(
-          src("vsid").asInstanceOf[String],
-          src("path").asInstanceOf[String],
-          src("uri").asInstanceOf[String],
-          src.get("state").map(_.asInstanceOf[String]).map(s=>VSFileState.withName(s)),
-          fixNumberCast(src("size")),
-          src.get("hash").map(_.asInstanceOf[String]),
-          ZonedDateTime.parse(src("timestamp").asInstanceOf[String]),
-          src("refreshFlag").asInstanceOf[Int],
-          src("storage").asInstanceOf[String],
-          src.get("metadata").map(_.asInstanceOf[Map[String,String]]),
-          maybeMembership,
-          src.get("archiveHunterId").map(_.asInstanceOf[String]),
-          src.get("archiveHunterConflict").map(_.asInstanceOf[Boolean])
-        )
-      }
-    }
-
     GraphDSL.create(finalSink) { implicit builder=> sink=>
       import akka.stream.scaladsl.GraphDSL.Implicits._
       import com.sksamuel.elastic4s.http.ElasticDsl._
+      import utils.VSFileHitReader._
 
       val src = nearlineIndexer.getSource(esClient, Seq(matchQuery("storage",storageId)), None)
       val deletionRequestBuilder:RequestBuilder[VSFile] = (t: VSFile) => delete(t.vsid) from s"$indexName/vsfile"

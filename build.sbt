@@ -53,7 +53,7 @@ lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerP
     )
   )
 
-val akkaVersion = "2.5.22"
+val akkaVersion = "2.5.23"
 val circeVersion = "0.9.3"
 val slf4jVersion = "1.7.25"
 
@@ -69,6 +69,7 @@ lazy val `common` = (project in file("common"))
       "io.circe" %% "circe-java8" % circeVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,

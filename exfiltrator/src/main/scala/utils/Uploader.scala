@@ -3,7 +3,7 @@ package utils
 import akka.actor.ActorSystem
 import akka.stream.alpakka.s3.MultipartUploadResult
 import akka.stream.alpakka.s3.scaladsl.S3
-import akka.stream.scaladsl.{GraphDSL, RunnableGraph}
+import akka.stream.scaladsl.{GraphDSL, Keep, RunnableGraph, Sink}
 import akka.stream.{ClosedShape, Materializer}
 import com.gu.vidispineakka.streamcomponents.VSFileContentSource
 import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileState, VSLazyItem}
@@ -26,7 +26,7 @@ import scala.concurrent.Future
 class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(implicit actorSystem: ActorSystem, mat:Materializer, vsComm:VSCommunicator) {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  val interestingFields = Seq("gnm_storage_rule_sensitive")
+  val interestingFields = Seq("gnm_storage_rule_sensitive","gnm_category")
   val potentialProxies = Seq("lowres","lowaudio","lowimage")
 
   /**
@@ -40,25 +40,36 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
       .map(_.headOption)
   }
 
+  def s3Exists(destBucket: String, destPath: String) = {
+    S3.getObjectMetadata(destBucket, destPath)
+      .toMat(Sink.head)(Keep.right)
+      .run()
+      .map(_.isDefined) //documentation states that if object does not exist then None is returned
+  }
 
   /**
    * copy a given file from the objectmatrix appliance to the deep archive
    * @param vsFile a VSFile instance
    * @return a Future containing a MultipartUploadResult
    */
-  def doOMUpload(vsFile:VSFile, omId:String, destBucket:String):Future[MultipartUploadResult] = {
+  def doOMUpload(vsFile:VSFile, omId:String, destBucket:String):Future[Option[MultipartUploadResult]] = {
     val destPath = vsFile.path
     val s3Sink = S3.multipartUpload(destBucket, destPath)
 
-      val stream = GraphDSL.create(s3Sink) { implicit builder =>
-        sink =>
-          import akka.stream.scaladsl.GraphDSL.Implicits._
-          val src = builder.add(new MatrixStoreFileSource(userInfo, omId))
-          src ~> sink
-          ClosedShape
-      }
-
-      RunnableGraph.fromGraph(stream).run()
+    s3Exists(destBucket, destPath).flatMap({
+      case true =>
+        logger.info(s"s3://$destBucket/$destPath already exists, not over-writing")
+        Future(None)
+      case false =>
+        val stream = GraphDSL.create(s3Sink) { implicit builder =>
+          sink =>
+            import akka.stream.scaladsl.GraphDSL.Implicits._
+            val src = builder.add(new MatrixStoreFileSource(userInfo, omId))
+            src ~> sink
+            ClosedShape
+        }
+        RunnableGraph.fromGraph(stream).run().map(r => Some(r))
+    })
   }
 
   /**
@@ -66,22 +77,29 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
    * @param vsFile a VSFile instance
    * @return a Future containing a MultipartUploadResult
    */
-  def doVSUpload(vsFile:com.gu.vidispineakka.vidispine.VSFile, destBucket:String):Future[MultipartUploadResult] = {
+  def doVSUpload(vsFile:com.gu.vidispineakka.vidispine.VSFile, destBucket:String):Future[Option[MultipartUploadResult]] = {
     val destPath = vsFile.path
     val s3Sink = S3.multipartUpload(destBucket, destPath)
 
-    VSFileContentSource.sourceFor(vsFile).flatMap({
-      case Left(errString)=>
-        logger.error(s"Could not get file source for ${vsFile.uri} (${vsFile.vsid}): $errString")
-        throw new RuntimeException(errString)
-      case Right(vsSource)=>
-        val stream = GraphDSL.create(s3Sink) {implicit builder=> sink=>
-          import akka.stream.scaladsl.GraphDSL.Implicits._
-          val src = builder.add(vsSource)
-          src ~> sink
-          ClosedShape
-        }
-        RunnableGraph.fromGraph(stream).run()
+    s3Exists(destBucket, destPath).flatMap({
+      case true=>
+        logger.info(s"s3://$destBucket/$destPath already exists, not over-writing")
+        Future(None)
+      case false=>
+        VSFileContentSource.sourceFor(vsFile).flatMap({
+          case Left(errString) =>
+            logger.error(s"Could not get file source for ${vsFile.uri} (${vsFile.vsid}): $errString")
+            throw new RuntimeException(errString)
+          case Right(vsSource) =>
+            val stream = GraphDSL.create(s3Sink) { implicit builder =>
+              sink =>
+                import akka.stream.scaladsl.GraphDSL.Implicits._
+                val src = builder.add(vsSource)
+                src ~> sink
+                ClosedShape
+            }
+            RunnableGraph.fromGraph(stream).run().map(r => Some(r))
+        })
     })
   }
 
@@ -97,6 +115,21 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
         case Some(values)=>
           val nonEmptyValues = values.filter(_.length>0)
           nonEmptyValues.nonEmpty
+      }
+    case None=> false
+  }
+
+  /**
+   * check if the 'category' field says this is a master or deliverable. Return true if so or false if it isn't
+   */
+  def isMaster(maybeItem:Option[VSLazyItem]):Boolean = maybeItem match {
+    case Some(item)=>
+      item.get("gnm_category") match {
+        case None=>false
+        case Some(values)=>
+          val nonEmptyValues = values.filter(_.length>0)
+          val catsToFilter = Seq("Master","Deliverable")
+          nonEmptyValues.intersect(catsToFilter).nonEmpty
       }
     case None=> false
   }
@@ -166,14 +199,14 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
       if(isSensitive(maybeItem.toOption)) {
         logger.warn(s"Item ${maybeItem.map(_.itemId)} is flagged as sensitive, leaving alone")
         Left( () )
+      } else if(isMaster(maybeItem.toOption)) {
+        logger.warn(s"Item ${maybeItem.map(_.itemId)} is flagged as a master or deliverable, leaving alone")
+        Left( () )
       } else {
         Right(findProxy(maybeItem.toOption))
       }
     })
 
-    //allow VS uploads to fail with a logged error and not abort the run.
-    //this means that we need to have an Option in our sequence; to keep the rest of the logic in-place
-    //we do a final map() on the future to filter out any None values
     supplementaryFiles.flatMap({
       case Left(_)=>  //Left => we should not continue
         Future(Seq())
@@ -181,6 +214,13 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
         val allFilesList = Seq(file) ++ zeroOrMoreProxies
           logger.info(s"${maybeItem.map(_.itemId)}: ${allFilesList.length} files to upload")
 
+        //allow VS uploads to fail with a logged error and not abort the run.
+        //this means that we need to have an Option in our sequence; to keep the rest of the logic in-place
+        //we do a final map() on the future to filter out any None values
+        //i.e. allFilesList (Seq[VSFile]) is mapped to Seq[Future[Option[MultipartUploadResult]]]
+        //then Future.sequence is applied to make Future[Seq[Option[MultipartUploadResult]]]
+        //then collect is applied to the sequence in a future-map to make Future[Seq[MultipartUploadResult]], i.e.
+        //just the results of the uploads.
         Future.sequence(allFilesList.map(fileToUpload=>{
           val destBucket = if(fileToUpload==file) mediaBucket else proxyBucket
           val maybeOMId = findObjectMatrixId(Some(fileToUpload))
@@ -188,9 +228,9 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
           logger.info(s"attempting to upload file at uri '${fileToUpload.uri}'")
           maybeOMId match {
             case Some(omId)=>
-              doOMUpload(fileToUpload, omId, destBucket).map(r=>Some(r))
+              doOMUpload(fileToUpload, omId, destBucket)
             case None=>
-              doVSUpload(fileToUpload, destBucket).map(r=>Some(r))
+              doVSUpload(fileToUpload, destBucket)
                 .recover({
                   case _:Throwable=>
                     logger.error(s"File ${fileToUpload.vsid} (${fileToUpload.uri}) was not uploaded!")
