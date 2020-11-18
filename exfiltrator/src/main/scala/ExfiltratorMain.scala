@@ -4,14 +4,16 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
-import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
+import com.gu.vidispineakka.streamcomponents.VSGetItem
+import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties, RequestFailure, RequestSuccess}
 import config.ESConfig
 import models.VSFileIndexer
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
 import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileItemMembership, VSFileShapeMembership, VSFileState}
 import com.om.mxs.client.japi.UserInfo
-import streamComponents.{IsArchivedSwitch, UploadStreamComponent, ValidStatusSwitch}
+import com.sksamuel.elastic4s.http.search.SearchResponse
+import streamComponents.{ExfiltratorStreamElement, IsArchivedSwitch, IsWithinProjectSwitch, UploadStreamComponent, ValidStatusSwitch}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
@@ -19,7 +21,9 @@ import com.sksamuel.elastic4s.streams.RequestBuilder
 import com.sksamuel.elastic4s.{Hit, HitReader}
 import helpers.TrustStoreHelper
 import org.slf4j.LoggerFactory
-import utils.Uploader
+import utils.{Uploader, VSProjects}
+
+import scala.concurrent.Future
 
 
 object ExfiltratorMain {
@@ -74,11 +78,80 @@ object ExfiltratorMain {
   def getUserInfo = UserInfoBuilder.fromFile(sys.env("MXS_VAULT"))
   val userInfo:UserInfo = getUserInfo.get  //allow it to raise if we can't load the file
 
-  val uploader = new Uploader(userInfo,sys.env("ARCHIVE_BUCKET"), sys.env("PROXY_BUCKET"))
+  val uploader = new Uploader(userInfo,sys.env("ARCHIVE_BUCKET"), sys.env("PROXY_BUCKET"), reallyDelete)
 
   val storageId = sys.env("STORAGE")
 
-  def makeStream(esClient:ElasticClient) = {
+  val interestingItemFields = Seq(
+    "gnm_storage_rule_sensitive",
+    "title",
+    "gnm_category"
+  )
+
+  def countEstimate(esClient:ElasticClient) = {
+    import com.sksamuel.elastic4s.http.ElasticDsl._
+    import com.sksamuel.elastic4s.circe._
+    import io.circe.generic.auto
+
+    esClient.execute {
+      search(indexName).query(matchQuery("storage", storageId))
+    }.map({
+      case RequestFailure(status, body, headers, error)=>
+        logger.error(s"Could not perform initial check: $status $body")
+        throw new RuntimeException("Elasticsearch server error")
+      case success:RequestSuccess[SearchResponse]=>
+        success.result.totalHits
+      case success:RequestSuccess[_]=>
+        logger.error(s"unexpected result of type ${success.getClass.toGenericString}")
+        throw new RuntimeException("invalid response")
+    })
+  }
+
+  def countStream(esClient:ElasticClient) = {
+    val finalSink = Sink.fold[Long, Any](0)((acc,elem)=>acc+1)
+
+    val graph = GraphDSL.create(finalSink) { implicit builder=> sink=>
+      import akka.stream.scaladsl.GraphDSL.Implicits._
+      import com.sksamuel.elastic4s.http.ElasticDsl._
+      import utils.VSFileHitReader._
+
+      val src = nearlineIndexer.getSource(esClient, Seq(matchQuery("storage",storageId)), None)
+
+      val isArchivedSwitch = builder.add(new IsArchivedSwitch)
+      val validStatusSwitch = builder.add(new ValidStatusSwitch)
+
+     // val ignoreMerge = builder.add(Merge[VSFile](4))
+      val ignoreSink = builder.add(Sink.ignore)
+
+      val countMerge = builder.add(Merge[Any](3))
+      src.map(_.to[VSFile]) ~> validStatusSwitch
+
+      //YES branch - it's valid - pass it on
+      validStatusSwitch.out(0) ~> isArchivedSwitch
+      //NO branch - it's not valid - log and ignore
+      validStatusSwitch.out(1).map(elem=>{
+        logger.info(s"Dropping file ${elem.vsid} because status is ${elem.state}")
+        elem
+      }) ~> ignoreSink
+
+      //YES branch - it's archived - delete the files
+      isArchivedSwitch.out(0).map(file=>ExfiltratorStreamElement(file, None)) ~> countMerge
+
+      //NO branch - it's not archived - archive the files
+      isArchivedSwitch.out(1) ~> countMerge
+
+      //CONFLICT branch - count it anyway
+      isArchivedSwitch.out(2) ~> countMerge
+      countMerge ~> sink
+      ClosedShape
+    }
+
+    RunnableGraph.fromGraph(graph).run().map(count=>{
+      logger.info(s"Test stream processed $count items")
+    })
+  }
+
+  def makeStream(esClient:ElasticClient, sensitiveProjects:Seq[String], deletableProjects:Seq[String]) = {
     val finalSink = Sink.ignore
 
     GraphDSL.create(finalSink) { implicit builder=> sink=>
@@ -93,8 +166,13 @@ object ExfiltratorMain {
 
       val isArchivedSwitch = builder.add(new IsArchivedSwitch)
       val validStatusSwitch = builder.add(new ValidStatusSwitch)
-      val deletionMerge = builder.add(Merge[VSFile](2))
-      val ignoreMerge = builder.add(Merge[VSFile](2))
+      val isProjectSensitiveSwitch = builder.add(new IsWithinProjectSwitch(sensitiveProjects, "sensitive projects"))
+      val isProjectDeletableSwitch = builder.add(new IsWithinProjectSwitch(deletableProjects, "deletable projects"))
+
+      val deletionMerge = builder.add(Merge[ExfiltratorStreamElement](2))
+      val itemLookup = builder.add(new VSGetItem(interestingItemFields))
+
+      val ignoreMerge = builder.add(Merge[VSFile](4))
       val vsDeleteFile = builder.add(new com.gu.vidispineakka.streamcomponents.VSDeleteFile(reallyDelete))
       val uploadStage = builder.add(new UploadStreamComponent(uploader))
 
@@ -109,15 +187,27 @@ object ExfiltratorMain {
       }) ~> ignoreMerge
 
       //YES branch - it's archived - delete the files
-      isArchivedSwitch.out(0) ~> deletionMerge
+      isArchivedSwitch.out(0).map(file=>ExfiltratorStreamElement(file, None)) ~> deletionMerge
 
       //NO branch - it's not archived - upload it. Upload errors (not ignores) will terminate the stream; ignored files
       //will pull the next file
-      isArchivedSwitch.out(1) ~> uploadStage ~> deletionMerge
+      isArchivedSwitch.out(1) ~> itemLookup
+      itemLookup.out.map(fileItemTuple=>ExfiltratorStreamElement(fileItemTuple._1, fileItemTuple._2)) ~> isProjectSensitiveSwitch
+
+      //YES branch - project is sensitive - leave it
+      isProjectSensitiveSwitch.out(0).map(_.file) ~> ignoreMerge
+      //NO branch - project is not sensitive - continue
+      isProjectSensitiveSwitch.out(1) ~> isProjectDeletableSwitch
+
+      //YES branch - project is deletable - hmmmm
+      isProjectDeletableSwitch.out(0).map(_.file) ~> ignoreMerge
+      //NO branch - project is not deletable - upload it
+      isProjectDeletableSwitch.out(1) ~> uploadStage ~> deletionMerge
+
       isArchivedSwitch.out(2) ~> ignoreMerge  //CONFLICT branch
       ignoreMerge ~> sink
 
-      deletionMerge ~> vsDeleteFile ~> deleteRecord //this is a sink
+      deletionMerge.out.map(elem=>elem.file) ~> vsDeleteFile ~> deleteRecord //this is a sink
       ClosedShape
     }
   }
@@ -129,8 +219,26 @@ object ExfiltratorMain {
         logger.error(s"Could not set up ES client: $err")
         sys.exit(1)
       case Success(esClient) =>
-        val stream = makeStream(esClient)
-        RunnableGraph.fromGraph(stream).run().onComplete({
+        countEstimate(esClient).flatMap(expectedCount=>{
+          logger.info(s"Expecting $expectedCount records to be returned")
+
+          Future.sequence(Seq(
+            VSProjects.findSensitiveProjectIds,
+            VSProjects.findDeletableProjectIds
+          )).flatMap(projectIdLists => {
+            val sensitiveProjectIds = projectIdLists.head
+            val deletableProjectIds = projectIdLists(1)
+
+            logger.info(s"Found ${sensitiveProjectIds.length} sensitive projects and ${deletableProjectIds.length} deletable projects")
+            if (sensitiveProjectIds.length < 2) {
+              Future.failed(new RuntimeException("Not enough projects found, this probably indicates a bug"))
+            } else {
+              val stream = makeStream(esClient, sensitiveProjectIds, deletableProjectIds)
+              RunnableGraph.fromGraph(stream).run()
+              //countStream(esClient)
+            }
+          })
+        }).onComplete({
           case Success(_) =>
             logger.info("Run completed successfully")
             sys.exit(0)

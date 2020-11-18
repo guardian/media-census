@@ -17,7 +17,7 @@ class UploaderSpec extends Specification with Mockito {
       fakeItem.get(any) returns Some(Seq("sensitive"))
 
       val toTest = new Uploader(mock[UserInfo], "some-bucket", "proxy-bucket")
-      val result = toTest.isSensitive(Some(fakeItem))
+      val result = toTest.isSensitive(fakeItem)
       result must beTrue
     }
 
@@ -28,7 +28,7 @@ class UploaderSpec extends Specification with Mockito {
       fakeItem.get(any) returns Some(Seq(""))
 
       val toTest = new Uploader(mock[UserInfo], "some-bucket", "proxy-bucket")
-      val result = toTest.isSensitive(Some(fakeItem))
+      val result = toTest.isSensitive(fakeItem)
       result must beFalse
     }
 
@@ -39,23 +39,12 @@ class UploaderSpec extends Specification with Mockito {
       fakeItem.get(any) returns None
 
       val toTest = new Uploader(mock[UserInfo], "some-bucket", "proxy-bucket")
-      val result = toTest.isSensitive(Some(fakeItem))
+      val result = toTest.isSensitive(fakeItem)
       result must beFalse
     }
   }
 
   "Uploader.findProxy" should {
-    "return an empty list if the item is None" in new AkkaTestkitSpecs2Support {
-      implicit val mat:Materializer = ActorMaterializer.create(system)
-      implicit val vsComm:VSCommunicator = mock[VSCommunicator]
-      val fakeItem = mock[VSLazyItem]
-      fakeItem.shapes returns None
-
-      val toTest = new Uploader(mock[UserInfo], "some-bucket", "proxy-bucket")
-      val result = toTest.findProxy(None)
-      result mustEqual Seq()
-    }
-
     "return an empty list if the item is has no shapes" in new AkkaTestkitSpecs2Support {
       implicit val mat:Materializer = ActorMaterializer.create(system)
       implicit val vsComm:VSCommunicator = mock[VSCommunicator]
@@ -63,7 +52,7 @@ class UploaderSpec extends Specification with Mockito {
       fakeItem.shapes returns None
 
       val toTest = new Uploader(mock[UserInfo], "some-bucket", "proxy-bucket")
-      val result = toTest.findProxy(Some(fakeItem))
+      val result = toTest.findProxy(fakeItem)
       result mustEqual Seq()
     }
 
@@ -77,7 +66,7 @@ class UploaderSpec extends Specification with Mockito {
       ))
 
       val toTest = new Uploader(mock[UserInfo], "some-bucket", "proxy-bucket")
-      val result = toTest.findProxy(Some(fakeItem))
+      val result = toTest.findProxy(fakeItem)
       result mustEqual Seq()
     }
 
@@ -96,7 +85,7 @@ class UploaderSpec extends Specification with Mockito {
       ))
 
       val toTest = new Uploader(mock[UserInfo], "some-bucket", "proxy-bucket")
-      val result = toTest.findProxy(Some(fakeItem))
+      val result = toTest.findProxy(fakeItem)
       result mustEqual Seq(proxyFile)
     }
   }

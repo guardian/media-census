@@ -91,7 +91,7 @@ object TrustStoreHelper {
         case itworked @ Success(_)=>itworked
         case failure @ Failure(err)=>
           if(err.isInstanceOf[CertificateException]) {
-            logger.info(s"Cert auth failed at $count:", err)
+            logger.debug(s"Cert auth failed at $count:", err)
             if (tail.isEmpty)
               Failure(err)
             else
@@ -118,7 +118,7 @@ object TrustStoreHelper {
   }
 
   /**
-    * convenience function that builds a custom TrustManager, configures an SSLContext to use it and then sets this context
+    * convenience function that builds a custom TrustManager, xconfigures an SSLContext to use it and then sets this context
     * as the default one
     * @param keyStorePaths sequence of paths to supplementary keystores
     * @return

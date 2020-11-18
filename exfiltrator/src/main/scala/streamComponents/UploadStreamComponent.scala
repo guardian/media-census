@@ -9,17 +9,17 @@ import utils.Uploader
 
 import scala.concurrent.ExecutionContext
 
-class UploadStreamComponent(uploader:Uploader)(implicit actorSystem:ActorSystem) extends GraphStage[FlowShape[VSFile,VSFile]] {
+class UploadStreamComponent(uploader:Uploader)(implicit actorSystem:ActorSystem) extends GraphStage[FlowShape[ExfiltratorStreamElement,ExfiltratorStreamElement]] {
   private final val logger = LoggerFactory.getLogger(getClass)
-  private final val in:Inlet[VSFile] = Inlet.create("UploadStreamComponent.in")
-  private final val out:Outlet[VSFile] = Outlet.create("UploadStreamComponent.out")
+  private final val in:Inlet[ExfiltratorStreamElement] = Inlet.create("UploadStreamComponent.in")
+  private final val out:Outlet[ExfiltratorStreamElement] = Outlet.create("UploadStreamComponent.out")
 
   private implicit val ec:ExecutionContext = actorSystem.dispatcher
 
-  override def shape: FlowShape[VSFile, VSFile] = FlowShape.of(in,out)
+  override def shape: FlowShape[ExfiltratorStreamElement, ExfiltratorStreamElement] = FlowShape.of(in,out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    val successCb = createAsyncCallback[VSFile](vsFile=>push(out, vsFile))
+    val successCb = createAsyncCallback[ExfiltratorStreamElement](vsFile=>push(out, vsFile))
     val ignoreCb  = createAsyncCallback[Unit](_=>pull(in))
     val errorCb = createAsyncCallback[Throwable](err=>{
       logger.error(s"Could not handle upload: ", err)
@@ -33,10 +33,10 @@ class UploadStreamComponent(uploader:Uploader)(implicit actorSystem:ActorSystem)
         uploader.handleUnarchivedFile(elem)
           .map(uploadResults=>{
             if(uploadResults.isEmpty) {
-              logger.info(s"File ${elem.vsid} (${elem.uri}) was ignored")
+              logger.info(s"File ${elem.file.vsid} (${elem.file.path}) on item ${elem.maybeItem.map(_.itemId)} was ignored")
               ignoreCb.invoke( () )
             } else {
-              logger.info(s"File ${elem.vsid} (${elem.uri}) uploaded ${uploadResults.length} files")
+              logger.info(s"File ${elem.file.vsid} (${elem.file.path}) on item ${elem.maybeItem.map(_.itemId)} uploaded ${uploadResults.length} files")
               successCb.invoke(elem)
             }
           })

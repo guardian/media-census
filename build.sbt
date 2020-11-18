@@ -318,7 +318,7 @@ lazy val `exfiltrator` = (project in file("exfiltrator"))
     "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
     "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion % "test",
     "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "1.0.2",
-    "com.gu" %% "akka-vidispine-components" % "0.4-SNAPSHOT",
+    "com.gu" %% "akka-vidispine-components" % "0.4",
     specs2 % Test
   ),version := sys.props.getOrElse("build.number","DEV"),
     dockerPermissionStrategy := DockerPermissionStrategy.CopyChown,
