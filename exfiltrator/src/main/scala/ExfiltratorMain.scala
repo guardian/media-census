@@ -1,6 +1,7 @@
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.stream.scaladsl.{GraphDSL, Merge, RunnableGraph, Sink}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
@@ -10,12 +11,13 @@ import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
 import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileItemMembership, VSFileShapeMembership, VSFileState}
 import com.om.mxs.client.japi.UserInfo
-import streamComponents.{IsArchivedSwitch, UploadStreamComponent}
+import streamComponents.{IsArchivedSwitch, UploadStreamComponent, ValidStatusSwitch}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import com.sksamuel.elastic4s.{Hit, HitReader}
+import helpers.TrustStoreHelper
 import org.slf4j.LoggerFactory
 import utils.Uploader
 
@@ -35,6 +37,18 @@ object ExfiltratorMain {
   )
 
   lazy val reallyDelete = sys.env.get("REALLY_DELETE").contains("true")
+
+  val localTrustStore = sys.env.get("LOCAL_TRUST_STORE")
+  if(localTrustStore.isDefined) {
+    logger.info(s"Adding local trust store at ${localTrustStore.get}")
+    TrustStoreHelper.setupTS(Seq(localTrustStore.get)) match {
+      case Success(context)=>
+        Http().setDefaultClientHttpsContext(ConnectionContext.https(context))
+      case Failure(err)=>
+        logger.error("Could not set up local trust store: ", err)
+        sys.exit(1)
+    }
+  }
 
   def getVSCommunicator = {
     import com.softwaremill.sttp._
@@ -78,11 +92,21 @@ object ExfiltratorMain {
         reallyDelete, deletionRequestBuilder)
 
       val isArchivedSwitch = builder.add(new IsArchivedSwitch)
+      val validStatusSwitch = builder.add(new ValidStatusSwitch)
       val deletionMerge = builder.add(Merge[VSFile](2))
+      val ignoreMerge = builder.add(Merge[VSFile](2))
       val vsDeleteFile = builder.add(new com.gu.vidispineakka.streamcomponents.VSDeleteFile(reallyDelete))
       val uploadStage = builder.add(new UploadStreamComponent(uploader))
 
-      src.map(_.to[VSFile]) ~> isArchivedSwitch
+      src.map(_.to[VSFile]) ~> validStatusSwitch
+
+      //YES branch - it's valid - pass it on
+      validStatusSwitch.out(0) ~> isArchivedSwitch
+      //NO branch - it's not valid - log and ignore
+      validStatusSwitch.out(1).map(elem=>{
+        logger.info(s"Dropping file ${elem.vsid} because status is ${elem.state}")
+        elem
+      }) ~> ignoreMerge
 
       //YES branch - it's archived - delete the files
       isArchivedSwitch.out(0) ~> deletionMerge
@@ -90,7 +114,8 @@ object ExfiltratorMain {
       //NO branch - it's not archived - upload it. Upload errors (not ignores) will terminate the stream; ignored files
       //will pull the next file
       isArchivedSwitch.out(1) ~> uploadStage ~> deletionMerge
-      isArchivedSwitch.out(2) ~> sink  //CONFLICT branch
+      isArchivedSwitch.out(2) ~> ignoreMerge  //CONFLICT branch
+      ignoreMerge ~> sink
 
       deletionMerge ~> vsDeleteFile ~> deleteRecord //this is a sink
       ClosedShape
@@ -98,6 +123,7 @@ object ExfiltratorMain {
   }
 
   def main(args:Array[String]) = {
+
     getEsClient match {
       case Failure(err) =>
         logger.error(s"Could not set up ES client: $err")

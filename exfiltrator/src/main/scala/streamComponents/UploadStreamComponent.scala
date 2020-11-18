@@ -22,7 +22,7 @@ class UploadStreamComponent(uploader:Uploader)(implicit actorSystem:ActorSystem)
     val successCb = createAsyncCallback[VSFile](vsFile=>push(out, vsFile))
     val ignoreCb  = createAsyncCallback[Unit](_=>pull(in))
     val errorCb = createAsyncCallback[Throwable](err=>{
-      logger.error(s"Could not handle upload: $err")
+      logger.error(s"Could not handle upload: ", err)
       failStage(err)
     })
 

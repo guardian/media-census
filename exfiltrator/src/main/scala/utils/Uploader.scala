@@ -105,25 +105,21 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
 
   /**
    * check the 'is sensitive' field. Return true if it is sensitive or false it it isn't/
-   * @param maybeItem an Option containing a populated VSLazyItem
    * @return boolean indicator
    */
-  def isSensitive(maybeItem:Option[VSLazyItem]):Boolean = maybeItem match {
-    case Some(item)=>
+  def isSensitive(item:VSLazyItem):Boolean =
       item.get("gnm_storage_rule_sensitive") match {
         case None=>false
         case Some(values)=>
           val nonEmptyValues = values.filter(_.length>0)
           nonEmptyValues.nonEmpty
       }
-    case None=> false
-  }
+
 
   /**
    * check if the 'category' field says this is a master or deliverable. Return true if so or false if it isn't
    */
-  def isMaster(maybeItem:Option[VSLazyItem]):Boolean = maybeItem match {
-    case Some(item)=>
+  def isMaster(item:VSLazyItem):Boolean =
       item.get("gnm_category") match {
         case None=>false
         case Some(values)=>
@@ -131,23 +127,20 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
           val catsToFilter = Seq("Master","Deliverable")
           nonEmptyValues.intersect(catsToFilter).nonEmpty
       }
-    case None=> false
-  }
 
   /**
    * finds VSFile instances for all shape tags marked as proxies
    * @param maybeItem an Option containing a populated VSLazyItem
    * @return a (possibly empty) sequence of VSFile instances
    */
-  def findProxy(maybeItem:Option[VSLazyItem]):Seq[VSFile] = maybeItem.flatMap(item=>item.shapes.map(allShapes=>{
+  def findProxy(item:VSLazyItem):Seq[VSFile] = item.shapes.map(allShapes=>{
       val proxyShapes = potentialProxies.filter(shapetag=>allShapes.contains(shapetag))
       logger.info(s"${item.itemId}: Found ${proxyShapes.length} proxies: ${proxyShapes}")
 
       proxyShapes.map(shapetag=>{
         allShapes(shapetag).files.headOption
       }).collect({case Some(file)=>file})
-    })
-  ).getOrElse(Seq())
+    }).getOrElse(Seq())
 
   /**
    * check the metadata dictionary for potential uuids
@@ -185,27 +178,41 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
       return Future(Seq())
     }
 
+    if(file.membership.isEmpty) {
+      logger.info(s"Found lone file: $file")
+    }
     val maybeItem = file.membership.map(m=>new VSLazyItem(m.itemId))
 
-    val itemMetadataFut = maybeItem.map(item=>item.getMoreMetadata(interestingFields).map({
-      case Left(err) =>
-        logger.error(s"Could not load metadata from ${item.itemId}: ${err.toString}")
-        throw new RuntimeException("Could not load metadata") //fail the future
-      case Right(updatedItem)=>
-        updatedItem
-    })).switchToFut.map(_.toRight())
+    logger.info(s"File ${file.vsid} comes from item ${maybeItem.map(_.itemId)}")
 
-    val supplementaryFiles:Future[Either[Unit, Seq[VSFile]]] = itemMetadataFut.map(maybeItem=>{
-      if(isSensitive(maybeItem.toOption)) {
-        logger.warn(s"Item ${maybeItem.map(_.itemId)} is flagged as sensitive, leaving alone")
-        Left( () )
-      } else if(isMaster(maybeItem.toOption)) {
-        logger.warn(s"Item ${maybeItem.map(_.itemId)} is flagged as a master or deliverable, leaving alone")
-        Left( () )
-      } else {
-        Right(findProxy(maybeItem.toOption))
-      }
-    })
+    val itemMetadataFut = maybeItem.map(item=>{
+      logger.info(s"Looking up metadata for item ${item.itemId}")
+      item.getMoreMetadata(interestingFields).map({
+        case Left(err) =>
+          logger.error(s"Could not load metadata from ${item.itemId}: ${err.toString}")
+          throw new RuntimeException("Could not load metadata") //fail the future
+        case Right(updatedItem)=>
+          logger.info(s"Got metadata for ${item.itemId}")
+          updatedItem
+      })
+    }).switchToFut.map(_.toRight())
+
+    val supplementaryFiles:Future[Either[Unit, Seq[VSFile]]] = itemMetadataFut.flatMap({
+        case Left(_)=>
+          Future(Right(Seq()))
+        case Right(item)=>
+          if(isSensitive(item)) {
+            logger.warn(s"Item ${maybeItem.map(_.itemId)} is flagged as sensitive, leaving alone")
+            Future(Left( () ))
+          } else if(isMaster(item)) {
+            logger.warn(s"Item ${maybeItem.map(_.itemId)} is flagged as a master or deliverable, leaving alone")
+            Future(Left( () ))
+          } else {
+            val collectionId = item.getSingle("__collection")
+            ItemProject.forCollection()
+            Future(Right(findProxy(item)))
+          }
+      })
 
     supplementaryFiles.flatMap({
       case Left(_)=>  //Left => we should not continue
@@ -225,7 +232,7 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String)(impli
           val destBucket = if(fileToUpload==file) mediaBucket else proxyBucket
           val maybeOMId = findObjectMatrixId(Some(fileToUpload))
 
-          logger.info(s"attempting to upload file at uri '${fileToUpload.uri}'")
+          logger.info(s"attempting to upload file '${fileToUpload.vsid}' at '${fileToUpload.path}'")
           maybeOMId match {
             case Some(omId)=>
               doOMUpload(fileToUpload, omId, destBucket)
