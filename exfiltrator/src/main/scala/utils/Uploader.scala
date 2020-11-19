@@ -1,10 +1,15 @@
 package utils
 
+import java.nio.charset.Charset
+
+import akka.Done
 import akka.actor.ActorSystem
-import akka.stream.alpakka.s3.MultipartUploadResult
+import akka.http.scaladsl.model.ContentTypes
+import akka.stream.alpakka.s3.{MultipartUploadResult, S3Headers}
 import akka.stream.alpakka.s3.scaladsl.S3
-import akka.stream.scaladsl.{GraphDSL, Keep, RunnableGraph, Sink}
+import akka.stream.scaladsl.{GraphDSL, Keep, RunnableGraph, Sink, Source}
 import akka.stream.{ClosedShape, Materializer}
+import akka.util.ByteString
 import com.gu.vidispineakka.streamcomponents.VSFileContentSource
 import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileState, VSLazyItem}
 import com.om.mxs.client.japi.UserInfo
@@ -24,7 +29,7 @@ import scala.concurrent.Future
  * @param mat implicitly provided Materializer
  * @param vsComm implicitly provided VSCommunicator
  */
-class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, allowUploads:Boolean=true)(implicit actorSystem: ActorSystem, mat:Materializer, vsComm:VSCommunicator) {
+class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, potentialMediaBuckets:Seq[String], allowUploads:Boolean=true)(implicit actorSystem: ActorSystem, mat:Materializer, vsComm:VSCommunicator) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   val interestingFields = Seq("gnm_storage_rule_sensitive","gnm_category")
@@ -41,11 +46,26 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, allow
       .map(_.headOption)
   }
 
-  def s3Exists(destBucket: String, destPath: String) = {
+  def s3ExistsInbucket(destBucket: String, destPath: String) = {
     S3.getObjectMetadata(destBucket, destPath)
       .toMat(Sink.head)(Keep.right)
       .run()
       .map(_.isDefined) //documentation states that if object does not exist then None is returned
+  }.recover({
+    case err:akka.stream.alpakka.s3.S3Exception=> //print out more useful debug information if we get an S3Exception
+      logger.error(s"S3 exception occurred: ${err.code} ${err.message}")
+      throw err
+  })
+
+  def s3Exists(destBucket:String, destPath:String) = {
+    val bToCheck = if(potentialMediaBuckets.contains(destBucket)) {
+      potentialMediaBuckets
+    } else {
+      potentialMediaBuckets :+ destBucket
+    }
+
+    Future.sequence(bToCheck.map(b=>s3ExistsInbucket(b, destPath)))
+      .map(_.contains(true))
   }
 
   /**
@@ -112,6 +132,33 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, allow
     })
   }
 
+  def doUploadMetadata(itemId:String, destBucket:String, destPath:String) = {
+    val finalDestPath = if(destPath.endsWith(".xml")) {
+      destPath
+    } else {
+      destPath + ".xml"
+    }
+
+    logger.info(s"Attempting to upload metadata for $itemId to s3://$destBucket/$finalDestPath")
+    s3Exists(destBucket, finalDestPath).flatMap({
+      case true=>
+        logger.info(s"Metadata file s3://$destBucket/$finalDestPath already exists")
+        Future(None)
+      case false=>
+        vsComm.request(VSCommunicator.OperationType.GET, s"/API/item/$itemId/metadata", None, Map("Accept" -> "application/xml"))
+          .flatMap({
+            case Left(httpErr) =>
+              logger.error(s"Could not obtain metadata information for item $itemId: ${httpErr.errorCode} ${httpErr.message}")
+              Future(None)
+            case Right(xmlContent) =>
+              val contentSource = Source.single(ByteString(xmlContent, Charset.forName("UTF-8")))
+              val s3Sink = S3.putObject(destBucket, finalDestPath, contentSource, xmlContent.length, ContentTypes.`text/xml(UTF-8)`, S3Headers.create())
+
+              s3Sink.toMat(Sink.ignore)(Keep.right).run().map(Some.apply)
+          })
+    })
+  }
+
   /**
    * check the 'is sensitive' field. Return true if it is sensitive or false it it isn't/
    * @return boolean indicator
@@ -139,7 +186,7 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, allow
 
   /**
    * finds VSFile instances for all shape tags marked as proxies
-   * @param maybeItem an Option containing a populated VSLazyItem
+   * @param item a populated VSLazyItem
    * @return a (possibly empty) sequence of VSFile instances
    */
   def findProxy(item:VSLazyItem):Seq[VSFile] = item.shapes.map(allShapes=>{
@@ -173,6 +220,13 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, allow
     val allFilesList = Seq(elem.file) ++ zeroOrMoreProxies
     logger.info(s"${elem.maybeItem.map(_.itemId)}: ${allFilesList.length} files to upload")
 
+    val metaUploadFut = elem.maybeItem match {
+      case Some(vsItem)=>
+        doUploadMetadata(vsItem.itemId, proxyBucket, elem.file.path + ".xml")
+      case None=>
+        Future(None)
+    }
+
     //allow VS uploads to fail with a logged error and not abort the run.
     //this means that we need to have an Option in our sequence; to keep the rest of the logic in-place
     //we do a final map() on the future to filter out any None values
@@ -196,7 +250,7 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, allow
                 None
             })
       }
-    })).map(_.collect({case Some(result)=>result}))
+    }) :+ metaUploadFut).map(_.collect({case Some(result)=>result}))
   }
 
   /**
@@ -211,7 +265,7 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, allow
    * @param elem ExfiltratorStreamElement with a reference to a VSFile entry to load and possibly its item
    * @return a Future, containing a sequence of MultipartUploadResults, one for each uploaded file.
    */
-  def handleUnarchivedFile(elem:ExfiltratorStreamElement):Future[Seq[MultipartUploadResult]] = {
+  def handleUnarchivedFile(elem:ExfiltratorStreamElement):Future[Seq[Object]] = {
     val file = elem.file
     if(file.state.contains(VSFileState.LOST)) {
       logger.warn(s"File ${file.vsid} is Lost, ignoring")

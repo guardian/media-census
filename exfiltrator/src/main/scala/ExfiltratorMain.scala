@@ -54,6 +54,14 @@ object ExfiltratorMain {
     }
   }
 
+  val potentialMediaBuckets = sys.env.get("MEDIA_BUCKETS") match {
+    case None=>
+      logger.error("You must specify MEDIA_BUCKETS in the environment")
+      sys.exit(1)
+    case Some(mediaBuckets)=>
+      mediaBuckets.split("\\s*,\\s*")
+  }
+
   def getVSCommunicator = {
     import com.softwaremill.sttp._
 
@@ -78,7 +86,7 @@ object ExfiltratorMain {
   def getUserInfo = UserInfoBuilder.fromFile(sys.env("MXS_VAULT"))
   val userInfo:UserInfo = getUserInfo.get  //allow it to raise if we can't load the file
 
-  val uploader = new Uploader(userInfo,sys.env("ARCHIVE_BUCKET"), sys.env("PROXY_BUCKET"), reallyDelete)
+  val uploader = new Uploader(userInfo,sys.env("ARCHIVE_BUCKET"), sys.env("PROXY_BUCKET"), potentialMediaBuckets, reallyDelete)
 
   val storageId = sys.env("STORAGE")
 
@@ -170,13 +178,13 @@ object ExfiltratorMain {
       val isProjectDeletableSwitch = builder.add(new IsWithinProjectSwitch(deletableProjects, "deletable projects"))
 
       val deletionMerge = builder.add(Merge[ExfiltratorStreamElement](2))
-      val itemLookup = builder.add(new VSGetItem(interestingItemFields))
+      val itemLookup = builder.add(new VSGetItem(interestingItemFields, includeShapes=true))
 
       val ignoreMerge = builder.add(Merge[VSFile](4))
       val vsDeleteFile = builder.add(new com.gu.vidispineakka.streamcomponents.VSDeleteFile(reallyDelete))
       val uploadStage = builder.add(new UploadStreamComponent(uploader))
 
-      src.map(_.to[VSFile]) ~> validStatusSwitch
+      src.map(_.to[VSFile]).async ~> validStatusSwitch
 
       //YES branch - it's valid - pass it on
       validStatusSwitch.out(0) ~> isArchivedSwitch
