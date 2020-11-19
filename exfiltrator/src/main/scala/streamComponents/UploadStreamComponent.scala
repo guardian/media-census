@@ -31,13 +31,20 @@ class UploadStreamComponent(uploader:Uploader)(implicit actorSystem:ActorSystem)
         val elem = grab(in)
 
         uploader.handleUnarchivedFile(elem)
-          .map(uploadResults=>{
-            if(uploadResults.isEmpty) {
+          .map(counts=>{
+            val successCount = counts._1
+            val totalCount = counts._2
+            if(successCount==0) {
               logger.info(s"File ${elem.file.vsid} (${elem.file.path}) on item ${elem.maybeItem.map(_.itemId)} was ignored")
               ignoreCb.invoke( () )
             } else {
-              logger.info(s"File ${elem.file.vsid} (${elem.file.path}) on item ${elem.maybeItem.map(_.itemId)} uploaded ${uploadResults.length} files")
-              successCb.invoke(elem)
+              logger.info(s"File ${elem.file.vsid} (${elem.file.path}) on item ${elem.maybeItem.map(_.itemId)} uploaded $successCount / $totalCount files")
+              if(totalCount>0 && successCount==totalCount) {
+                successCb.invoke(elem)
+              } else {
+                logger.warn("Some files failed to upload, not performing deletion")
+                ignoreCb.invoke( () )
+              }
             }
           })
           .recover({

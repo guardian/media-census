@@ -13,7 +13,7 @@ import com.sksamuel.elastic4s.circe._
 import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileItemMembership, VSFileShapeMembership, VSFileState}
 import com.om.mxs.client.japi.UserInfo
 import com.sksamuel.elastic4s.http.search.SearchResponse
-import streamComponents.{ExfiltratorStreamElement, IsArchivedSwitch, IsWithinProjectSwitch, UploadStreamComponent, ValidStatusSwitch}
+import streamComponents.{ExfiltratorStreamElement, IsArchivedSwitch, IsWithinProjectSwitch, UploadStreamComponent, VSDelete, ValidStatusSwitch}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
@@ -181,10 +181,10 @@ object ExfiltratorMain {
       val itemLookup = builder.add(new VSGetItem(interestingItemFields, includeShapes=true))
 
       val ignoreMerge = builder.add(Merge[VSFile](4))
-      val vsDeleteFile = builder.add(new com.gu.vidispineakka.streamcomponents.VSDeleteFile(reallyDelete))
+      val vsDeleter = builder.add(new VSDelete(reallyDelete))
       val uploadStage = builder.add(new UploadStreamComponent(uploader))
 
-      src.map(_.to[VSFile]).async ~> validStatusSwitch
+      src.take(150).map(_.to[VSFile]).async ~> validStatusSwitch
 
       //YES branch - it's valid - pass it on
       validStatusSwitch.out(0) ~> isArchivedSwitch
@@ -209,13 +209,14 @@ object ExfiltratorMain {
 
       //YES branch - project is deletable - hmmmm
       isProjectDeletableSwitch.out(0).map(_.file) ~> ignoreMerge
-      //NO branch - project is not deletable - upload it
+      //NO branch - project is not deletable - upload it. If the upload fails, then uploadStage does not forward on the processed element but pulls in another
       isProjectDeletableSwitch.out(1) ~> uploadStage ~> deletionMerge
 
       isArchivedSwitch.out(2) ~> ignoreMerge  //CONFLICT branch
       ignoreMerge ~> sink
 
-      deletionMerge.out.map(elem=>elem.file) ~> vsDeleteFile ~> deleteRecord //this is a sink
+      deletionMerge ~> vsDeleter      //vsDeleter deletes the item if there is one (implying deletion of the files) and deletes the file if there is not
+      vsDeleter.out.map(_.file) ~> deleteRecord //this is a sink
       ClosedShape
     }
   }

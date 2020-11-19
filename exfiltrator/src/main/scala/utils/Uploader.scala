@@ -250,7 +250,11 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, poten
                 None
             })
       }
-    }) :+ metaUploadFut).map(_.collect({case Some(result)=>result}))
+    }) :+ metaUploadFut).map(uploadResults=>{
+      val successCount = uploadResults.collect({case Some(result)=>result}).length
+      val totalCount = uploadResults.length
+      (successCount, totalCount)
+    })
   }
 
   /**
@@ -263,13 +267,13 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, poten
    * and they are pushed to deep archive in parallel.
    *
    * @param elem ExfiltratorStreamElement with a reference to a VSFile entry to load and possibly its item
-   * @return a Future, containing a sequence of MultipartUploadResults, one for each uploaded file.
+   * @return a Future, containing a tuple of (successfulUploadCount, totalUploadCount)
    */
-  def handleUnarchivedFile(elem:ExfiltratorStreamElement):Future[Seq[Object]] = {
+  def handleUnarchivedFile(elem:ExfiltratorStreamElement):Future[(Int, Int)] = {
     val file = elem.file
     if(file.state.contains(VSFileState.LOST)) {
       logger.warn(s"File ${file.vsid} is Lost, ignoring")
-      return Future(Seq())
+      return Future((0,0))
     }
 
     if(file.membership.isEmpty) {
@@ -280,10 +284,10 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, poten
       case Some(item)=>
         if(isSensitive(item)) {
           logger.warn(s"Item ${item.itemId} is flagged as sensitive, leaving alone")
-          Future(Seq())
+          Future((0,0))
         } else if(isMaster(item)) {
           logger.warn(s"Item ${item.itemId} is a master or deliverable, leaving alone")
-          Future(Seq())
+          Future((0,0))
         } else {
           performUploads(elem, findProxy(item))
         }
