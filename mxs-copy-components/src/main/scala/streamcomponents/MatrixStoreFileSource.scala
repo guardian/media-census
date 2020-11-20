@@ -22,6 +22,7 @@ class MatrixStoreFileSource(userInfo:UserInfo, sourceId:String, bufferSize:Int=2
     //private var channel:SeekableByteChannel = _
     private var stream:InputStream = _
     private var mxsFile:MxsObject = _
+    private var vault:Vault = _
 
     setHandler(out, new AbstractOutHandler {
       override def onPull(): Unit = {
@@ -48,16 +49,23 @@ class MatrixStoreFileSource(userInfo:UserInfo, sourceId:String, bufferSize:Int=2
     })
 
     override def preStart(): Unit = {
-      val vault = MatrixStore.openVault(userInfo)
-      mxsFile = vault.getObject(sourceId)
-      stream = mxsFile.newInputStream()
+      try {
+        vault = MatrixStore.openVault(userInfo)
+        mxsFile = vault.getObject(sourceId)
+        stream = mxsFile.newInputStream()
 
-      //channel = mxsFile.newSeekableObjectChannel(Set(AccessOption.READ).asJava)
-      logger.debug(s"Stream is $stream")
+        //channel = mxsFile.newSeekableObjectChannel(Set(AccessOption.READ).asJava)
+        logger.debug(s"Stream is $stream")
+      } catch {
+        case err:Throwable=>
+          logger.error(s"Unable to start streaming object $sourceId from ${vault.getId}: ", err)
+          throw err
+      }
     }
 
     override def postStop(): Unit = {
       if(stream!=null) stream.close()
+      if(vault!=null) vault.dispose()
     }
   }
 }

@@ -1,4 +1,5 @@
 import java.time.ZonedDateTime
+import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.{ConnectionContext, Http}
@@ -19,16 +20,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import com.sksamuel.elastic4s.{Hit, HitReader}
+import com.typesafe.config.ConfigFactory
 import helpers.TrustStoreHelper
 import org.slf4j.LoggerFactory
 import utils.{Uploader, VSProjects}
 
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 
 object ExfiltratorMain {
   private val logger = LoggerFactory.getLogger(getClass)
-  implicit lazy val actorSystem:ActorSystem = ActorSystem("exfiltrator")
+  private val builtinConfig =
+    """akka.http.client.parsing.max-content-length = 104857600""".stripMargin
+  implicit lazy val actorSystem:ActorSystem = ActorSystem("exfiltrator", ConfigFactory.parseString(builtinConfig))
   implicit lazy val mat:Materializer = ActorMaterializer.create(actorSystem)
 
   val indexName = sys.env("NEARLINE_INDEX")
@@ -167,7 +172,7 @@ object ExfiltratorMain {
       import com.sksamuel.elastic4s.http.ElasticDsl._
       import utils.VSFileHitReader._
 
-      val src = nearlineIndexer.getSource(esClient, Seq(matchQuery("storage",storageId)), None)
+      val src = nearlineIndexer.getSource(esClient, Seq(matchQuery("storage",storageId)), None, scrollLifetime = FiniteDuration(60, TimeUnit.MINUTES))
       val deletionRequestBuilder:RequestBuilder[VSFile] = (t: VSFile) => delete(t.vsid) from s"$indexName/vsfile"
       val deleteRecord = nearlineIndexer.deleteSinkCustom(esClient,
         reallyDelete, deletionRequestBuilder)

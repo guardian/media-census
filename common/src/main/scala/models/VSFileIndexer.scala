@@ -88,7 +88,7 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
     * @param actorRefFactory implicitly provided ActorRefFactory, this normally comes from the ActorSystem.
     * @return a stream Source that yields SearchHits. You can map this directly to VSFile objects, as indicated above
     */
-  def getSource(esClient:ElasticClient, q:Seq[Query], limit:Option[Int])(implicit actorRefFactory: ActorRefFactory) = {
+  def getSource(esClient:ElasticClient, q:Seq[Query], limit:Option[Int], scrollLifetime:FiniteDuration = FiniteDuration(5, TimeUnit.MINUTES))(implicit actorRefFactory: ActorRefFactory) = {
     val params = search(indexName) query boolQuery().withMust(q)
     val finalParams = limit match {
       case Some(actualLimit)=>
@@ -97,7 +97,7 @@ class VSFileIndexer(val indexName:String, batchSize:Int=20, concurrentBatches:In
       case None=>params
     }
     Source.fromPublisher(
-      esClient.publisher(finalParams scroll FiniteDuration(5, TimeUnit.MINUTES))
+      esClient.publisher(finalParams scroll scrollLifetime)
     )
   }
 

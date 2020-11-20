@@ -53,7 +53,7 @@ lazy val `mediacensus` = (project in file(".")).enablePlugins(PlayScala, DockerP
     )
   )
 
-val akkaVersion = "2.5.23"
+val akkaVersion = "2.5.31"
 val circeVersion = "0.9.3"
 val slf4jVersion = "1.7.25"
 
@@ -312,12 +312,13 @@ lazy val `exfiltrator` = (project in file("exfiltrator"))
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-agent" % akkaVersion,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+    //"com.fasterxml.jackson.core" % "jackson-databind" % "2.9.10.6",
     "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
     "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion % "test",
-    "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "1.0.2",
+    "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "1.1.2",
     "com.gu" %% "akka-vidispine-components" % "0.5",
     specs2 % Test
   ),version := sys.props.getOrElse("build.number","DEV"),
