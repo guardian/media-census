@@ -13,7 +13,7 @@ import com.sksamuel.elastic4s.circe._
 import com.gu.vidispineakka.vidispine.{VSCommunicator, VSFile, VSFileItemMembership, VSFileShapeMembership, VSFileState}
 import com.om.mxs.client.japi.UserInfo
 import com.sksamuel.elastic4s.http.search.SearchResponse
-import streamComponents.{ExfiltratorStreamElement, IsArchivedSwitch, IsWithinProjectSwitch, UploadStreamComponent, VSDelete, ValidStatusSwitch}
+import streamComponents.{DoesFileExist, ExfiltratorStreamElement, IsArchivedSwitch, IsWithinProjectSwitch, UploadStreamComponent, VSDelete, ValidStatusSwitch}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
@@ -172,6 +172,7 @@ object ExfiltratorMain {
       val deleteRecord = nearlineIndexer.deleteSinkCustom(esClient,
         reallyDelete, deletionRequestBuilder)
 
+      val doesExistSwitch = builder.add(new DoesFileExist)
       val isArchivedSwitch = builder.add(new IsArchivedSwitch)
       val validStatusSwitch = builder.add(new ValidStatusSwitch)
       val isProjectSensitiveSwitch = builder.add(new IsWithinProjectSwitch(sensitiveProjects, "sensitive projects"))
@@ -180,11 +181,16 @@ object ExfiltratorMain {
       val deletionMerge = builder.add(Merge[ExfiltratorStreamElement](2))
       val itemLookup = builder.add(new VSGetItem(interestingItemFields, includeShapes=true))
 
-      val ignoreMerge = builder.add(Merge[VSFile](4))
+      val ignoreMerge = builder.add(Merge[VSFile](5))
       val vsDeleter = builder.add(new VSDelete(reallyDelete))
       val uploadStage = builder.add(new UploadStreamComponent(uploader))
 
-      src.take(150).map(_.to[VSFile]).async ~> validStatusSwitch
+      src.map(_.to[VSFile]).async ~> doesExistSwitch
+
+      //YES branch - it does exist - pass it on
+      doesExistSwitch.out(0) ~> validStatusSwitch
+      //NO branch - it does not exist - ignore
+      doesExistSwitch.out(1) ~> ignoreMerge
 
       //YES branch - it's valid - pass it on
       validStatusSwitch.out(0) ~> isArchivedSwitch

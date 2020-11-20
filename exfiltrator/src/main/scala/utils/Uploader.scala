@@ -190,13 +190,21 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, poten
    * @return a (possibly empty) sequence of VSFile instances
    */
   def findProxy(item:VSLazyItem):Seq[VSFile] = item.shapes.map(allShapes=>{
-      val proxyShapes = potentialProxies.filter(shapetag=>allShapes.contains(shapetag))
-      logger.info(s"${item.itemId}: Found ${proxyShapes.length} proxies: ${proxyShapes}")
+    val proxyShapes = potentialProxies.filter(shapetag=>allShapes.contains(shapetag))
+    logger.info(s"${item.itemId}: Found ${proxyShapes.length} proxies: ${proxyShapes}")
 
-      proxyShapes.map(shapetag=>{
-        allShapes(shapetag).files.headOption
-      }).collect({case Some(file)=>file})
-    }).getOrElse(Seq())
+    val proxyFileEntries = proxyShapes.map(shapetag=>{
+      allShapes(shapetag).files.headOption
+    }).collect({case Some(file)=>file})
+
+    val invalidProxyFileEntries = proxyFileEntries.filter(! _.state.contains(VSFileState.CLOSED))
+    if(invalidProxyFileEntries.nonEmpty) {
+      logger.warn(s"Item ${item.itemId} has ${invalidProxyFileEntries.length} missing proxy files: ")
+      invalidProxyFileEntries.foreach(rec=>logger.warn(s"\t'${rec.vsid}' on storage '${rec.storage}' at path '${rec.path}' with uri '${rec.uri}''"))
+    }
+
+    proxyFileEntries.filter(_.state.contains(VSFileState.CLOSED))
+  }).getOrElse(Seq())
 
   /**
    * check the metadata dictionary for potential uuids
@@ -252,7 +260,11 @@ class Uploader (userInfo:UserInfo, mediaBucket:String, proxyBucket:String, poten
       }
     }) :+ metaUploadFut).map(uploadResults=>{
       val successCount = uploadResults.collect({case Some(result)=>result}).length
-      val totalCount = uploadResults.length
+      val totalCount = if(elem.maybeItem.isDefined) {
+        uploadResults.length
+      } else {
+        uploadResults.length-1  //if there is no item, then the upload of metadata is always returned as failed; but there is no error, so don't abort
+      }
       (successCount, totalCount)
     })
   }

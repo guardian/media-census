@@ -49,7 +49,8 @@ class UploadStreamComponent(uploader:Uploader)(implicit actorSystem:ActorSystem)
           })
           .recover({
             case err:Throwable=>
-              errorCb.invoke(err)
+              logger.error(s"File ${elem.file.vsid} failed: ${err.getMessage}")
+              ignoreCb.invoke(())
           })
       }
     })
