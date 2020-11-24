@@ -61,7 +61,16 @@ class VSDelete(reallyDelete:Boolean)(implicit vsComm:VSCommunicator, mat:Materia
             errorCb.invoke(err)
           case Success(Left(httpErr))=>
             logger.error(s"Could not process deletion request for $elem: ${httpErr.errorCode} ${httpErr.message}")
-            errorCb.invoke(new RuntimeException(s"Deletion request failed: ${httpErr.errorCode}"))
+            if(httpErr.errorCode==404) {
+              if(elem.maybeItem.isDefined) {
+                logger.warn(s"Item ${elem.maybeItem.get} did not exist, can't delete a non-existent item")
+              } else {
+                logger.warn(s"File ${elem.file} did not exist, can't delete a non-existent file")
+              }
+              completionCb.invoke(elem)
+            } else {
+              errorCb.invoke(new RuntimeException(s"Deletion request failed: ${httpErr.errorCode}"))
+            }
           case Success(Right(xmlContent))=>
             logger.debug(s"Vidispine returned $xmlContent")
             completionCb.invoke(elem)
