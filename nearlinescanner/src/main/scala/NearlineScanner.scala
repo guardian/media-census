@@ -1,5 +1,4 @@
 import java.time.ZonedDateTime
-
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Broadcast, GraphDSL, RunnableGraph, Sink}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
@@ -7,7 +6,7 @@ import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties}
 import config.{ESConfig, VSConfig}
 import models.{JobHistory, JobHistoryDAO, JobType, MediaCensusEntry, MediaCensusIndexer, VSFileIndexer}
 import play.api.Logger
-import vidispine.{VSCommunicator, VSFile, VSFileStateEncoder}
+import vidispine.{VSCommunicator, VSFile, VSFileState, VSFileStateEncoder}
 import com.softwaremill.sttp._
 import helpers.{CleanoutFunctions, ZonedDateTimeEncoder}
 import streamComponents.{PeriodicUpdate, PeriodicUpdateBasic, VSFileIdInList, VSStorageScanSource}
@@ -47,6 +46,10 @@ object NearlineScanner extends CleanoutFunctions with ZonedDateTimeEncoder with 
 
   lazy implicit val indexer = new VSFileIndexer(indexName, batchSize = 200)
 
+  def shouldIndexFile(f:VSFile):Boolean = {
+    !f.state.contains(VSFileState.TO_BE_DELETED)
+  }
+
   def buildStream(initialJobRecord: JobHistory, storageId:String)(implicit esClient:ElasticClient, jobHistoryDAO: JobHistoryDAO,indexer: VSFileIndexer) = {
     val counterSink = Sink.seq[String]
     GraphDSL.create(counterSink) { implicit builder=> counter=>
@@ -57,7 +60,7 @@ object NearlineScanner extends CleanoutFunctions with ZonedDateTimeEncoder with 
       val sink = builder.add(indexer.getPartialUpdateSink(esClient))
       val splitter = builder.add(new Broadcast[VSFile](2,eagerCancel = true))
 
-      src.out.log("vs-file-indexer-stream") ~> updater ~> splitter ~> sink
+      src.out.log("vs-file-indexer-stream").filter(shouldIndexFile) ~> updater ~> splitter ~> sink
       splitter.out(1).map(_.vsid) ~> counter
       ClosedShape
     }
